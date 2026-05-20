@@ -1558,6 +1558,8 @@ function applyCardBackCosmeticToElement(cardBackEl) {
     "card-back-cosmetic-midnight-stars",
     "card-back-cosmetic-neon-table",
     "card-back-cosmetic-royal-felt",
+    "card-back-cosmetic-oll-logo",
+    "card-back-cosmetic-muse-logo",
   );
   if (!cosmetic || cosmetic.id === "classic") {
     cardBackEl.style.removeProperty("--card-back-cosmetic-image");

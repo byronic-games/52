@@ -44,7 +44,7 @@
     descEl.innerText = cosmetic.description || "";
     costEl.innerText = owned ? (selected ? "Selected" : "Owned") : `${cosmetic.cost} XP`;
 
-    previewEl.className = `shop-card-preview card-back card-back-blue ${cosmetic.previewClass || ""}`.trim();
+    previewEl.className = `shop-card-preview card-back card-back-blue ${cosmetic.previewClass || ""}${owned ? "" : " locked"}`.trim();
     if (cosmetic.image) {
       previewEl.style.setProperty("--card-back-cosmetic-image", `url("${cosmetic.image}")`);
     } else {

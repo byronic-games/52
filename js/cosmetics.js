@@ -40,6 +40,15 @@ const CARD_BACK_COSMETICS = [
     previewClass: "card-back-cosmetic-oll-logo",
     image: "images/card_backs/oll_logo.png",
   },
+  {
+    id: "muse_logo",
+    name: "Muse Logo",
+    description: "Muse logo card back.",
+    cost: 400,
+    included: true,
+    previewClass: "card-back-cosmetic-muse-logo",
+    image: "images/card_backs/muse_logo.png",
+  },
 ];
 
 function getCardBackCosmeticById(id) {
