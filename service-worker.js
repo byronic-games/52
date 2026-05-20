@@ -1,11 +1,12 @@
-const CACHE_VERSION = "20260520c";
+const CACHE_VERSION = "20260520f";
 const CACHE_NAME = `byronic-52-${CACHE_VERSION}`;
-const GAME_ASSET_VERSION = "20260520c";
+const GAME_ASSET_VERSION = "20260520f";
 
 const APP_SHELL = [
   "./",
   "./index.html",
   "./game.html",
+  "./shop.html",
   "./daily.html",
   "./settings.html",
   "./profile.html",
@@ -24,9 +25,11 @@ const APP_SHELL = [
   "./settings.css",
   "./profile.css",
   "./heroes.css",
+  `./shop.css?v=${GAME_ASSET_VERSION}`,
   "./cheat-index.css",
   `./js/constants.js?v=${GAME_ASSET_VERSION}`,
   `./js/storage.js?v=${GAME_ASSET_VERSION}`,
+  `./js/cosmetics.js?v=${GAME_ASSET_VERSION}`,
   `./js/state.js?v=${GAME_ASSET_VERSION}`,
   `./js/powers.js?v=${GAME_ASSET_VERSION}`,
   `./js/cheats.js?v=${GAME_ASSET_VERSION}`,
@@ -41,6 +44,7 @@ const APP_SHELL = [
   "./js/daily-page.js",
   "./js/settings.js",
   "./js/profile-page.js",
+  `./js/shop.js?v=${GAME_ASSET_VERSION}`,
   "./js/heroes.js",
   `./js/leaderboard.js?v=${GAME_ASSET_VERSION}`,
   "./js/cheat-index.js",

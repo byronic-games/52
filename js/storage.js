@@ -516,6 +516,43 @@ function saveExperienceDisplayEnabled(enabled) {
   return false;
 }
 
+function loadOwnedCardBackCosmetics() {
+  const defaults = ["classic"];
+  try {
+    const parsed = JSON.parse(localStorage.getItem(CARD_BACK_COSMETICS_KEY) || "[]");
+    const owned = Array.isArray(parsed) ? parsed.filter(Boolean).map(String) : [];
+    return Array.from(new Set([...defaults, ...owned]));
+  } catch {
+    return defaults;
+  }
+}
+
+function saveOwnedCardBackCosmetics(ids) {
+  const owned = Array.from(new Set(["classic", ...(Array.isArray(ids) ? ids : []).filter(Boolean).map(String)]));
+  localStorage.setItem(CARD_BACK_COSMETICS_KEY, JSON.stringify(owned));
+  return owned;
+}
+
+function isCardBackCosmeticOwned(id) {
+  return loadOwnedCardBackCosmetics().includes(String(id || ""));
+}
+
+function unlockCardBackCosmetic(id) {
+  if (!id) return loadOwnedCardBackCosmetics();
+  return saveOwnedCardBackCosmetics([...loadOwnedCardBackCosmetics(), String(id)]);
+}
+
+function loadSelectedCardBackCosmetic() {
+  const selected = String(localStorage.getItem(SELECTED_CARD_BACK_COSMETIC_KEY) || "classic");
+  return isCardBackCosmeticOwned(selected) ? selected : "classic";
+}
+
+function saveSelectedCardBackCosmetic(id) {
+  const normalized = isCardBackCosmeticOwned(id) ? String(id) : "classic";
+  localStorage.setItem(SELECTED_CARD_BACK_COSMETIC_KEY, normalized);
+  return normalized;
+}
+
 function recordRunStarted(deckKey, runMode = "standard") {
   const stats = loadProfileStats();
   stats.runsStarted += 1;

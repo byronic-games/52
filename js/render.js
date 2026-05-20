@@ -143,6 +143,7 @@ function renderRevealOverlayCard(pending, showFace) {
     );
   } else {
     overlayEl.className = `reveal-overlay card-back card-back-${revealBackColor} ${revealStatus.tornCorner ? "torn-corner" : ""}`.trim();
+    applyCardBackCosmeticToElement(overlayEl);
     overlayEl.innerHTML = `<div class="card-back-symbol">&#127136;</div>`;
     if (revealStatus.tornCorner) {
       const tear = document.createElement("div");
@@ -1548,6 +1549,28 @@ function renderCardFaceMarkup(card, displayValue, isTemporarilyModified, include
   `;
 }
 
+function applyCardBackCosmeticToElement(cardBackEl) {
+  if (!cardBackEl || typeof getSelectedCardBackCosmetic !== "function") return;
+  const cosmetic = getSelectedCardBackCosmetic();
+  cardBackEl.classList.remove(
+    "has-card-back-cosmetic",
+    "card-back-cosmetic-classic",
+    "card-back-cosmetic-midnight-stars",
+    "card-back-cosmetic-neon-table",
+    "card-back-cosmetic-royal-felt",
+  );
+  if (!cosmetic || cosmetic.id === "classic") {
+    cardBackEl.style.removeProperty("--card-back-cosmetic-image");
+    return;
+  }
+  cardBackEl.classList.add("has-card-back-cosmetic", cosmetic.previewClass || "");
+  if (cosmetic.image) {
+    cardBackEl.style.setProperty("--card-back-cosmetic-image", `url("${cosmetic.image}")`);
+  } else {
+    cardBackEl.style.removeProperty("--card-back-cosmetic-image");
+  }
+}
+
 function isFaceRank(rank) {
   return rank === "J" || rank === "Q" || rank === "K";
 }
@@ -1799,6 +1822,7 @@ function renderFaceDownDeck() {
     deckEl.innerHTML = "";
     const idleDeckBackColor = getDeckBackColor(state.currentDeckKey || state.selectedDeckKey);
     deckEl.className = `card-back card-back-${idleDeckBackColor}${getPreservedTutorialFocusClass(deckEl)}`;
+    applyCardBackCosmeticToElement(deckEl);
     deckEl.removeAttribute("data-back-color");
     if (remainingValueEl) {
       const openingCount = Array.isArray(state.deck) ? state.deck.length : 0;
@@ -1869,6 +1893,9 @@ function renderFaceDownDeck() {
     : shouldShowDeckStatsInline
       ? `card-face red card-stats-face ${backStatus.tornCorner ? "torn-corner-face" : ""}${tutorialFocusClass}`.trim()
       : `card-back card-back-${backColor} ${backStatus.tornCorner ? "torn-corner" : ""}${tutorialFocusClass}`.trim();
+  if (!blankSpaceActive && !shouldShowDeckStatsInline) {
+    applyCardBackCosmeticToElement(deckEl);
+  }
   if (blankSpaceActive) {
     deckEl.removeAttribute("data-back-color");
   } else {
