@@ -4,24 +4,38 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>52! Cheat Index</title>
-  <link rel="stylesheet" href="cheat-index.css">
+  <link rel="stylesheet" href="cheat-index.css?v=20260521c">
 </head>
 <body>
   <main class="catalog-shell">
     <header class="catalog-header">
       <h1>52! Cheat Index</h1>
-      <p>Live view from <code>js/cheats.js</code> for fast balancing and expansion.</p>
+      <p>Edit balancing fields, download the CSV, then run the importer to apply your changes.</p>
       <div class="header-actions">
         <a href="index.html">Back To Intro</a>
         <a href="game.html">Open Game</a>
       </div>
     </header>
 
+    <section class="panel power-reference-panel">
+      <h2>Power Reference</h2>
+      <p>Use these ids in the <code>Power Exclude</code> column.</p>
+      <div id="power-reference-list" class="power-reference-list"></div>
+      <datalist id="power-id-options"></datalist>
+    </section>
+
     <section class="panel">
       <div class="panel-top">
         <label for="cheat-search">Filter</label>
         <input id="cheat-search" type="text" placeholder="Search by name, id, rarity, or condition">
-        <button id="download-csv-btn" type="button">Download CSV</button>
+        <div class="editor-actions">
+          <button id="download-csv-btn" type="button">Download Edited CSV</button>
+          <button id="reset-edits-btn" type="button">Reset Page Edits</button>
+        </div>
+      </div>
+      <div class="import-helper" aria-label="Import command">
+        <p>After downloading, replace <code>tools\cheat-catalog.csv</code> with it, then run:</p>
+        <code>powershell -ExecutionPolicy Bypass -File .\tools\import-cheats.ps1 -CsvPath ".\tools\cheat-catalog.csv" -OutputPath ".\js\cheat-balance-overrides.js"</code>
       </div>
       <div id="catalog-summary" class="summary"></div>
       <div class="table-wrap">
@@ -30,13 +44,14 @@
             <tr>
               <th>ID</th>
               <th>Name</th>
+              <th>Description</th>
               <th>Rarity</th>
-              <th>Unlock</th>
+              <th>Meta</th>
               <th>Included</th>
               <th>Stacking</th>
               <th>Weight</th>
+              <th>Power Exclude</th>
               <th>Conditions</th>
-              <th>Description</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -46,10 +61,11 @@
   </main>
 
    <script src="js/constants.js?v=20260512z"></script>
+  <script src="js/powers.js?v=20260521c"></script>
   <script src="js/cheats.js"></script>
   <script src="js/cheat-balance-overrides.js"></script>
   <script src="js/apply-cheat-balance-overrides.js"></script>
-  <script src="js/cheat-index.js"></script>
+  <script src="js/cheat-index.js?v=20260521c"></script>
   <script src="js/pwa-update.js?v=20260515a"></script>
 </body>
 </html>
