@@ -1,6 +1,6 @@
-const CACHE_VERSION = "20260522n";
+const CACHE_VERSION = "20260522p";
 const CACHE_NAME = `byronic-52-${CACHE_VERSION}`;
-const GAME_ASSET_VERSION = "20260522n";
+const GAME_ASSET_VERSION = "20260522p";
 
 const APP_SHELL = [
   "./",
@@ -27,7 +27,7 @@ const APP_SHELL = [
   "./heroes.css",
   `./shop.css?v=${GAME_ASSET_VERSION}`,
   `./cheat-index.css?v=${GAME_ASSET_VERSION}`,
-  "./tools/cheat-catalog.csv",
+  "./cheat-catalog.csv",
   `./js/constants.js?v=${GAME_ASSET_VERSION}`,
   `./js/storage.js?v=${GAME_ASSET_VERSION}`,
   `./js/cosmetics.js?v=${GAME_ASSET_VERSION}`,
@@ -56,7 +56,6 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)),
   );
-  self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
@@ -104,7 +103,7 @@ self.addEventListener("fetch", (event) => {
 });
 
 self.addEventListener("message", (event) => {
-  if (event.data?.type === "SKIP_WAITING") {
+  if (event.data?.type === "SKIP_WAITING" && event.data?.confirmed) {
     self.skipWaiting();
   }
 });

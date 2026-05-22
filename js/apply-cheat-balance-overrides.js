@@ -127,7 +127,7 @@
   }
 
   function loadCatalogOverridesSync() {
-    const path = window.CHEAT_CATALOG_CSV_PATH || "tools/cheat-catalog.csv";
+    const path = window.CHEAT_CATALOG_CSV_PATH || "cheat-catalog.csv";
     try {
       const request = new XMLHttpRequest();
       request.open("GET", path, false);
@@ -179,7 +179,7 @@
   const catalogOverrides = loadCatalogOverridesSync();
   if (catalogOverrides) {
     applyOverrides(catalogOverrides);
-    window.CHEAT_CATALOG_SOURCE = "tools/cheat-catalog.csv";
+    window.CHEAT_CATALOG_SOURCE = "cheat-catalog.csv";
   } else {
     window.CHEAT_CATALOG_SOURCE = "js/cheat-balance-overrides.js";
   }
