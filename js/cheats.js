@@ -174,6 +174,7 @@ const CHEAT_DESCRIPTIONS = {
   "Product of Next Two": "Reveals the product of the next two face down cards.",
   "Top Half / Bottom Half": "Is the next card below 7 or is it 7 and above?",
   "Face Card Ahead?": "Reveals whether at least one face card (J, Q, or K) appears in the next three face down cards.",
+  "What is it Not?": "Reveals two remaining cards that the next face-down card is not.",
   [`Within ±${RANGE_CHEAT_DELTA}?`]: `Is the next card within ${RANGE_CHEAT_DELTA} above or below the current face card?`,
   "One of Next 2 Higher?": "Reveals if at least one of the next two cards is higher than the current card.",
   "One of Next 2 Lower?": "Reveals if at least one of the next two cards is lower than the current card.",
@@ -206,6 +207,7 @@ const CHEAT_DESCRIPTIONS = {
   "Bang Average": "Reveals the exact average value of the next three face down cards.",
   "God Save The King": "Play on any face card. If the next card is a King, the run survives even if your guess is wrong.",
   "Swap": "Swap the current face-up card with the next face-down card.",
+  "Banish It": "Send the current face-up card to the back of the deck and turn over the next card without increasing the found count.",
   "Jack Of All Trades": "Can only be used on a Jack. Swap the current Jack with the next face-down card and reveal that new current card.",
   "Fortune Teller": "Reveals the values of the next three face-down cards in a random order.",
   "Equals 11": "Arm this card. If it and the next revealed card total 11, choose 3 extra cheats.",
@@ -221,6 +223,10 @@ const CHEAT_DESCRIPTIONS = {
   "Locky 7s": "Gain 10 Nudge +1 and 10 Nudge -1 charges. From then on, any card that is or becomes a 7 locks at 7 and cannot be nudged.",
   "Margin Of Error": "If your next guess is wrong by 3 or less, the run continues.",
   "Corporate Icebreaker": "Hear two true value-and-suit facts and one believable lie about the next three cards.",
+  "Legends Ahead": "Your next Cheat pick offers Legendary Cheats only.",
+  "Emergency Cord": "Gain 10 Nudge +1 and 10 Nudge -1, then shuffle two Jokers into the face-down deck.",
+  "Two's Company": "Mark the next face-down 2 in the deck with a temporary 2 on its back.",
+  "Refund": "Arm this card. After your next guess, unnecessary current-card nudges used this turn are returned.",
   "Tear Corner": "Tear off the top left corner of the current face card so it can be recognised in future runs.",
 };
 
@@ -543,6 +549,34 @@ const CHEATS = [
       return found
         ? "Yes — a face card is in the next three."
         : "No — no face card in the next three.";
+    },
+  },
+  {
+    id: "what_is_it_not",
+    name: "What is it Not?",
+    rarity: "uncommon",
+    weight: 1,
+    included: true,
+    unlockAt: 0,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => {
+      const next = getNextCardAt(1);
+      if (!next) return "No next card.";
+      const candidates = state.deck
+        .slice(state.index + 2)
+        .filter((card) => !isJokerCard(card));
+      if (candidates.length < 2) return "Not enough remaining cards to rule out two.";
+
+      const rng = getCheatDeterministicRng("what_is_it_not");
+      const options = [...candidates];
+      const ruledOut = [];
+      while (ruledOut.length < 2 && options.length > 0) {
+        const idx = Math.floor(rng() * options.length);
+        ruledOut.push(options.splice(idx, 1)[0]);
+      }
+
+      return `The next card is not ${ruledOut.map((card) => formatCardIdentityForCheat(card)).join(" or ")}.`;
     },
   },
   {
@@ -1358,7 +1392,7 @@ const CHEATS = [
     },
   },
   {
-    id: "hot_or_cold",
+    id: "margin_of_error",
     name: "Margin Of Error",
     rarity: "common",
     weight: 1,
@@ -1393,25 +1427,107 @@ const CHEATS = [
       if (!remainingPool.length) return "Not enough cards remaining for a believable lie.";
 
       const rng = getCheatDeterministicRng("corporate_icebreaker");
-      const truthIndexes = [0, 1, 2];
-      for (let i = truthIndexes.length - 1; i > 0; i -= 1) {
-        const swapIndex = Math.floor(rng() * (i + 1));
-        [truthIndexes[i], truthIndexes[swapIndex]] = [truthIndexes[swapIndex], truthIndexes[i]];
-      }
-
       const fakeCard = remainingPool[Math.floor(rng() * remainingPool.length)];
-      const statements = [
-        formatCardIdentityForCheat(upcoming[truthIndexes[0]], truthIndexes[0] + 1),
-        formatCardIdentityForCheat(upcoming[truthIndexes[1]], truthIndexes[1] + 1),
-        formatCardIdentityForCheat(fakeCard),
-      ];
-
-      for (let i = statements.length - 1; i > 0; i -= 1) {
-        const swapIndex = Math.floor(rng() * (i + 1));
-        [statements[i], statements[swapIndex]] = [statements[swapIndex], statements[i]];
-      }
+      const lieIndex = Math.floor(rng() * upcoming.length);
+      const statements = upcoming.map((card, index) =>
+        index === lieIndex
+          ? formatCardIdentityForCheat(fakeCard)
+          : formatCardIdentityForCheat(card, index + 1)
+      );
 
       return `Two truths and one lie: ${statements.join(" / ")}`;
+    },
+  },
+  {
+    id: "legends_ahead",
+    name: "Legends Ahead",
+    rarity: "rare",
+    weight: 0.65,
+    included: true,
+    unlockAt: 30,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => {
+      state.legendaryCheatOfferArmed = true;
+      return "Legends Ahead armed - your next Cheat pick will offer Legendary Cheats only.";
+    },
+  },
+  {
+    id: "emergency_cord",
+    name: "Emergency Cord",
+    rarity: "legendary",
+    weight: 0.75,
+    included: true,
+    unlockAt: 30,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => {
+      if (!Array.isArray(state.deck) || !state.current) return "No active deck.";
+      if (state.index >= state.deck.length - 1) return "No face-down cards left.";
+
+      state.nudgeUpCharges = (state.nudgeUpCharges || 0) + 10;
+      state.nudgeDownCharges = (state.nudgeDownCharges || 0) + 10;
+
+      const rng = getCheatDeterministicRng("emergency_cord");
+      const jokerCount = 2;
+      for (let i = 0; i < jokerCount; i += 1) {
+        const insertAt = state.index + 1 + Math.floor(rng() * Math.max(1, state.deck.length - state.index));
+        state.deck.splice(insertAt, 0, {
+          id: `emergency_cord_joker_${state.index}_${i + 1}_${Math.floor(rng() * 1000000)}`,
+          jokerId: "emergency_cord_joker",
+          name: "Emergency Joker",
+          shortName: "Emergency",
+          icon: "!",
+          type: "joker",
+          suit: "Joker",
+          rank: "Emergency",
+          value: null,
+          description: "A Joker hazard introduced by Emergency Cord.",
+        });
+      }
+
+      return "Emergency Cord pulled - gained 10 Nudge +1 and 10 Nudge -1, but 2 Jokers entered the face-down deck.";
+    },
+  },
+  {
+    id: "twos_company",
+    name: "Two's Company",
+    rarity: "uncommon",
+    weight: 0.9,
+    included: true,
+    unlockAt: 0,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => {
+      if (!Array.isArray(state.deck) || !state.current) return "No active deck.";
+      const target = state.deck
+        .slice(state.index + 1)
+        .find((card) => !isJokerCard(card) && card.rank === "2");
+      if (!target) return "No face-down 2 left in the deck.";
+
+      if (!state.temporaryCardBackMarks || typeof state.temporaryCardBackMarks !== "object") {
+        state.temporaryCardBackMarks = {};
+      }
+      state.temporaryCardBackMarks[target.id] = "2";
+      return "Two's Company marked the next face-down 2 for this run.";
+    },
+  },
+  {
+    id: "refund",
+    name: "Refund",
+    rarity: "rare",
+    weight: 0.8,
+    included: true,
+    unlockAt: 0,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => {
+      if (!state.current) return "No current card.";
+      const next = getNextCardAt(1);
+      if (!next) return "No next card.";
+      if (isJokerCard(next)) return "Joker.";
+      state.refundArmed = true;
+      return "Refund armed - after your next guess, unnecessary current-card nudges used this turn will be returned.";
     },
   },
   {
@@ -1427,6 +1543,38 @@ const CHEATS = [
       if (!state.current) return "No current card.";
       setCardBackStatus(state.current.id, { tornCorner: true });
       return `${describeCard(state.current)} now has a torn corner on its back.`;
+    },
+  },
+  {
+    id: "banish_it",
+    name: "Banish It",
+    rarity: "rare",
+    weight: 0.8,
+    included: true,
+    unlockAt: 0,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => {
+      if (!state.current || !Array.isArray(state.deck)) return "No current card.";
+      const currentIndex = state.index;
+      const nextIndex = currentIndex + 1;
+      if (nextIndex >= state.deck.length) return "No next card.";
+
+      const banishedCard = state.deck[currentIndex];
+      const nextCard = state.deck[nextIndex];
+      state.deck.splice(currentIndex, 2, nextCard);
+      state.deck.push(banishedCard);
+      state.current = nextCard;
+      state.currentValueModifier = 0;
+      state.nextCardValueModifier = 0;
+      state.cheatUsesOnCurrentCard = 0;
+      if (typeof resetCurrentTurnNudgeTracking === "function") {
+        resetCurrentTurnNudgeTracking();
+      }
+      unmarkCardSeen(banishedCard);
+      markCardSeen(nextCard);
+
+      return `Banished ${describeCard(banishedCard)} to the back of the deck - current card is now ${describeCard(nextCard)}.`;
     },
   },
   {
@@ -1456,6 +1604,9 @@ const CHEATS = [
       state.current = state.deck[currentIndex];
       state.currentValueModifier = 0;
       state.nextCardValueModifier = 0;
+      if (typeof resetCurrentTurnNudgeTracking === "function") {
+        resetCurrentTurnNudgeTracking();
+      }
       markCardSeen(state.current);
 
       return `Swapped with next card - current card is now ${describeCard(state.current)}.`;
@@ -1561,6 +1712,28 @@ function getRandomCheatOptions(count = 3, seedString = "", includeAll = false) {
   return options;
 }
 
+function getLegendaryCheatOptions(count = 3, seedString = "", includeAll = false) {
+  const pool = [...getEligibleCheatPool(includeAll)].filter((cheat) => (cheat.rarity || "common") === "legendary");
+  const options = [];
+  const seeded = !!normalizeSeed(seedString);
+  const rng = seeded
+    ? mulberry32(stringToSeedNumber(`${GAME_VERSION}|legendary-only|${seedString}`))
+    : null;
+
+  const getLegendaryWeight = (cheat) => {
+    const explicitWeight = Number.isFinite(cheat.weight) ? cheat.weight : 1;
+    return Math.max(0.01, explicitWeight);
+  };
+
+  while (options.length < count && pool.length > 0) {
+    const idx = getWeightedRandomIndex(pool, getLegendaryWeight, seeded ? rng : Math.random);
+    if (idx < 0) break;
+    options.push(pool.splice(idx, 1)[0]);
+  }
+
+  return options;
+}
+
 function getTutorialCheatOptions(count = 2, seedString = "", includeAll = false) {
   const disallowed = new Set(["nudge_up", "nudge_down", "green_energy_boost"]);
   const pool = [...getEligibleCheatPool(includeAll)].filter((cheat) => !disallowed.has(cheat.id));
@@ -1584,10 +1757,22 @@ function offerCheatChoice(reason = "") {
   const tutorialOfferActive = typeof window.isTutorialCheatOfferActive === "function" && window.isTutorialCheatOfferActive();
   const optionCount = tutorialOfferActive ? 2 : (isDailyRun ? 3 : getCheatOfferOptionCount());
   const newlyMetaUnlocked = isDailyRun ? [] : markMetaUnlockedCheats();
+  const legendaryOfferArmed = !!state.legendaryCheatOfferArmed && !tutorialOfferActive;
   state.pauseForCheat = false; // Ensure pause is cleared before showing cheat selection
   state.activeCheatAwardReason = reason || "";
 
-  if (tutorialOfferActive) {
+  if (legendaryOfferArmed) {
+    const offerIndex = isDailyRun ? (state.dailyCheatOfferCount || 0) + 1 : 0;
+    const seed = isDailyRun ? getDailyCheatOfferSeed(offerIndex) : `${state.runSeed}|legendary-cheat-offer|${state.correctAnswers || 0}|${state.index || 0}`;
+    state.pendingCheatOptions = getLegendaryCheatOptions(optionCount, seed, isDailyRun);
+    if (!state.pendingCheatOptions.length) {
+      state.pendingCheatOptions = getRandomCheatOptions(optionCount, seed, isDailyRun);
+    }
+    state.legendaryCheatOfferArmed = false;
+    if (isDailyRun) {
+      state.dailyCheatOfferCount = offerIndex;
+    }
+  } else if (tutorialOfferActive) {
     const offerIndex = (state.dailyCheatOfferCount || 0) + 1;
     const tutorialSeed = isDailyRun ? getDailyCheatOfferSeed(offerIndex) : "";
     state.pendingCheatOptions = getTutorialCheatOptions(optionCount, tutorialSeed, isDailyRun);
@@ -1626,6 +1811,7 @@ function offerCheatChoice(reason = "") {
   appendRunDebugLog("cheat_offer_presented", {
     awardReason: state.activeCheatAwardReason || ((state.sixSevenRewardChoicesRemaining || 0) > 0 ? "six_seven_bonus" : "streak"),
     optionCount,
+    legendaryOnly: legendaryOfferArmed && state.pendingCheatOptions.every((option) => (option.rarity || "common") === "legendary"),
     options: state.pendingCheatOptions.map((option) => ({
       id: option.id,
       name: option.name,

@@ -1,6 +1,6 @@
-const CACHE_VERSION = "20260521c";
+const CACHE_VERSION = "20260522f";
 const CACHE_NAME = `byronic-52-${CACHE_VERSION}`;
-const GAME_ASSET_VERSION = "20260521c";
+const GAME_ASSET_VERSION = "20260522f";
 
 const APP_SHELL = [
   "./",
@@ -41,7 +41,7 @@ const APP_SHELL = [
   "./js/main.js",
   "./js/fullscreen.js",
   "./js/daily.js",
-  "./js/daily-page.js",
+  `./js/daily-page.js?v=${GAME_ASSET_VERSION}`,
   "./js/settings.js",
   "./js/profile-page.js",
   `./js/shop.js?v=${GAME_ASSET_VERSION}`,

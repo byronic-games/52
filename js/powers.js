@@ -56,7 +56,16 @@ const POWERS = [
   {
     id: "lucky_opening",
     name: "Lucky Opening",
-    description: "Start each run with two Lucky 7 Cheats in hand.",
+    description: "Start each run with four Lucky 7 Cheats in hand.",
+    rarity: "common",
+    unlockAt: 0,
+    weight: 1,
+    included: true,
+  },
+  {
+    id: "tears_before_playtime",
+    name: "Tears Before Playtime",
+    description: "Start each run with two Tear Corner Cheats in hand.",
     rarity: "common",
     unlockAt: 0,
     weight: 1,
@@ -110,7 +119,7 @@ const POWERS = [
   {
     id: "bingo",
     name: "Bingo",
-    description: "Gain 5 Nudge +1 and 5 Nudge -1 when you complete the four corners, your first rank line, and your second rank line.",
+    description: "Gain 5 Nudge +1 and 5 Nudge -1 when you complete the four corners, your first horizontal row, and your second horizontal row.",
     rarity: "common",
     unlockAt: 0,
     weight: 1,
@@ -178,6 +187,8 @@ function getPowerIcon(powerId) {
       return "A";
     case "lucky_opening":
       return "7";
+    case "tears_before_playtime":
+      return "T";
     case "diamonds_are_forever":
       return "◇";
     case "all_you_need_is_love":

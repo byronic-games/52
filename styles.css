@@ -1173,6 +1173,28 @@ body[data-visuals="new"] .card-nudge-old-rank-br {
   clip-path: polygon(0 0, 100% 0, 100% 100%);
 }
 
+.temporary-card-back-mark {
+  position: absolute;
+  top: 11%;
+  left: 11%;
+  z-index: 4;
+  min-width: 1.35em;
+  min-height: 1.35em;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  padding: 0.06em 0.28em;
+  background: rgba(255, 255, 255, 0.94);
+  color: #101018;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: clamp(1.2rem, 7cqw, 2.4rem);
+  font-weight: 900;
+  line-height: 1;
+  box-shadow:
+    0 0 0 2px rgba(16, 16, 24, 0.18),
+    0 8px 18px rgba(0, 0, 0, 0.24);
+}
+
 .card-temp-chip {
   position: absolute;
   right: 8px;
@@ -5758,7 +5780,7 @@ body.game-page.black-deck-active #game.game-over-effect::before {
 
 .cheat-stack-count {
   position: absolute;
-  top: -6px;
+  top: -1px;
   right: -7px;
   min-width: 1.7em;
   min-height: 1.7em;

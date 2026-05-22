@@ -145,6 +145,13 @@ function renderRevealOverlayCard(pending, showFace) {
     overlayEl.className = `reveal-overlay card-back card-back-${revealBackColor} ${revealStatus.tornCorner ? "torn-corner" : ""}`.trim();
     applyCardBackCosmeticToElement(overlayEl);
     overlayEl.innerHTML = `<div class="card-back-symbol">&#127136;</div>`;
+    const temporaryMark = state.temporaryCardBackMarks?.[revealCard.id] || "";
+    if (temporaryMark) {
+      const mark = document.createElement("div");
+      mark.className = "temporary-card-back-mark";
+      mark.innerText = temporaryMark;
+      overlayEl.appendChild(mark);
+    }
     if (revealStatus.tornCorner) {
       const tear = document.createElement("div");
       tear.className = "tear-mark";
@@ -1333,6 +1340,7 @@ const CHEAT_ICON_BY_NAME = Object.freeze({
   "Product of Next Two": "∏2",
   "Top Half / Bottom Half": "◐",
   "Face Card Ahead?": "JQK",
+  "What is it Not?": "NOT",
   "One of Next 2 Higher?": "2↑",
   "One of Next 2 Lower?": "2↓",
   "Higher of Next Two": "⇈",
@@ -1356,6 +1364,7 @@ const CHEAT_ICON_BY_NAME = Object.freeze({
   "Run Stopper": "⛔",
   "Bang Average": "AVG",
   "God Save The King": "♔",
+  "Banish It": "BAN",
   "Jack Of All Trades": "J✦",
   "Fortune Teller": "🔮",
   "You Can Cheat A Cheater": "C²",
@@ -1368,6 +1377,10 @@ const CHEAT_ICON_BY_NAME = Object.freeze({
   "Locky 7s": "7🔒",
   "Margin Of Error": "±3",
   "Corporate Icebreaker": "💬",
+  "Legends Ahead": "LA",
+  "Emergency Cord": "EC",
+  "Two's Company": "2C",
+  "Refund": "RF",
   "Tear Corner": "◰",
   "Swap": "⇄",
   "+5 Energy": "⚡5",
@@ -1912,6 +1925,13 @@ function renderFaceDownDeck() {
     symbol.className = "card-back-symbol";
     symbol.innerText = "🂠";
     deckEl.appendChild(symbol);
+    const temporaryMark = state.temporaryCardBackMarks?.[next.id] || "";
+    if (temporaryMark) {
+      const mark = document.createElement("div");
+      mark.className = "temporary-card-back-mark";
+      mark.innerText = temporaryMark;
+      deckEl.appendChild(mark);
+    }
   }
 
   if (backStatus.tornCorner && !blankSpaceActive) {
