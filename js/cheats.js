@@ -187,6 +187,7 @@ const CHEAT_DESCRIPTIONS = {
   "Nudge -1": "Decreases the value of the current face card by one for the next guess.",
   "Nudge +2": "Increases the value of the current face card by two, stopping at King.",
   "Nudge -2": "Decreases the value of the current face card by two, stopping at Ace.",
+  "Need The Nudge": "Swap your stored Nudge +1 and Nudge -1 charge totals.",
   "+5 Energy": "Green Deck only. Gain 5 Energy instantly.",
   "Next Card Nudge Up": "Temporarily nudges the next face-down card up by 3 for the next guess, stopping at King.",
   "Next Card Nudge Down": "Temporarily nudges the next face-down card down by 3 for the next guess, stopping at Ace.",
@@ -198,6 +199,7 @@ const CHEAT_DESCRIPTIONS = {
   "Psycho": "For the next three guesses, you cannot use Cheats or Nudges. Survive all three to choose a new Power.",
   "Higher, Higher, Higher": "Choose a new Power if your next three successful guesses are Higher.",
   "Back To Square One": "Treat the current face-up card as an Ace for the next guess.",
+  "9 to 5": "Can only be used on a 9. Treat the current card as a 5 for the next guess.",
   "A Stitch In Time Saves...": "Can only be used on a 9. If your next guess is wrong, the run continues.",
   "Catch-22": "Can only be used on a 2. If the next card is also a 2, choose a new Power.",
   "Sixth Sense": "Can only be used on a 6. Reveals whether the next card is higher, lower, or neither.",
@@ -216,10 +218,12 @@ const CHEAT_DESCRIPTIONS = {
   "Suits You, Sir": "If the next card is the same suit as the current card, gain 5 Nudge +1 and 5 Nudge -1 charges.",
   "Cursed Shield": "Lose all currently stored nudges now. Your next wrong guess is survived.",
   "One Life Left": "Adds one stored life. Each life survives one wrong guess, and multiple lives can be stacked.",
+  "Killer Queen": "Adds one stored save. It continues the run when you guess Lower on a Queen and reveal a King.",
   "The Higher The Better": "Locks this card's value. You must choose Higher on your next guess and gain Nudge +1 charges equal to the card-value difference.",
   "The Lower The Better": "Locks this card's value. You must choose Lower on your next guess and gain Nudge -1 charges equal to the card-value difference.",
   "Suited and Booted": "Survive your next guess regardless of outcome unless the revealed next card matches the current card's suit.",
   "Always Bet On The Black": "For the next card only: if it is a Club or a Spade, the run survives even on a wrong guess.",
+  "Red? Dead? Redemption": "For the next guess, a losing guess is saved if the revealed card is a Heart or Diamond.",
   "Locky 7s": "Gain 10 Nudge +1 and 10 Nudge -1 charges. From then on, any card that is or becomes a 7 locks at 7 and cannot be nudged.",
   "Margin Of Error": "If your next guess is wrong by 3 or less, the run continues.",
   "Corporate Icebreaker": "Hear two true value-and-suit facts and one believable lie about the next three cards.",
@@ -845,7 +849,25 @@ const CHEATS = [
 
       return "Next face-down card nudged down for the next guess.";
     },
-  },  {
+  },
+  {
+    id: "need_the_nudge",
+    name: "Need The Nudge",
+    rarity: "common",
+    weight: 1,
+    included: true,
+    unlockAt: 0,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => {
+      const upCharges = Math.max(0, Number(state.nudgeUpCharges) || 0);
+      const downCharges = Math.max(0, Number(state.nudgeDownCharges) || 0);
+      state.nudgeUpCharges = downCharges;
+      state.nudgeDownCharges = upCharges;
+      return `Need The Nudge swapped stored nudges: +${upCharges}/-${downCharges} became +${downCharges}/-${upCharges}.`;
+    },
+  },
+  {
     id: "halve_it",
     name: "Halve It",
     rarity: "uncommon",
@@ -1004,6 +1026,23 @@ const CHEATS = [
     },
   },
   {
+    id: "nine_to_five",
+    name: "9 to 5",
+    rarity: "uncommon",
+    weight: 1,
+    included: true,
+    unlockAt: 40,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => {
+      if (!state.current) return "No current card.";
+      const current = getCurrentEffectiveValue();
+      if (current !== 9) return "9 to 5 can only be used on a 9.";
+      state.currentValueModifier += 5 - current;
+      return "9 to 5 - current card is treated as 5 for the next guess.";
+    },
+  },
+  {
     id: "stitch_in_time_saves",
     name: "A Stitch In Time Saves...",
     rarity: "rare",
@@ -1107,7 +1146,7 @@ const CHEATS = [
     name: "Bang Average",
     rarity: "uncommon",
     weight: 0.8,
-    included: true,
+    included: false,
     unlockAt: 20,
     stacking: "unique",
     consumeOnUse: true,
@@ -1299,6 +1338,20 @@ const CHEATS = [
     },
   },
   {
+    id: "killer_queen",
+    name: "Killer Queen",
+    rarity: "rare",
+    weight: 0.8,
+    included: true,
+    unlockAt: 0,
+    stacking: "stackable",
+    consumeOnUse: true,
+    use: () => {
+      state.killerQueenLives = Math.max(0, Number(state.killerQueenLives) || 0) + 1;
+      return `Killer Queen stored - ${state.killerQueenLives} ${state.killerQueenLives === 1 ? "save" : "saves"} ready.`;
+    },
+  },
+  {
     id: "higher_the_better",
     name: "The Higher The Better",
     rarity: "rare",
@@ -1360,6 +1413,20 @@ const CHEATS = [
     use: () => {
       state.alwaysBetBlackArmed = true;
       return "Always Bet On The Black armed - if the next card is a Club or Spade, the run survives even on a wrong guess.";
+    },
+  },
+  {
+    id: "red_dead_redemption",
+    name: "Red? Dead? Redemption",
+    rarity: "rare",
+    weight: 0.85,
+    included: true,
+    unlockAt: 30,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => {
+      state.redDeadRedemptionArmed = true;
+      return "Red? Dead? Redemption armed - if the next card is a Heart or Diamond, a losing guess survives.";
     },
   },
   {
@@ -1930,6 +1997,7 @@ function pickCheatFromChoice(index, options = {}) {
     cheatsInHandAfterPick: state.cheats.map((heldCheat) => heldCheat.id),
     nudgeUpCharges: state.nudgeUpCharges || 0,
     nudgeDownCharges: state.nudgeDownCharges || 0,
+    legendaryCheatOfferArmed: !!state.legendaryCheatOfferArmed,
     message: state.message,
   });
 

@@ -705,6 +705,8 @@ function previewPendingRunBehindPowerChoice(deck, runMode = "standard", deckKey 
   state.bingoCornersAwarded = false;
   state.bingoLineAwardCount = 0;
   state.oneLifeLeftLives = 0;
+  state.killerQueenLives = 0;
+  state.redDeadRedemptionArmed = false;
   state.energy = 0;
   state.lastJokerMessage = "";
   state.currentDeckKey = normalizedDeckKey;
@@ -1079,10 +1081,12 @@ function startRunWithPower(powerId) {
     psychoRemaining: 0,
     godSaveKingArmed: false,
     alwaysBetBlackArmed: false,
+    redDeadRedemptionArmed: false,
     lockySevensActive: false,
     oddOneOutArmed: false,
     cursedShieldArmed: false,
     oneLifeLeftLives: 0,
+    killerQueenLives: 0,
     suitedAndBootedArmed: false,
     suitedAndBootedSuit: "",
     blankSpaceActive: false,
@@ -1907,10 +1911,12 @@ function clearArmedPowerEffects() {
   state.higherHigherHigherRemaining = 0;
   state.godSaveKingArmed = false;
   state.alwaysBetBlackArmed = false;
+  state.redDeadRedemptionArmed = false;
   state.lockySevensActive = false;
   state.oddOneOutArmed = false;
   state.cursedShieldArmed = false;
   state.oneLifeLeftLives = 0;
+  state.killerQueenLives = 0;
   state.suitedAndBootedArmed = false;
   state.suitedAndBootedSuit = "";
   state.forcedNextGuess = "";
@@ -2156,11 +2162,13 @@ function makeGuessLegacy(type) {
   const catch22WasArmed = !!state.catch22Armed;
   const godSaveKingWasArmed = !!state.godSaveKingArmed;
   const alwaysBetBlackWasArmed = !!state.alwaysBetBlackArmed;
+  const redDeadRedemptionWasArmed = !!state.redDeadRedemptionArmed;
   const oddOneOutWasArmed = !!state.oddOneOutArmed;
   const sixSevenWasArmed = !!state.sixSevenArmed;
   const cursedShieldWasArmed = !!state.cursedShieldArmed;
   const refundWasArmed = !!state.refundArmed;
   const oneLifeLeftLivesBeforeGuess = Math.max(0, Number(state.oneLifeLeftLives) || 0);
+  const killerQueenLivesBeforeGuess = Math.max(0, Number(state.killerQueenLives) || 0);
   const suitedAndBootedWasArmed = !!state.suitedAndBootedArmed;
   const equals11WasArmed = !!state.equals11Armed;
   const suitedAndBootedSuit = state.suitedAndBootedSuit || "";
@@ -2178,6 +2186,7 @@ function makeGuessLegacy(type) {
   state.catch22Armed = false;
   state.godSaveKingArmed = false;
   state.alwaysBetBlackArmed = false;
+  state.redDeadRedemptionArmed = false;
   state.oddOneOutArmed = false;
   state.sixSevenArmed = false;
   state.refundArmed = false;
@@ -2194,8 +2203,10 @@ function makeGuessLegacy(type) {
   const jokerAutoCorrect = currentIsJoker;
   let rescuedBySuitSave = false;
   let rescuedByAlwaysBetBlack = false;
+  let rescuedByRedDeadRedemption = false;
   let rescuedByCursedShield = false;
   let rescuedByOneLifeLeft = false;
+  let rescuedByKillerQueen = false;
   let rescuedBySuitedAndBooted = false;
   let rescuedByMarginForError = false;
   let rescuedByHotOrCold = false;
@@ -2234,6 +2245,7 @@ function makeGuessLegacy(type) {
         fiveAliveWasArmed,
         godSaveKingWasArmed,
         alwaysBetBlackWasArmed,
+        redDeadRedemptionWasArmed,
         oddOneOutWasArmed,
         sixSevenWasArmed,
         cursedShieldWasArmed,
@@ -2287,7 +2299,15 @@ function makeGuessLegacy(type) {
     rescuedByStitchInTime = !comparisonCorrect && stitchInTimeWasArmed;
     const rescuedByGodSaveKing = !comparisonCorrect && godSaveKingWasArmed && getNextComparisonValueForGuess(next) === 13;
     rescuedByAlwaysBetBlack = !comparisonCorrect && alwaysBetBlackWasArmed && (next.suit === SUITS[0] || next.suit === SUITS[3]);
+    rescuedByRedDeadRedemption = !comparisonCorrect && redDeadRedemptionWasArmed && (next.suit === SUITS[1] || next.suit === SUITS[2]);
     rescuedByCursedShield = !comparisonCorrect && cursedShieldWasArmed;
+    rescuedByKillerQueen =
+      !comparisonCorrect &&
+      type === "lower" &&
+      state.current?.rank === "Q" &&
+      Number.isFinite(nextComparisonValue) &&
+      nextComparisonValue === 13 &&
+      killerQueenLivesBeforeGuess > 0;
     rescuedBySuitedAndBooted = !comparisonCorrect && suitedAndBootedWasArmed && !!suitedAndBootedSuit && next.suit !== suitedAndBootedSuit;
     rescuedBySuitSave = !comparisonCorrect && !!passiveSuitSavePower;
     rescuedByOneLifeLeft =
@@ -2299,7 +2319,9 @@ function makeGuessLegacy(type) {
       !rescuedByStitchInTime &&
       !rescuedByGodSaveKing &&
       !rescuedByAlwaysBetBlack &&
+      !rescuedByRedDeadRedemption &&
       !rescuedByCursedShield &&
+      !rescuedByKillerQueen &&
       !rescuedBySuitedAndBooted &&
       !rescuedBySuitSave &&
       oneLifeLeftLivesBeforeGuess > 0;
@@ -2312,7 +2334,9 @@ function makeGuessLegacy(type) {
       rescuedByStitchInTime ||
       rescuedByGodSaveKing ||
       rescuedByAlwaysBetBlack ||
+      rescuedByRedDeadRedemption ||
       rescuedByCursedShield ||
+      rescuedByKillerQueen ||
       rescuedByOneLifeLeft ||
       rescuedBySuitedAndBooted ||
       rescuedBySuitSave;
@@ -2321,6 +2345,9 @@ function makeGuessLegacy(type) {
     }
     if (rescuedByOneLifeLeft) {
       state.oneLifeLeftLives = Math.max(0, oneLifeLeftLivesBeforeGuess - 1);
+    }
+    if (rescuedByKillerQueen) {
+      state.killerQueenLives = Math.max(0, killerQueenLivesBeforeGuess - 1);
     }
   }
 
@@ -2348,11 +2375,13 @@ function makeGuessLegacy(type) {
         fiveAliveWasArmed,
         godSaveKingWasArmed,
         alwaysBetBlackWasArmed,
+        redDeadRedemptionWasArmed,
         oddOneOutWasArmed,
         sixSevenWasArmed,
         passiveSuitSavePowerId: passiveSuitSavePower?.id || "",
         rescuedBySuitSave,
         rescuedByAlwaysBetBlack,
+        rescuedByRedDeadRedemption,
         message: lossDetail,
       });
     triggerGameOverEffect(lossDetail);
@@ -2409,6 +2438,7 @@ function makeGuessLegacy(type) {
       stitchInTimeWasArmed,
       godSaveKingWasArmed,
       alwaysBetBlackWasArmed,
+      redDeadRedemptionWasArmed,
       oddOneOutWasArmed,
       sixSevenWasArmed,
     });
@@ -2477,14 +2507,20 @@ function makeGuessLegacy(type) {
         ? "match"
         : rescuedByCursedShield
           ? "cursed_shield"
-          : rescuedBySuitedAndBooted
-            ? "suited_and_booted"
-            : rescuedByMarginForError
-              ? "margin_for_error"
-              : rescuedByHotOrCold
-                ? "margin_of_error"
-                : rescuedByStitchInTime
-                  ? "stitch_in_time_saves"
+          : rescuedByAlwaysBetBlack
+            ? "always_bet_on_the_black"
+            : rescuedByRedDeadRedemption
+              ? "red_dead_redemption"
+              : rescuedByKillerQueen
+                ? "killer_queen"
+                : rescuedBySuitedAndBooted
+                  ? "suited_and_booted"
+                  : rescuedByMarginForError
+                    ? "margin_for_error"
+                    : rescuedByHotOrCold
+                      ? "margin_of_error"
+                      : rescuedByStitchInTime
+                        ? "stitch_in_time_saves"
         : lucky7WasArmed
           ? "lucky_7"
           : fiveAliveWasArmed
@@ -2502,11 +2538,14 @@ function makeGuessLegacy(type) {
     fiveAliveWasArmed,
     godSaveKingWasArmed,
     alwaysBetBlackWasArmed,
+    redDeadRedemptionWasArmed,
     oddOneOutWasArmed,
     sixSevenWasArmed,
     cursedShieldWasArmed,
     oneLifeLeftLivesBeforeGuess,
     oneLifeLeftLivesAfterGuess: state.oneLifeLeftLives || 0,
+    killerQueenLivesBeforeGuess,
+    killerQueenLivesAfterGuess: state.killerQueenLives || 0,
     suitedAndBootedWasArmed,
     suitedAndBootedSuit,
     forcedNextGuessDirection,
@@ -2515,8 +2554,10 @@ function makeGuessLegacy(type) {
     passiveSuitSavePowerId: passiveSuitSavePower?.id || "",
     rescuedBySuitSave,
       rescuedByAlwaysBetBlack,
+      rescuedByRedDeadRedemption,
       rescuedByCursedShield,
       rescuedByOneLifeLeft,
+      rescuedByKillerQueen,
       rescuedBySuitedAndBooted,
       blankSpaceWasActive,
       wlStageBeforeGuess,
@@ -2690,6 +2731,16 @@ function makeGuessLegacy(type) {
   }
   if (rescuedByAlwaysBetBlack) {
     state.message = `Always Bet On The Black saved the run - it was ${describeCard(next)}.`;
+    render();
+    return;
+  }
+  if (rescuedByRedDeadRedemption) {
+    state.message = `Red? Dead? Redemption saved the run - it was ${describeCard(next)}.`;
+    render();
+    return;
+  }
+  if (rescuedByKillerQueen) {
+    state.message = `Killer Queen saved the run - Lower on Queen revealed ${describeCard(next)}. ${state.killerQueenLives || 0} ${state.killerQueenLives === 1 ? "save" : "saves"} left.`;
     render();
     return;
   }
@@ -2883,11 +2934,13 @@ function makeGuess(type) {
   const catch22WasArmed = !!state.catch22Armed;
   const godSaveKingWasArmed = !!state.godSaveKingArmed;
   const alwaysBetBlackWasArmed = !!state.alwaysBetBlackArmed;
+  const redDeadRedemptionWasArmed = !!state.redDeadRedemptionArmed;
   const oddOneOutWasArmed = !!state.oddOneOutArmed;
   const sixSevenWasArmed = !!state.sixSevenArmed;
   const cursedShieldWasArmed = !!state.cursedShieldArmed;
   const refundWasArmed = !!state.refundArmed;
   const oneLifeLeftLivesBeforeGuess = Math.max(0, Number(state.oneLifeLeftLives) || 0);
+  const killerQueenLivesBeforeGuess = Math.max(0, Number(state.killerQueenLives) || 0);
   const suitedAndBootedWasArmed = !!state.suitedAndBootedArmed;
   const suitedAndBootedSuit = state.suitedAndBootedSuit || "";
   const blankSpaceWasActive = !!state.blankSpaceActive;
@@ -2904,6 +2957,7 @@ function makeGuess(type) {
   state.catch22Armed = false;
   state.godSaveKingArmed = false;
   state.alwaysBetBlackArmed = false;
+  state.redDeadRedemptionArmed = false;
   state.oddOneOutArmed = false;
   state.sixSevenArmed = false;
   state.refundArmed = false;
@@ -2922,8 +2976,10 @@ function makeGuess(type) {
   const jokerAutoCorrect = currentIsJoker;
   let rescuedBySuitSave = false;
   let rescuedByAlwaysBetBlack = false;
+  let rescuedByRedDeadRedemption = false;
   let rescuedByCursedShield = false;
   let rescuedByOneLifeLeft = false;
+  let rescuedByKillerQueen = false;
   let rescuedBySuitedAndBooted = false;
   let rescuedByMarginForError = false;
   let rescuedByHotOrCold = false;
@@ -3037,7 +3093,15 @@ function makeGuess(type) {
     rescuedByStitchInTime = !comparisonCorrect && stitchInTimeWasArmed;
     const rescuedByGodSaveKing = !comparisonCorrect && godSaveKingWasArmed && getNextComparisonValueForGuess(next) === 13;
     rescuedByAlwaysBetBlack = !comparisonCorrect && alwaysBetBlackWasArmed && (nextSuitForResolution === SUITS[0] || nextSuitForResolution === SUITS[3]);
+    rescuedByRedDeadRedemption = !comparisonCorrect && redDeadRedemptionWasArmed && (nextSuitForResolution === SUITS[1] || nextSuitForResolution === SUITS[2]);
     rescuedByCursedShield = !comparisonCorrect && cursedShieldWasArmed;
+    rescuedByKillerQueen =
+      !comparisonCorrect &&
+      type === "lower" &&
+      state.current?.rank === "Q" &&
+      Number.isFinite(nextComparisonValue) &&
+      nextComparisonValue === 13 &&
+      killerQueenLivesBeforeGuess > 0;
     rescuedBySuitedAndBooted = !comparisonCorrect && suitedAndBootedWasArmed && !!suitedAndBootedSuit && nextSuitForResolution !== suitedAndBootedSuit;
     rescuedBySuitSave = !comparisonCorrect && !!passiveSuitSavePower;
     rescuedByOneLifeLeft =
@@ -3049,7 +3113,9 @@ function makeGuess(type) {
       !rescuedByStitchInTime &&
       !rescuedByGodSaveKing &&
       !rescuedByAlwaysBetBlack &&
+      !rescuedByRedDeadRedemption &&
       !rescuedByCursedShield &&
+      !rescuedByKillerQueen &&
       !rescuedBySuitedAndBooted &&
       !rescuedBySuitSave &&
       oneLifeLeftLivesBeforeGuess > 0;
@@ -3062,7 +3128,9 @@ function makeGuess(type) {
       rescuedByStitchInTime ||
       rescuedByGodSaveKing ||
       rescuedByAlwaysBetBlack ||
+      rescuedByRedDeadRedemption ||
       rescuedByCursedShield ||
+      rescuedByKillerQueen ||
       rescuedByOneLifeLeft ||
       rescuedBySuitedAndBooted ||
       rescuedBySuitSave;
@@ -3071,6 +3139,9 @@ function makeGuess(type) {
     }
     if (rescuedByOneLifeLeft) {
       state.oneLifeLeftLives = Math.max(0, oneLifeLeftLivesBeforeGuess - 1);
+    }
+    if (rescuedByKillerQueen) {
+      state.killerQueenLives = Math.max(0, killerQueenLivesBeforeGuess - 1);
     }
     wlLossSatisfied = wlStageBeforeGuess === "need_loss" && !comparisonCorrect;
     if (wlLossSatisfied) {
@@ -3126,16 +3197,21 @@ function makeGuess(type) {
       fiveAliveWasArmed,
       godSaveKingWasArmed,
       alwaysBetBlackWasArmed,
+      redDeadRedemptionWasArmed,
       oddOneOutWasArmed,
       sixSevenWasArmed,
       cursedShieldWasArmed,
+      killerQueenLivesBeforeGuess,
+      killerQueenLivesAfterGuess: state.killerQueenLives || 0,
       suitedAndBootedWasArmed,
       suitedAndBootedSuit,
       forcedNextGuessDirection,
       passiveSuitSavePowerId: passiveSuitSavePower?.id || "",
       rescuedBySuitSave,
       rescuedByAlwaysBetBlack,
+      rescuedByRedDeadRedemption,
       rescuedByCursedShield,
+      rescuedByKillerQueen,
       rescuedBySuitedAndBooted,
       rescuedByMarginForError,
       rescuedByHotOrCold,
@@ -3229,6 +3305,7 @@ function makeGuess(type) {
       fiveAliveWasArmed,
       godSaveKingWasArmed,
       alwaysBetBlackWasArmed,
+      redDeadRedemptionWasArmed,
       oddOneOutWasArmed,
       sixSevenWasArmed,
       cursedShieldWasArmed,
@@ -3238,6 +3315,7 @@ function makeGuess(type) {
       forcedNudgeDirection,
       forcedNudgeReward,
       rescuedByCursedShield,
+      rescuedByKillerQueen,
       rescuedBySuitedAndBooted,
       energyAfter: state.energy || 0,
     });
@@ -3314,14 +3392,20 @@ function makeGuess(type) {
         ? "match"
         : rescuedByCursedShield
           ? "cursed_shield"
-          : rescuedBySuitedAndBooted
-            ? "suited_and_booted"
-            : rescuedByMarginForError
-              ? "margin_for_error"
-              : rescuedByHotOrCold
-                ? "margin_of_error"
-                : rescuedByStitchInTime
-                  ? "stitch_in_time_saves"
+          : rescuedByAlwaysBetBlack
+            ? "always_bet_on_the_black"
+            : rescuedByRedDeadRedemption
+              ? "red_dead_redemption"
+              : rescuedByKillerQueen
+                ? "killer_queen"
+                : rescuedBySuitedAndBooted
+                  ? "suited_and_booted"
+                  : rescuedByMarginForError
+                    ? "margin_for_error"
+                    : rescuedByHotOrCold
+                      ? "margin_of_error"
+                      : rescuedByStitchInTime
+                        ? "stitch_in_time_saves"
         : lucky7WasArmed
           ? "lucky_7"
           : fiveAliveWasArmed
@@ -3350,11 +3434,14 @@ function makeGuess(type) {
     catch22Hit,
     godSaveKingWasArmed,
     alwaysBetBlackWasArmed,
+    redDeadRedemptionWasArmed,
     oddOneOutWasArmed,
     sixSevenWasArmed,
     cursedShieldWasArmed,
     oneLifeLeftLivesBeforeGuess,
     oneLifeLeftLivesAfterGuess: state.oneLifeLeftLives || 0,
+    killerQueenLivesBeforeGuess,
+    killerQueenLivesAfterGuess: state.killerQueenLives || 0,
     suitedAndBootedWasArmed,
     suitedAndBootedSuit,
     forcedNextGuessDirection,
@@ -3363,8 +3450,10 @@ function makeGuess(type) {
     passiveSuitSavePowerId: passiveSuitSavePower?.id || "",
     rescuedBySuitSave,
     rescuedByAlwaysBetBlack,
+    rescuedByRedDeadRedemption,
     rescuedByCursedShield,
     rescuedByOneLifeLeft,
+    rescuedByKillerQueen,
     rescuedBySuitedAndBooted,
     rescuedByMarginForError,
     rescuedByHotOrCold,
@@ -3516,7 +3605,10 @@ function makeGuess(type) {
   const oneLifeLeftText = rescuedByOneLifeLeft
     ? ` One Life Left saved this guess. ${state.oneLifeLeftLives || 0} ${state.oneLifeLeftLives === 1 ? "life" : "lives"} left.`
     : "";
-  const rescueBonusText = `${rescuedByCursedShield ? " Cursed Shield saved this guess." : ""}${rescuedBySuitedAndBooted ? " Suited and Booted saved this guess." : ""}${rescuedByMarginForError ? " Margin For Error saved this guess." : ""}${rescuedByHotOrCold ? " Margin Of Error saved this guess." : ""}${rescuedByStitchInTime ? " A Stitch In Time saved this guess." : ""}${oneLifeLeftText}${forcedRewardText}${wlAdvanceText}${equals11MissText}${higherHigherHigherText}${refundText}${bingoAwardText}`;
+  const killerQueenText = rescuedByKillerQueen
+    ? ` Killer Queen saved this guess. ${state.killerQueenLives || 0} ${state.killerQueenLives === 1 ? "save" : "saves"} left.`
+    : "";
+  const rescueBonusText = `${rescuedByCursedShield ? " Cursed Shield saved this guess." : ""}${rescuedByRedDeadRedemption ? " Red? Dead? Redemption saved this guess." : ""}${rescuedBySuitedAndBooted ? " Suited and Booted saved this guess." : ""}${rescuedByMarginForError ? " Margin For Error saved this guess." : ""}${rescuedByHotOrCold ? " Margin Of Error saved this guess." : ""}${rescuedByStitchInTime ? " A Stitch In Time saved this guess." : ""}${oneLifeLeftText}${killerQueenText}${forcedRewardText}${wlAdvanceText}${equals11MissText}${higherHigherHigherText}${refundText}${bingoAwardText}`;
 
 
   if (state.streak >= getCheatRewardThreshold()) {
@@ -3618,6 +3710,11 @@ function makeGuess(type) {
     render();
     return;
   }
+  if (rescuedByKillerQueen) {
+    state.message = appendEnergyFeedback(`Killer Queen saved the run - Lower on Queen revealed ${describeCard(next)}. ${state.killerQueenLives || 0} ${state.killerQueenLives === 1 ? "save" : "saves"} left.${bingoAwardText}`, revealDistance);
+    render();
+    return;
+  }
   if (rescuedByOneLifeLeft) {
     state.message = appendEnergyFeedback(`One Life Left saved the run - it was ${describeCard(next)}. ${state.oneLifeLeftLives || 0} ${state.oneLifeLeftLives === 1 ? "life" : "lives"} left.${bingoAwardText}`, revealDistance);
     render();
@@ -3630,6 +3727,11 @@ function makeGuess(type) {
   }
   if (rescuedByAlwaysBetBlack) {
     state.message = appendEnergyFeedback(`Always Bet On The Black saved the run - it was ${describeCard(next)}.${rescueBonusText}`, revealDistance);
+    render();
+    return;
+  }
+  if (rescuedByRedDeadRedemption) {
+    state.message = appendEnergyFeedback(`Red? Dead? Redemption saved the run - it was ${describeCard(next)}.${rescueBonusText}`, revealDistance);
     render();
     return;
   }

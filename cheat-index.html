@@ -10,7 +10,7 @@
   <main class="catalog-shell">
     <header class="catalog-header">
       <h1>52! Cheat Index</h1>
-      <p>Edit balancing fields, download the CSV, then run the importer to apply your changes.</p>
+      <p>Edit balancing fields, download the CSV, then replace <code>tools\cheat-catalog.csv</code>. The game reads that CSV directly.</p>
       <div class="header-actions">
         <a href="index.html">Back To Intro</a>
         <a href="game.html">Open Game</a>
@@ -33,9 +33,8 @@
           <button id="reset-edits-btn" type="button">Reset Page Edits</button>
         </div>
       </div>
-      <div class="import-helper" aria-label="Import command">
-        <p>After downloading, replace <code>tools\cheat-catalog.csv</code> with it, then run:</p>
-        <code>powershell -ExecutionPolicy Bypass -File .\tools\import-cheats.ps1 -CsvPath ".\tools\cheat-catalog.csv" -OutputPath ".\js\cheat-balance-overrides.js"</code>
+      <div class="import-helper" aria-label="Catalog source">
+        <p>After downloading, replace <code>tools\cheat-catalog.csv</code>. The generated JS override remains a fallback, but the CSV wins when present.</p>
       </div>
       <div id="catalog-summary" class="summary"></div>
       <div class="table-wrap">
@@ -64,7 +63,7 @@
   <script src="js/powers.js?v=20260521c"></script>
   <script src="js/cheats.js"></script>
   <script src="js/cheat-balance-overrides.js"></script>
-  <script src="js/apply-cheat-balance-overrides.js"></script>
+  <script src="js/apply-cheat-balance-overrides.js?v=20260522h"></script>
   <script src="js/cheat-index.js?v=20260521c"></script>
   <script src="js/pwa-update.js?v=20260515a"></script>
 </body>

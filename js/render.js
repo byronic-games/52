@@ -1374,6 +1374,7 @@ const CHEAT_ICON_BY_NAME = Object.freeze({
   "The Lower The Better": "⇊!",
   "Suited and Booted": "♠B",
   "Always Bet On The Black": "♠♣",
+  "Red? Dead? Redemption": "♥♦",
   "Locky 7s": "7🔒",
   "Margin Of Error": "±3",
   "Corporate Icebreaker": "💬",
@@ -1387,15 +1388,18 @@ const CHEAT_ICON_BY_NAME = Object.freeze({
 });
 
 function getCheatIcon(name) {
+  if (name === "Need The Nudge") return "N±";
   if (name === "Equals 11") return "=11";
   if (name === "WL") return "W/L";
   if (name === "Psycho") return "PSY";
   if (name === "Higher, Higher, Higher") return "^^^";
   if (name === "Back To Square One") return "A1";
+  if (name === "9 to 5") return "9-5";
   if (name === "A Stitch In Time Saves...") return "9+";
   if (name === "Catch-22") return "22";
   if (name === "Sixth Sense") return "6?";
   if (name === "One Life Left") return "♥1";
+  if (name === "Killer Queen") return "KQ";
   return CHEAT_ICON_BY_NAME[name] || "✦";
 }
 
@@ -2650,11 +2654,15 @@ function renderCheats() {
       const useCheat = () => {
         const result = entry.cheat.use();
         const didConsume = shouldConsumeCheatAfterUse(entry.cheat, result);
-        state.message = result;
+        const cheatersProsperText = typeof awardCheatersProsperCheatUse === "function"
+          ? awardCheatersProsperCheatUse(didConsume)
+          : "";
+        state.message = `${result}${cheatersProsperText}`;
         appendRunDebugLog("cheat_used", {
           cheatId: entry.cheat.id,
           cheatName: entry.cheat.name,
           result,
+          cheatersProsperTriggered: !!cheatersProsperText,
           cheatsInHandBeforeConsume: state.cheats.map((heldCheat) => heldCheat.id),
           consumeOnUse: !!entry.cheat.consumeOnUse,
           didConsume,
@@ -2666,15 +2674,18 @@ function renderCheats() {
             higherHigherHigherRemaining: Number(state.higherHigherHigherRemaining) || 0,
             godSaveKing: !!state.godSaveKingArmed,
             alwaysBetBlack: !!state.alwaysBetBlackArmed,
+            redDeadRedemption: !!state.redDeadRedemptionArmed,
             oddOneOut: !!state.oddOneOutArmed,
             cursedShield: !!state.cursedShieldArmed,
             oneLifeLeftLives: Number(state.oneLifeLeftLives) || 0,
+            killerQueenLives: Number(state.killerQueenLives) || 0,
             suitedAndBooted: !!state.suitedAndBootedArmed,
             suitedAndBootedSuit: state.suitedAndBootedSuit || "",
             blankSpaceActive: !!state.blankSpaceActive,
             blankSpaceValue: Number.isFinite(state.blankSpaceValue) ? state.blankSpaceValue : null,
             forcedNextGuess: state.forcedNextGuess || "",
             lockCurrentCardForForcedGuess: !!state.lockCurrentCardForForcedGuess,
+            legendaryCheatOfferArmed: !!state.legendaryCheatOfferArmed,
             sixSeven: !!state.sixSevenArmed,
             catch22: !!state.catch22Armed,
             cheatACheaterRemaining: Number(state.cheatACheaterRemaining) || 0,

@@ -72,6 +72,15 @@ const POWERS = [
     included: true,
   },
   {
+    id: "cheaters_prosper",
+    name: "Cheaters Prosper",
+    description: "Every time you play a Cheat, gain 3 Nudge +1 and 3 Nudge -1 charges.",
+    rarity: "common",
+    unlockAt: 0,
+    weight: 1,
+    included: true,
+  },
+  {
     id: "diamonds_are_forever",
     name: "Diamonds Are Forever",
     description: "Wrong guesses do not end the run while the face-up card is a Diamond.",
@@ -189,6 +198,8 @@ function getPowerIcon(powerId) {
       return "7";
     case "tears_before_playtime":
       return "T";
+    case "cheaters_prosper":
+      return "C+";
     case "diamonds_are_forever":
       return "◇";
     case "all_you_need_is_love":
@@ -381,4 +392,11 @@ function awardOnCorrectGuessPowers(guessType) {
   }
 
   return awardedNames;
+}
+
+function awardCheatersProsperCheatUse(didConsume = true) {
+  if (!didConsume || !runHasPower("cheaters_prosper")) return "";
+  state.nudgeUpCharges = (state.nudgeUpCharges || 0) + 3;
+  state.nudgeDownCharges = (state.nudgeDownCharges || 0) + 3;
+  return " Cheaters Prosper: gained 3 Nudge +1 and 3 Nudge -1.";
 }

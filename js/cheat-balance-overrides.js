@@ -12,14 +12,23 @@ window.CHEAT_BALANCE_OVERRIDES = {
                            "rarity":  "uncommon"
                        },
     "always_bet_on_the_black":  {
-                                    "stacking":  "unique",
-                                    "description":  "For the next card only: if it is a Club or a Spade, the run survives even on a wrong guess.",
-                                    "weight":  0.85,
-                                    "unlockAt":  30,
-                                    "name":  "Always Bet On The Black",
-                                    "included":  true,
-                                    "rarity":  "rare"
-                                },
+                                     "stacking":  "unique",
+                                     "description":  "For the next card only: if it is a Club or a Spade, the run survives even on a wrong guess.",
+                                     "weight":  0.85,
+                                     "unlockAt":  30,
+                                     "name":  "Always Bet On The Black",
+                                     "included":  true,
+                                     "rarity":  "rare"
+                                 },
+    "red_dead_redemption":  {
+                                "stacking":  "unique",
+                                "description":  "For the next guess, a losing guess is saved if the revealed card is a Heart or Diamond.",
+                                "weight":  0.85,
+                                "unlockAt":  30,
+                                "name":  "Red? Dead? Redemption",
+                                "included":  true,
+                                "rarity":  "rare"
+                            },
     "next_three_total":  {
                              "stacking":  "unique",
                              "description":  "Reveals the total of the next three face down cards.",
@@ -129,14 +138,23 @@ window.CHEAT_BALANCE_OVERRIDES = {
                       "rarity":  "uncommon"
                   },
     "one_life_left":  {
-                          "stacking":  "stackable",
-                          "description":  "Adds one stored life. Each life survives one wrong guess, and multiple lives can be stacked.",
-                          "weight":  0.75,
-                          "unlockAt":  30,
-                          "name":  "One Life Left",
-                          "included":  true,
-                          "rarity":  "legendary"
-                      },
+                           "stacking":  "stackable",
+                           "description":  "Adds one stored life. Each life survives one wrong guess, and multiple lives can be stacked.",
+                           "weight":  0.75,
+                           "unlockAt":  30,
+                           "name":  "One Life Left",
+                           "included":  true,
+                           "rarity":  "legendary"
+                       },
+    "killer_queen":  {
+                         "stacking":  "stackable",
+                         "description":  "Adds one stored save. It continues the run when you guess Lower on a Queen and reveal a King.",
+                         "weight":  0.8,
+                         "unlockAt":  0,
+                         "name":  "Killer Queen",
+                         "included":  true,
+                         "rarity":  "rare"
+                     },
     "six_seven":  {
                       "stacking":  "unique",
                       "description":  "Use only on an un-nudged 6 or 7, and it must be the first and only cheat played on that card. Nudges then lock. Guess correctly to pick 3 cheats in a row. Guess wrong and you lose.",
@@ -302,15 +320,24 @@ window.CHEAT_BALANCE_OVERRIDES = {
                    "rarity":  "rare"
                },
     "nudge_down":  {
-                       "stacking":  "stackable",
-                       "description":  "Decreases the value of the current face card by one for the next guess.",
+                        "stacking":  "stackable",
+                        "description":  "Decreases the value of the current face card by one for the next guess.",
                        "weight":  1,
                        "unlockAt":  0,
                        "name":  "Nudge -1",
                        "included":  true,
-                       "rarity":  "common",
-                       "poolExcludedIfPowerOwned":  "nudge_engine"
-                   },
+                        "rarity":  "common",
+                        "poolExcludedIfPowerOwned":  "nudge_engine"
+                    },
+    "need_the_nudge":  {
+                           "stacking":  "unique",
+                           "description":  "Swap your stored Nudge +1 and Nudge -1 charge totals.",
+                           "weight":  1,
+                           "unlockAt":  0,
+                           "name":  "Need The Nudge",
+                           "included":  true,
+                           "rarity":  "common"
+                       },
     "higher_the_better":  {
                               "stacking":  "unique",
                               "description":  "Locks this card\u0027s value. You must choose Higher on your next guess and gain Nudge +1 charges equal to the card-value difference.",
@@ -387,12 +414,12 @@ window.CHEAT_BALANCE_OVERRIDES = {
     "bang_average":  {
                          "stacking":  "unique",
                          "description":  "Reveals the exact average value of the next three face down cards.",
-                         "weight":  1,
-                         "unlockAt":  20,
-                         "name":  "Bang Average",
-                         "included":  true,
-                         "rarity":  "uncommon"
-                     },
+                          "weight":  1,
+                          "unlockAt":  20,
+                          "name":  "Bang Average",
+                          "included":  false,
+                          "rarity":  "uncommon"
+                      },
     "next_card_parity":  {
                              "stacking":  "unique",
                              "description":  "Reveals if the next card is odd, even or a picture card.",
@@ -420,6 +447,15 @@ window.CHEAT_BALANCE_OVERRIDES = {
                                "included":  true,
                                "rarity":  "uncommon"
                            },
+    "nine_to_five":  {
+                         "stacking":  "unique",
+                         "description":  "Can only be used on a 9. Treat the current card as a 5 for the next guess.",
+                         "weight":  1,
+                         "unlockAt":  40,
+                         "name":  "9 to 5",
+                         "included":  true,
+                         "rarity":  "uncommon"
+                     },
     "wl":  {
                "stacking":  "unique",
                "description":  "Win your next guess, then lose the one after. If you do, the run survives and you choose 3 extra cheats.",
