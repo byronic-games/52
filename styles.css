@@ -929,6 +929,31 @@ a {
   flex: 0 0 var(--card-width);
 }
 
+#current-card.has-active-effects-tooltip {
+  cursor: help;
+  touch-action: manipulation;
+}
+
+#current-card.has-active-effects-tooltip::after {
+  content: "?";
+  position: absolute;
+  right: calc(var(--card-border-width) + 6px);
+  top: calc(var(--card-border-width) + 6px);
+  display: grid;
+  place-items: center;
+  width: clamp(18px, 5.4cqw, 26px);
+  height: clamp(18px, 5.4cqw, 26px);
+  border-radius: 999px;
+  background: rgba(11, 8, 18, 0.72);
+  color: #dff8ff;
+  border: 1px solid rgba(90, 226, 255, 0.42);
+  font-size: clamp(0.68rem, 2.7cqw, 0.86rem);
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 0 14px rgba(90, 226, 255, 0.18);
+  pointer-events: none;
+}
+
 .card-empty-slot {
   background: transparent;
   box-shadow:

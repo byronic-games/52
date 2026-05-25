@@ -1,6 +1,6 @@
-const CACHE_VERSION = "20260522p";
+const CACHE_VERSION = "20260525f";
 const CACHE_NAME = `byronic-52-${CACHE_VERSION}`;
-const GAME_ASSET_VERSION = "20260522p";
+const GAME_ASSET_VERSION = "20260525f";
 
 const APP_SHELL = [
   "./",

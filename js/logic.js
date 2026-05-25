@@ -3,10 +3,13 @@ const ENABLE_GAME_OVER_EFFECTS = true;
 const ENABLE_VICTORY_EFFECTS = true;
 const RUN_DEBUG_LOG_LIMIT = 150;
 
-function getYellowJokersForLevel(levelNumber = DEFAULT_LEVEL_NUMBER) {
+function getYellowJokerPool({
+  levelNumber = DEFAULT_LEVEL_NUMBER,
+  includeLocked = false,
+} = {}) {
   const normalizedLevel = normalizeLevelNumber(levelNumber);
   return YELLOW_JOKERS
-    .filter((joker) => normalizedLevel >= normalizeLevelNumber(joker.unlockLevel))
+    .filter((joker) => includeLocked || normalizedLevel >= normalizeLevelNumber(joker.unlockLevel))
     .map((joker) => ({
       ...joker,
       type: "joker",
@@ -16,26 +19,58 @@ function getYellowJokersForLevel(levelNumber = DEFAULT_LEVEL_NUMBER) {
     }));
 }
 
+function chooseYellowJokersForLevel(levelNumber = DEFAULT_LEVEL_NUMBER, seedString = "") {
+  const normalizedLevel = normalizeLevelNumber(levelNumber);
+  const pool = getYellowJokerPool({ includeLocked: true });
+  const tearless = pool.find((joker) => String(joker.id || "").includes("tearless")) || pool[0];
+  if (!tearless) return [];
+
+  const extraCount = Math.max(0, normalizedLevel - 1);
+  const otherJokers = pool.filter((joker) => joker.id !== tearless.id);
+  seededShuffle(otherJokers, `${seedString}|yellow-joker-picks|L${normalizedLevel}`);
+  return [tearless, ...otherJokers.slice(0, extraCount)];
+}
+
+function getYellowJokersForLevel(levelNumber = DEFAULT_LEVEL_NUMBER, seedString = "") {
+  return chooseYellowJokersForLevel(levelNumber, seedString);
+}
+
+function createYellowJokerCard(joker, idSuffix = "") {
+  if (!joker) return null;
+  const baseId = joker.jokerId || joker.id || "yellow_joker";
+  return {
+    ...joker,
+    id: idSuffix ? `${baseId}_${idSuffix}` : baseId,
+    jokerId: baseId,
+    type: "joker",
+    suit: "Joker",
+    rank: joker.shortName || joker.name || "Joker",
+    value: null,
+  };
+}
+
 function isJokerCard(card) {
   return !!card && card.type === "joker";
 }
 
 function getJokerName(card) {
-  return card?.name || "Joker";
+  return card?.displayName || card?.name || "Joker";
+}
+
+function getJokerEffectRng(label = "joker") {
+  const seedBase = normalizeSeed(state.runSeed || "") || "NO-SEED";
+  const jokerId = state.current?.jokerId || state.current?.id || "";
+  return mulberry32(stringToSeedNumber(`${GAME_VERSION}|${seedBase}|${state.index}|${jokerId}|${label}`));
 }
 
 function buildYellowDeck(baseDeck, seedString, levelNumber = DEFAULT_LEVEL_NUMBER) {
-  const jokers = getYellowJokersForLevel(levelNumber);
+  const jokers = getYellowJokersForLevel(levelNumber, seedString);
   if (!jokers.length) return baseDeck;
 
   const safeOpening = baseDeck.slice(0, 4);
   const hazardPool = [
     ...baseDeck.slice(4),
-    ...jokers.map((joker, index) => ({
-      ...joker,
-      id: `${joker.id}_${index + 1}`,
-      jokerId: joker.id,
-    })),
+    ...jokers.map((joker, index) => createYellowJokerCard(joker, String(index + 1))),
   ];
 
   seededShuffle(hazardPool, `${seedString}|yellow-jokers|L${normalizeLevelNumber(levelNumber)}`);
@@ -1895,12 +1930,64 @@ function applyTearlessJoker() {
     : [];
 
   if (!unseenTornCards.length) {
-    return "Tearless found the torn cards, but none still hidden in this run.";
+    return "A Yellow Joker searched for torn cards, but none were still hidden in this run.";
   }
 
   const unseenTornCard = unseenTornCards[Math.floor(Math.random() * unseenTornCards.length)];
   setCardBackStatus(unseenTornCard.id, { tornCorner: false });
-  return `Tearless repaired ${describeCard(unseenTornCard)}. Persistent torn corners now: ${Math.max(0, totalTorn - 1)}.`;
+  return `A Yellow Joker repaired ${describeCard(unseenTornCard)}. Persistent torn corners now: ${Math.max(0, totalTorn - 1)}.`;
+}
+
+function applyTimelessJoker() {
+  if (!Array.isArray(state.deck) || !(state.seenCardIds instanceof Set)) {
+    return "Timeless found no revealed cards to rewind.";
+  }
+
+  const currentIndex = Math.max(0, Number(state.index) || 0);
+  const revealedPlayingCards = state.deck
+    .slice(0, currentIndex)
+    .filter((card) => card && !isJokerCard(card));
+  const cardsToReturn = revealedPlayingCards.slice(-10);
+
+  if (!cardsToReturn.length) {
+    return "Timeless found no revealed playing cards to rewind.";
+  }
+
+  const returnIds = new Set(cardsToReturn.map((card) => card.id));
+  const nextDeck = state.deck.filter((card, index) => index >= currentIndex || !returnIds.has(card?.id));
+  state.deck = nextDeck;
+  const newCurrentIndex = state.deck.findIndex((card) => card?.id === state.current?.id);
+  state.index = newCurrentIndex >= 0
+    ? newCurrentIndex
+    : Math.min(currentIndex, Math.max(0, state.deck.length - 1));
+  state.current = state.deck[state.index] || state.current;
+
+  cardsToReturn.forEach((card) => {
+    state.seenCardIds.delete(card.id);
+  });
+  if (returnIds.has(state.recentlySeenCardId)) {
+    state.recentlySeenCardId = "";
+  }
+
+  const rng = getJokerEffectRng("timeless");
+  const shuffledCards = [...cardsToReturn];
+  for (let i = shuffledCards.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rng() * (i + 1));
+    [shuffledCards[i], shuffledCards[j]] = [shuffledCards[j], shuffledCards[i]];
+  }
+  shuffledCards.forEach((card) => {
+    const faceDownCount = Math.max(1, state.deck.length - state.index);
+    const insertAt = state.index + 1 + Math.floor(rng() * faceDownCount);
+    state.deck.splice(insertAt, 0, card);
+  });
+
+  appendRunDebugLog("yellow_joker_timeless_rewind", {
+    returnedCount: cardsToReturn.length,
+    returnedCards: cardsToReturn.map(describeCardForDebug),
+    seenCountAfter: state.seenCardIds.size,
+  });
+
+  return `Timeless shuffled ${cardsToReturn.length} revealed playing ${cardsToReturn.length === 1 ? "card" : "cards"} back into the deck.`;
 }
 
 function clearArmedPowerEffects() {
@@ -1933,20 +2020,23 @@ function applyYellowJokerEffect(jokerCard) {
   if (jokerId.includes("tearless")) {
     return applyTearlessJoker();
   }
+  if (jokerId.includes("timeless")) {
+    return applyTimelessJoker();
+  }
   if (jokerId.includes("nudgeless")) {
     const removed = (Number(state.nudgeUpCharges) || 0) + (Number(state.nudgeDownCharges) || 0);
     state.nudgeUpCharges = 0;
     state.nudgeDownCharges = 0;
     return removed > 0
-      ? `Nudgeless removed ${removed} banked Nudge${removed === 1 ? "" : "s"}.`
-      : "Nudgeless found no banked Nudges.";
+      ? `A Yellow Joker removed ${removed} banked Nudge${removed === 1 ? "" : "s"}.`
+      : "A Yellow Joker found no banked Nudges.";
   }
   if (jokerId.includes("cheatless")) {
     const removed = Array.isArray(state.cheats) ? state.cheats.length : 0;
     state.cheats = [];
     return removed > 0
-      ? `Cheatless discarded ${removed} banked Cheat${removed === 1 ? "" : "s"}.`
-      : "Cheatless found no banked Cheats.";
+      ? `A Yellow Joker discarded ${removed} banked Cheat${removed === 1 ? "" : "s"}.`
+      : "A Yellow Joker found no banked Cheats.";
   }
   if (jokerId.includes("powerless")) {
     const removedPowers = Array.isArray(state.powers)
@@ -1958,8 +2048,8 @@ function applyYellowJokerEffect(jokerCard) {
     state.nextCardValueModifier = 0;
     clearArmedPowerEffects();
     return removedPowers > 0
-      ? `Powerless stripped ${removedPowers} persistent Power${removedPowers === 1 ? "" : "s"}.`
-      : "Powerless cleared active effects, but no persistent Power was left.";
+      ? `A Yellow Joker stripped ${removedPowers} persistent Power${removedPowers === 1 ? "" : "s"}.`
+      : "A Yellow Joker cleared active effects, but no persistent Power was left.";
   }
   return `${getJokerName(jokerCard)} did nothing.`;
 }

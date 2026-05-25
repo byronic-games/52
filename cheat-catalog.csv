@@ -67,7 +67,7 @@
 "margin_of_error","Margin Of Error","common","0","true","unique","1","","Available from run start","If your next guess is wrong by 3 or less, the run continues."
 "corporate_icebreaker","Corporate Icebreaker","uncommon","30","true","unique","0.8","","Meta progression >= 30","Hear two true value-and-suit facts and one lie about the next three cards."
 "legends_ahead","Legends Ahead","rare","30","true","unique","0.65","","Meta progression >= 30","Your next Cheat pick offers Legendary Cheats only."
-"emergency_cord","Emergency Cord","legendary","30","true","unique","0.75","","Meta progression >= 30","Gain 10 Nudge +1 and 10 Nudge -1, then shuffle two Jokers into the face-down deck."
+"emergency_cord","Emergency Cord","legendary","30","true","unique","0.75","","Meta progression >= 30","Gain 10 Nudge +1 and 10 Nudge -1, then shuffle two random Yellow Jokers into the face-down deck."
 "twos_company","Two's Company","uncommon","0","true","unique","0.9","","Available from run start","Mark the next face-down 2 in the deck with a temporary 2 on its back."
 "refund","Refund","rare","0","true","unique","0.8","","Available from run start","After your next guess, unnecessary current-card nudges used this turn are returned."
 "tear_corner","Tear Corner","common","40","true","unique","1","","Meta progression >= 40","Tear off the top left corner of the current face card so it can be recognised in future runs."

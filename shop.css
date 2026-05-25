@@ -20,6 +20,8 @@ body {
   height: 100%;
   min-height: 100%;
   overflow: hidden;
+  position: fixed;
+  inset: 0;
 }
 
 body {
@@ -33,24 +35,33 @@ body {
 }
 
 .shop-shell {
-  height: 100dvh;
+  height: var(--app-height, 100svh);
   min-height: 0;
   display: grid;
   place-items: center;
   overflow: hidden;
-  padding: max(10px, env(safe-area-inset-top)) 14px max(10px, env(safe-area-inset-bottom));
+  padding:
+    max(7px, env(safe-area-inset-top))
+    clamp(8px, 3vw, 14px)
+    max(7px, env(safe-area-inset-bottom));
 }
 
 .shop-card {
-  width: min(94vw, 520px);
+  width: min(94vw, 500px);
   height: 100%;
+  max-height: calc(var(--app-height, 100svh) - max(14px, env(safe-area-inset-top)) - max(14px, env(safe-area-inset-bottom)));
   min-height: 0;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) 14px auto minmax(30px, auto);
-  gap: clamp(8px, 1.6dvh, 14px);
+  grid-template-rows:
+    clamp(114px, 18.5svh, 170px)
+    minmax(0, 1fr)
+    16px
+    clamp(104px, 16svh, 132px)
+    clamp(0px, 4.2svh, 34px);
+  gap: clamp(5px, 1.1svh, 10px);
   overflow: hidden;
   border-radius: 20px;
-  padding: clamp(12px, 3.6vw, 22px);
+  padding: clamp(9px, 2.7vw, 18px);
   background: linear-gradient(180deg, rgba(47, 31, 61, 0.98), rgba(22, 14, 31, 0.98));
   box-shadow:
     0 24px 54px rgba(0, 0, 0, 0.46),
@@ -59,7 +70,10 @@ body {
 
 .shop-header {
   display: grid;
-  gap: clamp(5px, 1dvh, 8px);
+  align-content: start;
+  gap: clamp(4px, 0.8svh, 7px);
+  min-height: 0;
+  overflow: hidden;
 }
 
 .shop-kicker {
@@ -74,8 +88,9 @@ body {
 .shop-header h1 {
   margin: 0;
   color: var(--pink);
-  font-size: clamp(1.9rem, 8.4vw, 3.1rem);
-  line-height: 0.95;
+  font-size: clamp(1.72rem, 7.5vw, 2.8rem);
+  line-height: 0.96;
+  white-space: nowrap;
 }
 
 .shop-balance {
@@ -85,7 +100,7 @@ body {
   align-items: center;
   gap: 10px;
   border-radius: 999px;
-  padding: 8px 12px;
+  padding: 7px 12px;
   background: rgba(8, 6, 14, 0.56);
   color: var(--muted);
   font-size: 0.8rem;
@@ -101,14 +116,14 @@ body {
 .shop-carousel {
   min-height: 0;
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  grid-template-columns: clamp(38px, 11vw, 50px) minmax(0, 1fr) clamp(38px, 11vw, 50px);
   align-items: stretch;
-  gap: 8px;
+  gap: clamp(4px, 1.8vw, 8px);
 }
 
 .shop-arrow {
-  width: 44px;
-  height: 58px;
+  width: clamp(38px, 11vw, 50px);
+  height: clamp(52px, 10svh, 72px);
   align-self: center;
   border: 0;
   border-radius: 14px;
@@ -122,15 +137,15 @@ body {
   min-width: 0;
   min-height: 0;
   display: grid;
-  grid-template-rows: minmax(0, 1fr) clamp(96px, 15dvh, 122px);
+  grid-template-rows: minmax(0, 1fr) clamp(86px, 13.5svh, 116px);
   justify-items: center;
   align-items: center;
-  gap: clamp(8px, 1.5dvh, 14px);
+  gap: clamp(5px, 1svh, 10px);
 }
 
 .shop-card-preview-wrap {
-  width: min(58vw, 230px, calc((100dvh - 330px) * 0.72));
-  min-width: 150px;
+  width: min(56vw, 220px, max(118px, calc((var(--app-height, 100svh) - 315px) * 0.7)));
+  min-width: clamp(118px, 36vw, 150px);
   max-height: 100%;
   aspect-ratio: 5 / 7;
   display: grid;
@@ -227,16 +242,18 @@ body {
   width: 100%;
   min-height: 0;
   display: grid;
-  grid-template-rows: 2.15em 2.7em 1.45em;
+  grid-template-rows: 1.35em 2.55em 1.3em;
   align-content: start;
   text-align: center;
 }
 
 .shop-cosmetic-copy h2 {
   margin: 0;
-  font-size: clamp(1.35rem, 5.6vw, 1.95rem);
+  font-size: clamp(1.22rem, 5.1vw, 1.7rem);
   line-height: 1.08;
   overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .shop-cosmetic-copy p {
@@ -244,6 +261,9 @@ body {
   color: var(--muted);
   line-height: 1.35;
   overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .shop-cost {
@@ -274,12 +294,15 @@ body {
 
 .shop-actions {
   display: grid;
-  gap: clamp(8px, 1.3dvh, 10px);
+  grid-template-rows: 1fr 1fr;
+  gap: clamp(7px, 1.1svh, 10px);
+  min-height: 0;
 }
 
 .shop-primary-btn,
 .shop-secondary-btn {
-  min-height: 50px;
+  min-height: 0;
+  height: 100%;
   border: 0;
   border-radius: 14px;
   display: grid;
@@ -314,15 +337,23 @@ body {
   font-size: 0.82rem;
   line-height: 1.35;
   text-align: center;
-  height: 2.7em;
+  height: 100%;
   overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
-@media (max-height: 700px) {
+@media (max-height: 740px) {
   .shop-card {
-    grid-template-rows: auto minmax(0, 1fr) 10px auto minmax(24px, auto);
-    gap: 7px;
-    padding: 12px;
+    grid-template-rows:
+      clamp(98px, 17svh, 128px)
+      minmax(0, 1fr)
+      12px
+      clamp(92px, 15.5svh, 112px)
+      0;
+    gap: 5px;
+    padding: 10px;
   }
 
   .shop-kicker {
@@ -330,31 +361,25 @@ body {
   }
 
   .shop-header h1 {
-    font-size: clamp(1.7rem, 7.8vw, 2.5rem);
+    font-size: clamp(1.5rem, 6.7vw, 2.25rem);
   }
 
   .shop-balance {
-    padding: 7px 11px;
-  }
-
-  .shop-carousel {
-    grid-template-columns: 40px minmax(0, 1fr) 40px;
-    gap: 6px;
+    padding: 6px 10px;
   }
 
   .shop-arrow {
-    width: 40px;
-    height: 52px;
+    height: clamp(48px, 9svh, 60px);
   }
 
   .shop-cosmetic {
-    grid-template-rows: minmax(0, 1fr) 88px;
-    gap: 7px;
+    grid-template-rows: minmax(0, 1fr) clamp(76px, 12.5svh, 88px);
+    gap: 5px;
   }
 
   .shop-card-preview-wrap {
-    width: min(48vw, 190px, calc((100dvh - 292px) * 0.72));
-    min-width: 132px;
+    width: min(50vw, 184px, max(108px, calc((var(--app-height, 100svh) - 270px) * 0.68)));
+    min-width: clamp(108px, 34vw, 132px);
   }
 
   .shop-cosmetic-copy {
@@ -367,18 +392,18 @@ body {
 
   .shop-primary-btn,
   .shop-secondary-btn {
-    min-height: 42px;
+    font-size: 0.92rem;
   }
 
   .shop-note {
-    font-size: 0.72rem;
-    height: 2.45em;
+    display: none;
   }
 }
 
 @media (max-height: 620px) {
   .shop-card {
-    grid-template-rows: auto minmax(0, 1fr) 8px auto;
+    grid-template-rows: 86px minmax(0, 1fr) 10px 84px;
+    border-radius: 16px;
   }
 
   .shop-note {

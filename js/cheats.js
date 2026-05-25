@@ -228,7 +228,7 @@ const CHEAT_DESCRIPTIONS = {
   "Margin Of Error": "If your next guess is wrong by 3 or less, the run continues.",
   "Corporate Icebreaker": "Hear two true value-and-suit facts and one believable lie about the next three cards.",
   "Legends Ahead": "Your next Cheat pick offers Legendary Cheats only.",
-  "Emergency Cord": "Gain 10 Nudge +1 and 10 Nudge -1, then shuffle two Jokers into the face-down deck.",
+  "Emergency Cord": "Gain 10 Nudge +1 and 10 Nudge -1, then shuffle two random Yellow Jokers into the face-down deck.",
   "Two's Company": "Mark the next face-down 2 in the deck with a temporary 2 on its back.",
   "Refund": "Arm this card. After your next guess, unnecessary current-card nudges used this turn are returned.",
   "Tear Corner": "Tear off the top left corner of the current face card so it can be recognised in future runs.",
@@ -1535,25 +1535,32 @@ const CHEATS = [
       state.nudgeUpCharges = (state.nudgeUpCharges || 0) + 10;
       state.nudgeDownCharges = (state.nudgeDownCharges || 0) + 10;
 
+      const jokerPool = typeof getYellowJokerPool === "function"
+        ? getYellowJokerPool({ includeLocked: true })
+        : [];
+      if (!jokerPool.length) return "No Yellow Jokers available.";
+
       const rng = getCheatDeterministicRng("emergency_cord");
       const jokerCount = 2;
+      const availableJokers = [...jokerPool];
       for (let i = 0; i < jokerCount; i += 1) {
+        if (!availableJokers.length) {
+          availableJokers.push(...jokerPool);
+        }
+        const jokerIndex = Math.floor(rng() * availableJokers.length);
+        const jokerTemplate = availableJokers.splice(jokerIndex, 1)[0];
+        const jokerCard = typeof createYellowJokerCard === "function"
+          ? createYellowJokerCard(
+              jokerTemplate,
+              `emergency_cord_${state.index}_${i + 1}_${Math.floor(rng() * 1000000)}`,
+            )
+          : null;
+        if (!jokerCard) continue;
         const insertAt = state.index + 1 + Math.floor(rng() * Math.max(1, state.deck.length - state.index));
-        state.deck.splice(insertAt, 0, {
-          id: `emergency_cord_joker_${state.index}_${i + 1}_${Math.floor(rng() * 1000000)}`,
-          jokerId: "emergency_cord_joker",
-          name: "Emergency Joker",
-          shortName: "Emergency",
-          icon: "!",
-          type: "joker",
-          suit: "Joker",
-          rank: "Emergency",
-          value: null,
-          description: "A Joker hazard introduced by Emergency Cord.",
-        });
+        state.deck.splice(insertAt, 0, jokerCard);
       }
 
-      return "Emergency Cord pulled - gained 10 Nudge +1 and 10 Nudge -1, but 2 Jokers entered the face-down deck.";
+      return "Emergency Cord pulled - gained 10 Nudge +1 and 10 Nudge -1, but 2 Yellow Jokers entered the face-down deck.";
     },
   },
   {

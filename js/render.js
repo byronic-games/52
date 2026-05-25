@@ -1320,6 +1320,123 @@ function setupHeaderPowerTooltip(el, payload) {
   el.dataset.tooltipBody = payload?.description || "";
 }
 
+function getActiveEffectsTooltipPayload() {
+  const waiting = [];
+
+  if (state.lucky7Armed) waiting.push("Lucky 7: next guess is protected.");
+  if (state.fiveAliveArmed) waiting.push("Five Alive: next wrong guess survives.");
+  if (state.marginForErrorArmed) waiting.push("Margin For Error: wrong by 2 or less survives.");
+  if (state.hotOrColdArmed) waiting.push("Margin Of Error: wrong by 3 or less survives.");
+  if (state.stitchInTimeArmed) waiting.push("A Stitch In Time: next wrong guess survives.");
+  if (state.godSaveKingArmed) waiting.push("God Save The King: King reveal saves a wrong guess.");
+  if (state.alwaysBetBlackArmed) waiting.push("Always Bet On The Black: Club or Spade reveal saves a wrong guess.");
+  if (state.redDeadRedemptionArmed) waiting.push("Red? Dead? Redemption: Heart or Diamond reveal saves a wrong guess.");
+  if (state.oddOneOutArmed) waiting.push("Odd One Out: next odd card loses, otherwise survives.");
+  if (state.cursedShieldArmed) waiting.push("Cursed Shield: next wrong guess survives.");
+  if ((state.oneLifeLeftLives || 0) > 0) waiting.push(`One Life Left: ${state.oneLifeLeftLives} ${state.oneLifeLeftLives === 1 ? "life" : "lives"} stored.`);
+  if ((state.killerQueenLives || 0) > 0) waiting.push(`Killer Queen: ${state.killerQueenLives} save${state.killerQueenLives === 1 ? "" : "s"} for Lower on Queen into King.`);
+  if (state.suitedAndBootedArmed) {
+    waiting.push(`Suited and Booted: survives unless next card is ${state.suitedAndBootedSuit || "the chosen suit"}.`);
+  }
+  if (state.equals11Armed) waiting.push("Equals 11: current + next totaling 11 gives 3 Cheats.");
+  if (state.refundArmed) waiting.push("Refund: unnecessary nudges this turn will be returned.");
+  if (state.legendaryCheatOfferArmed) waiting.push("Legends Ahead: next Cheat pick is Legendary only.");
+  if (state.sixSevenArmed) waiting.push("6/7: correct guess gives 3 Cheat picks; wrong guess loses.");
+  if (state.catch22Armed) waiting.push("Catch-22: next 2 gives a Power pick.");
+  if (state.forcedNextGuess) {
+    waiting.push(`${state.forcedNextGuess === "higher" ? "The Higher The Better" : "The Lower The Better"}: next guess must be ${state.forcedNextGuess}.`);
+  }
+  if (state.blankSpaceActive) {
+    const blankValue = getBlankSpaceDisplayValue();
+    waiting.push(`Blank Space: next card treated as ${Number.isFinite(blankValue) ? valueToRank(blankValue) : "the current value"}.`);
+  }
+  if ((state.higherHigherHigherRemaining || 0) > 0) {
+    waiting.push(`Higher, Higher, Higher: ${state.higherHigherHigherRemaining} Higher ${state.higherHigherHigherRemaining === 1 ? "guess" : "guesses"} left.`);
+  }
+  if ((state.psychoRemaining || 0) > 0) {
+    waiting.push(`Psycho: ${state.psychoRemaining} no-Cheat ${state.psychoRemaining === 1 ? "guess" : "guesses"} left.`);
+  }
+  if ((state.cheatACheaterRemaining || 0) > 0) {
+    waiting.push(`You Can Cheat A Cheater: ${state.cheatACheaterRemaining} correct ${state.cheatACheaterRemaining === 1 ? "guess" : "guesses"} left.`);
+  }
+  if (state.wlStage === "need_win") waiting.push("WL: win this guess, then lose the next.");
+  if (state.wlStage === "need_loss") waiting.push("WL: lose this guess to claim 3 Cheats.");
+
+  const powerNames = Array.isArray(state.powers)
+    ? state.powers
+        .map((powerId) => getPowerById(powerId)?.name)
+        .filter(Boolean)
+    : [];
+
+  const sections = [];
+  if (waiting.length) {
+    sections.push(`Waiting:\n${waiting.map((item) => `- ${item}`).join("\n")}`);
+  }
+  if (powerNames.length) {
+    sections.push(`Powers active:\n${powerNames.join(", ")}`);
+  }
+
+  return {
+    enabled: !!state.current && !state.openingPreview,
+    title: "Active Effects",
+    description: sections.length
+      ? sections.join("\n\n")
+      : "No Cheats or Powers are currently waiting to trigger.",
+  };
+}
+
+function setupCurrentCardEffectsTooltip(el, payload) {
+  if (!el || el.dataset.currentEffectsTooltipInit === "1") {
+    if (el) {
+      el.dataset.tooltipEnabled = payload?.enabled ? "1" : "0";
+      el.dataset.tooltipTitle = payload?.title || "";
+      el.dataset.tooltipBody = payload?.description || "";
+    }
+    return;
+  }
+
+  let holdTimer = null;
+
+  const clearHold = () => {
+    clearTimeout(holdTimer);
+    holdTimer = null;
+    hideCheatTooltip();
+  };
+
+  el.addEventListener("pointerdown", (event) => {
+    if (el.dataset.tooltipEnabled !== "1") return;
+    if (event.button !== undefined && event.button !== 0) return;
+    clearTimeout(holdTimer);
+    if (event.pointerType === "mouse") {
+      showTooltip(el.dataset.tooltipTitle, el.dataset.tooltipBody, el);
+      return;
+    }
+    holdTimer = setTimeout(() => {
+      showTooltip(el.dataset.tooltipTitle, el.dataset.tooltipBody, el);
+    }, 300);
+  });
+
+  el.addEventListener("pointerup", clearHold);
+  el.addEventListener("pointercancel", clearHold);
+  el.addEventListener("pointerleave", clearHold);
+  el.addEventListener("mouseenter", () => {
+    if (!canUseHoverTooltips()) return;
+    if (el.dataset.tooltipEnabled !== "1") return;
+    showTooltip(el.dataset.tooltipTitle, el.dataset.tooltipBody, el);
+  });
+  el.addEventListener("mouseleave", clearHold);
+  el.addEventListener("contextmenu", (event) => {
+    if (el.dataset.tooltipEnabled !== "1") return;
+    event.preventDefault();
+  });
+
+  el.dataset.currentEffectsTooltipInit = "1";
+  el.dataset.tooltipRole = "current-effects";
+  el.dataset.tooltipEnabled = payload?.enabled ? "1" : "0";
+  el.dataset.tooltipTitle = payload?.title || "";
+  el.dataset.tooltipBody = payload?.description || "";
+}
+
 const CHEAT_ICON_BY_NAME = Object.freeze({
   "Above 9?": "9↑",
   "Below 5?": "5↓",
@@ -1670,6 +1787,7 @@ function renderCurrentCard() {
   if (!cardToRender) {
     currentCardEl.className = `card-empty-slot${getPreservedTutorialFocusClass(currentCardEl)}`.trim();
     currentCardEl.innerHTML = "";
+    setupCurrentCardEffectsTooltip(currentCardEl, { enabled: false });
     currentValueEl.innerText = "";
     return;
   }
@@ -1707,6 +1825,10 @@ function renderCurrentCard() {
       nudgeFromValue: nudgeAnimation?.fromValue,
     }
   );
+  const activeEffectsPayload = getActiveEffectsTooltipPayload();
+  setupCurrentCardEffectsTooltip(currentCardEl, activeEffectsPayload);
+  currentCardEl.classList.toggle("has-active-effects-tooltip", activeEffectsPayload.enabled);
+  currentCardEl.setAttribute("aria-label", `${describeCard(cardToRender)}. Hold to view active effects.`);
 
   currentValueEl.innerText = "";
 }

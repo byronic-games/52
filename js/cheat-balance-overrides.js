@@ -485,7 +485,7 @@ window.CHEAT_BALANCE_OVERRIDES = {
                        },
     "emergency_cord":  {
                            "stacking":  "unique",
-                           "description":  "Gain 10 Nudge +1 and 10 Nudge -1, then shuffle two Jokers into the face-down deck.",
+                           "description":  "Gain 10 Nudge +1 and 10 Nudge -1, then shuffle two random Yellow Jokers into the face-down deck.",
                            "weight":  0.75,
                            "unlockAt":  30,
                            "name":  "Emergency Cord",

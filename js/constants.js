@@ -94,6 +94,14 @@ const YELLOW_JOKERS = [
     unlockLevel: 4,
     description: "Removes persistent powers and clears armed power/cheat effects.",
   },
+  {
+    id: "yellow_joker_timeless",
+    name: "Timeless",
+    shortName: "Timeless",
+    icon: "T",
+    unlockLevel: 2,
+    description: "Shuffles recently revealed playing cards back into the deck.",
+  },
 ];
 
 function mulberry32(a) {
