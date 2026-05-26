@@ -48,6 +48,44 @@ function getProfileStampLabel(achievements) {
   return "New Challenger";
 }
 
+function renderProfileCardStateGrid(gridEl, summaryEl) {
+  if (!gridEl || !summaryEl || !Array.isArray(SUITS) || !Array.isArray(RANKS)) return;
+
+  const statuses = typeof loadCardBackStatuses === "function" ? loadCardBackStatuses() : {};
+  const tornIds = new Set(
+    Object.entries(statuses || {})
+      .filter(([, status]) => !!status?.tornCorner)
+      .map(([cardId]) => cardId)
+  );
+
+  gridEl.innerHTML = "";
+  SUITS.forEach((suit) => {
+    RANKS.forEach((rank) => {
+      const cardId = getCardId(suit, rank.r);
+      const isTorn = tornIds.has(cardId);
+      const cell = document.createElement("div");
+      cell.className = `profile-card-state-cell ${suit === "♥" || suit === "♦" ? "red" : "black"} ${isTorn ? "torn" : ""}`;
+      cell.setAttribute("aria-label", `${rank.r}${suit}${isTorn ? " has a torn corner" : " has no tear"}`);
+
+      const rankEl = document.createElement("span");
+      rankEl.className = "profile-card-state-rank";
+      rankEl.textContent = rank.r;
+
+      const suitEl = document.createElement("span");
+      suitEl.className = "profile-card-state-suit";
+      suitEl.textContent = suit;
+
+      cell.append(rankEl, suitEl);
+      gridEl.appendChild(cell);
+    });
+  });
+
+  const tornCount = tornIds.size;
+  summaryEl.textContent = tornCount > 0
+    ? `${tornCount} torn ${tornCount === 1 ? "card" : "cards"} currently marked.`
+    : "No torn cards currently marked.";
+}
+
 function renderProfilePage() {
   const nameInput = document.getElementById("profile-name-input");
   const crownStripEl = document.getElementById("profile-crown-strip");
@@ -67,9 +105,11 @@ function renderProfilePage() {
   const dailyClearsEl = document.getElementById("profile-daily-clears");
   const stampEl = document.getElementById("profile-stamp");
   const achievementListEl = document.getElementById("profile-achievement-list");
+  const cardStateSummaryEl = document.getElementById("profile-card-state-summary");
+  const cardStateGridEl = document.getElementById("profile-card-state-grid");
   const backBtn = document.getElementById("profile-back-btn");
 
-  if (!nameInput || !crownStripEl || !bestRunEl || !totalCorrectEl || !decksBeatenEl || !runsStartedEl || !blueClearsEl || !redClearsEl || !greenClearsEl || !yellowClearsEl || !blueRunsEl || !redRunsEl || !greenRunsEl || !yellowRunsEl || !dailyAttemptsEl || !dailyClearsEl || !stampEl || !achievementListEl || !backBtn) {
+  if (!nameInput || !crownStripEl || !bestRunEl || !totalCorrectEl || !decksBeatenEl || !runsStartedEl || !blueClearsEl || !redClearsEl || !greenClearsEl || !yellowClearsEl || !blueRunsEl || !redRunsEl || !greenRunsEl || !yellowRunsEl || !dailyAttemptsEl || !dailyClearsEl || !stampEl || !achievementListEl || !cardStateSummaryEl || !cardStateGridEl || !backBtn) {
     return;
   }
 
@@ -112,6 +152,8 @@ function renderProfilePage() {
       item.textContent = achievement.unlocked ? `Stamped: ${achievement.label}` : "Locked achievement";
       achievementListEl.appendChild(item);
     });
+
+    renderProfileCardStateGrid(cardStateGridEl, cardStateSummaryEl);
   };
 
   nameInput.addEventListener("input", () => {

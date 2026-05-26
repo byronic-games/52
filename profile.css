@@ -260,6 +260,75 @@ h1 {
   color: var(--muted);
 }
 
+.profile-card-state-summary {
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.profile-card-state-grid {
+  display: grid;
+  grid-template-columns: repeat(13, minmax(0, 1fr));
+  gap: clamp(3px, 1vw, 6px);
+  padding: 10px;
+  border-radius: 14px;
+  background: rgba(17, 11, 25, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.profile-card-state-cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  aspect-ratio: 0.72;
+  border-radius: 5px;
+  background: rgba(245, 241, 247, 0.96);
+  color: #111018;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+.profile-card-state-cell.red {
+  color: #d92835;
+}
+
+.profile-card-state-cell.black {
+  color: #111018;
+}
+
+.profile-card-state-rank {
+  font-size: clamp(0.56rem, 2.2vw, 0.92rem);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.profile-card-state-suit {
+  position: absolute;
+  right: 12%;
+  bottom: 9%;
+  font-size: clamp(0.42rem, 1.8vw, 0.72rem);
+  line-height: 1;
+}
+
+.profile-card-state-cell.torn {
+  clip-path: polygon(18% 0, 100% 0, 100% 100%, 0 100%, 0 18%);
+}
+
+.profile-card-state-cell.torn::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 28%;
+  aspect-ratio: 1;
+  background: rgba(24, 14, 34, 0.92);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+
 .actions {
   margin-top: 14px;
   display: flex;
@@ -337,6 +406,11 @@ h1 {
   .achievement-item {
     font-size: 0.76rem;
     padding: 9px 10px;
+  }
+
+  .profile-card-state-grid {
+    gap: 3px;
+    padding: 8px;
   }
 
   .btn {
