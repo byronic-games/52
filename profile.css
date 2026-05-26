@@ -315,7 +315,7 @@ h1 {
 }
 
 .profile-card-state-cell.torn {
-  clip-path: polygon(26% 0, 100% 0, 100% 100%, 0 100%, 0 26%);
+  clip-path: polygon(29% 0, 100% 0, 100% 100%, 0 100%, 0 29%);
   background:
     linear-gradient(135deg, rgba(255, 207, 114, 0.26), rgba(245, 241, 247, 0.96) 45%),
     rgba(245, 241, 247, 0.96);
@@ -330,7 +330,7 @@ h1 {
   position: absolute;
   top: 0;
   left: 0;
-  width: 38%;
+  width: 42%;
   aspect-ratio: 1;
   background:
     linear-gradient(135deg, rgba(16, 9, 23, 0.98), rgba(49, 30, 62, 0.94));
@@ -344,7 +344,7 @@ h1 {
   top: 8%;
   left: 8%;
   z-index: 2;
-  width: 15%;
+  width: 17%;
   aspect-ratio: 1;
   border-radius: 999px;
   background: var(--gold);
