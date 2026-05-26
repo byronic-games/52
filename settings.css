@@ -114,17 +114,6 @@ h1 {
   gap: 12px;
 }
 
-.hold-button {
-  position: relative;
-  min-height: 64px;
-  border: 0;
-  border-radius: 16px;
-  overflow: hidden;
-  background: rgba(19, 11, 28, 0.95);
-  color: var(--text);
-  box-shadow: inset 0 0 0 1px rgba(247, 125, 246, 0.38);
-}
-
 .action-button {
   min-height: 64px;
   border: 0;
@@ -172,28 +161,6 @@ h1 {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
 }
 
-.hold-fill {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 0%;
-  background: linear-gradient(90deg, rgba(199, 255, 84, 0.2), rgba(51, 220, 255, 0.38));
-  transition: width 90ms linear;
-}
-
-.hold-label {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 64px;
-  padding: 0 18px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
 .action-label {
   display: inline-flex;
   align-items: center;
@@ -204,12 +171,6 @@ h1 {
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-
-.hold-button.is-armed {
-  box-shadow:
-    inset 0 0 0 1px rgba(199, 255, 84, 0.68),
-    0 0 20px rgba(199, 255, 84, 0.16);
 }
 
 .settings-status {
