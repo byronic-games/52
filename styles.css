@@ -1174,8 +1174,13 @@ body[data-visuals="new"] .card-nudge-old-rank-br {
   clip-path: polygon(16% 0, 100% 0, 100% 100%, 0 100%, 0 16%);
 }
 
+.card-face.torn-corner-back {
+  clip-path: polygon(0 0, 84% 0, 100% 16%, 100% 100%, 0 100%);
+}
+
 .tear-mark-face,
-.tear-mark {
+.tear-mark,
+.tear-mark-back {
   position: absolute;
   width: 26%;
   aspect-ratio: 1;
@@ -1192,7 +1197,8 @@ body[data-visuals="new"] .card-nudge-old-rank-br {
   clip-path: polygon(0 0, 84% 0, 100% 16%, 100% 100%, 0 100%);
 }
 
-.tear-mark {
+.tear-mark,
+.tear-mark-back {
   top: 0;
   right: 0;
   clip-path: polygon(0 0, 100% 0, 100% 100%);

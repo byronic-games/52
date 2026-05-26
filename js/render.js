@@ -154,7 +154,7 @@ function renderRevealOverlayCard(pending, showFace) {
     }
     if (revealStatus.tornCorner) {
       const tear = document.createElement("div");
-      tear.className = "tear-mark";
+      tear.className = "tear-mark-back";
       overlayEl.appendChild(tear);
     }
   }
@@ -2032,7 +2032,7 @@ function renderFaceDownDeck() {
   deckEl.className = blankSpaceActive
     ? `card-face blank-space-face ${backStatus.tornCorner ? "torn-corner-face" : ""}${tutorialFocusClass}`.trim()
     : shouldShowDeckStatsInline
-      ? `card-face red card-stats-face ${backStatus.tornCorner ? "torn-corner-face" : ""}${tutorialFocusClass}`.trim()
+      ? `card-face red card-stats-face ${backStatus.tornCorner ? "torn-corner-back" : ""}${tutorialFocusClass}`.trim()
       : `card-back card-back-${backColor} ${backStatus.tornCorner ? "torn-corner" : ""}${tutorialFocusClass}`.trim();
   if (!blankSpaceActive && !shouldShowDeckStatsInline) {
     applyCardBackCosmeticToElement(deckEl);
@@ -2062,7 +2062,7 @@ function renderFaceDownDeck() {
 
   if (backStatus.tornCorner && !blankSpaceActive) {
     const tear = document.createElement("div");
-    tear.className = shouldShowDeckStatsInline ? "tear-mark-face" : "tear-mark";
+    tear.className = "tear-mark-back";
     deckEl.appendChild(tear);
   }
 
