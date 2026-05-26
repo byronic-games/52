@@ -1,4 +1,6 @@
 const PROFILE_NAME_KEY = "hl_prototype_hero_name";
+const PROFILE_RESET_HOLD_DURATION_MS = 5000;
+
 function getProfileAchievements(stats, deckWins) {
   return [
     {
@@ -107,11 +109,41 @@ function renderProfilePage() {
   const achievementListEl = document.getElementById("profile-achievement-list");
   const cardStateSummaryEl = document.getElementById("profile-card-state-summary");
   const cardStateGridEl = document.getElementById("profile-card-state-grid");
+  const resetDeckBtn = document.getElementById("profile-reset-deck-btn");
+  const resetDeckFill = document.getElementById("profile-reset-deck-fill");
+  const resetDeckLabel = document.getElementById("profile-reset-deck-label");
+  const resetDeckStatus = document.getElementById("profile-reset-deck-status");
   const backBtn = document.getElementById("profile-back-btn");
 
-  if (!nameInput || !crownStripEl || !bestRunEl || !totalCorrectEl || !decksBeatenEl || !runsStartedEl || !blueClearsEl || !redClearsEl || !greenClearsEl || !yellowClearsEl || !blueRunsEl || !redRunsEl || !greenRunsEl || !yellowRunsEl || !dailyAttemptsEl || !dailyClearsEl || !stampEl || !achievementListEl || !cardStateSummaryEl || !cardStateGridEl || !backBtn) {
+  if (!nameInput || !crownStripEl || !bestRunEl || !totalCorrectEl || !decksBeatenEl || !runsStartedEl || !blueClearsEl || !redClearsEl || !greenClearsEl || !yellowClearsEl || !blueRunsEl || !redRunsEl || !greenRunsEl || !yellowRunsEl || !dailyAttemptsEl || !dailyClearsEl || !stampEl || !achievementListEl || !cardStateSummaryEl || !cardStateGridEl || !resetDeckBtn || !resetDeckFill || !resetDeckLabel || !resetDeckStatus || !backBtn) {
     return;
   }
+
+  let holdStartedAt = 0;
+  let holdTimer = null;
+  let holdRaf = 0;
+  let resetTriggered = false;
+
+  const setHoldProgress = (progress) => {
+    resetDeckFill.style.width = `${Math.max(0, Math.min(100, progress * 100))}%`;
+  };
+
+  const stopHoldTracking = () => {
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+    if (holdRaf) {
+      cancelAnimationFrame(holdRaf);
+      holdRaf = 0;
+    }
+  };
+
+  const clearHoldVisuals = () => {
+    resetDeckBtn.classList.remove("is-armed");
+    setHoldProgress(0);
+    resetDeckLabel.innerText = "Hold To Reset Deck";
+  };
 
   const render = () => {
     const deckWins = loadDeckWins();
@@ -156,6 +188,51 @@ function renderProfilePage() {
     renderProfileCardStateGrid(cardStateGridEl, cardStateSummaryEl);
   };
 
+  const triggerDeckReset = () => {
+    resetTriggered = true;
+    stopHoldTracking();
+    if (typeof resetDeckAlterations === "function") {
+      resetDeckAlterations();
+    }
+    resetDeckBtn.classList.remove("is-armed");
+    setHoldProgress(1);
+    resetDeckLabel.innerText = "Deck Reset";
+    resetDeckStatus.innerText = "Deck alterations cleared. Card stats remain untouched.";
+    renderProfileCardStateGrid(cardStateGridEl, cardStateSummaryEl);
+  };
+
+  const updateHoldProgress = () => {
+    if (!holdStartedAt || resetTriggered) return;
+    const elapsed = performance.now() - holdStartedAt;
+    const progress = Math.min(1, elapsed / PROFILE_RESET_HOLD_DURATION_MS);
+    setHoldProgress(progress);
+    resetDeckLabel.innerText = progress >= 1
+      ? "Deck Reset"
+      : `Hold ${Math.max(0, Math.ceil((PROFILE_RESET_HOLD_DURATION_MS - elapsed) / 1000))}s To Reset`;
+
+    if (progress < 1) {
+      holdRaf = requestAnimationFrame(updateHoldProgress);
+    }
+  };
+
+  const beginResetHold = () => {
+    stopHoldTracking();
+    resetTriggered = false;
+    holdStartedAt = performance.now();
+    resetDeckBtn.classList.add("is-armed");
+    resetDeckStatus.innerText = "Keep holding to clear torn corners and other deck alterations.";
+    holdTimer = setTimeout(triggerDeckReset, PROFILE_RESET_HOLD_DURATION_MS);
+    holdRaf = requestAnimationFrame(updateHoldProgress);
+  };
+
+  const cancelResetHold = () => {
+    if (resetTriggered) return;
+    stopHoldTracking();
+    holdStartedAt = 0;
+    clearHoldVisuals();
+    resetDeckStatus.innerText = "Clears torn corners and future physical deck changes. Card stats stay untouched.";
+  };
+
   nameInput.addEventListener("input", () => {
     savePreferredHeroName(nameInput.value);
   });
@@ -167,6 +244,16 @@ function renderProfilePage() {
     }
     window.location.href = "index.html";
   });
+
+  resetDeckBtn.addEventListener("pointerdown", (event) => {
+    if (event.button !== undefined && event.button !== 0) return;
+    event.preventDefault();
+    beginResetHold();
+  });
+  resetDeckBtn.addEventListener("pointerup", cancelResetHold);
+  resetDeckBtn.addEventListener("pointerleave", cancelResetHold);
+  resetDeckBtn.addEventListener("pointercancel", cancelResetHold);
+  resetDeckBtn.addEventListener("contextmenu", (event) => event.preventDefault());
 
   render();
 }
