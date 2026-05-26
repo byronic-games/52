@@ -1364,6 +1364,7 @@ function getActiveEffectsTooltipPayload() {
 
   const powerNames = Array.isArray(state.powers)
     ? state.powers
+        .filter((powerId) => !(typeof isNudgeChargePower === "function" && isNudgeChargePower(powerId)))
         .map((powerId) => getPowerById(powerId)?.name)
         .filter(Boolean)
     : [];
@@ -1406,6 +1407,7 @@ function setupCurrentCardEffectsTooltip(el, payload) {
   el.addEventListener("pointerdown", (event) => {
     if (el.dataset.tooltipEnabled !== "1") return;
     if (event.button !== undefined && event.button !== 0) return;
+    event.preventDefault();
     clearTimeout(holdTimer);
     if (event.pointerType === "mouse") {
       showTooltip(el.dataset.tooltipTitle, el.dataset.tooltipBody, el);
