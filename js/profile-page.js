@@ -1,5 +1,5 @@
 const PROFILE_NAME_KEY = "hl_prototype_hero_name";
-const PROFILE_RESET_HOLD_DURATION_MS = 5000;
+const PROFILE_RESTORE_HOLD_DURATION_MS = 5000;
 
 function getProfileAchievements(stats, deckWins) {
   return [
@@ -50,6 +50,49 @@ function getProfileStampLabel(achievements) {
   return "New Challenger";
 }
 
+function syncProfileSnapshotCardBackStatus(cardId, status) {
+  if (!cardId || typeof sessionStorage === "undefined" || typeof GAME_STATE_SNAPSHOT_KEY === "undefined") return;
+  const raw = sessionStorage.getItem(GAME_STATE_SNAPSHOT_KEY);
+  if (!raw) return;
+
+  try {
+    const snapshot = JSON.parse(raw);
+    if (!snapshot || typeof snapshot !== "object") return;
+    const statuses = snapshot.cardBackStatuses && typeof snapshot.cardBackStatuses === "object"
+      ? snapshot.cardBackStatuses
+      : {};
+    if (status) {
+      statuses[cardId] = status;
+    } else {
+      delete statuses[cardId];
+    }
+    snapshot.cardBackStatuses = statuses;
+    sessionStorage.setItem(GAME_STATE_SNAPSHOT_KEY, JSON.stringify(snapshot));
+  } catch {
+    // Persistent storage has already been updated, so malformed snapshots can be ignored.
+  }
+}
+
+function restoreProfileTornCard(cardId) {
+  if (!cardId || typeof loadCardBackStatuses !== "function" || typeof saveCardBackStatuses !== "function") return false;
+
+  const statuses = loadCardBackStatuses();
+  const current = statuses?.[cardId];
+  if (!current?.tornCorner) return false;
+
+  const nextStatus = { ...current, tornCorner: false };
+  const isDefaultStatus = !nextStatus.tornCorner && (!nextStatus.backColor || nextStatus.backColor === "blue");
+  if (isDefaultStatus) {
+    delete statuses[cardId];
+    syncProfileSnapshotCardBackStatus(cardId, null);
+  } else {
+    statuses[cardId] = nextStatus;
+    syncProfileSnapshotCardBackStatus(cardId, nextStatus);
+  }
+  saveCardBackStatuses(statuses);
+  return true;
+}
+
 function renderProfileCardStateGrid(gridEl, summaryEl) {
   if (!gridEl || !summaryEl || !Array.isArray(SUITS) || !Array.isArray(RANKS)) return;
 
@@ -66,6 +109,9 @@ function renderProfileCardStateGrid(gridEl, summaryEl) {
       const cardId = getCardId(suit, rank.r);
       const isTorn = tornIds.has(cardId);
       const cell = document.createElement("div");
+      cell.dataset.cardId = cardId;
+      cell.dataset.cardLabel = `${rank.r}${suit}`;
+      cell.dataset.torn = isTorn ? "true" : "false";
       cell.className = `profile-card-state-cell ${suit === "♥" || suit === "♦" ? "red" : "black"} ${isTorn ? "torn" : ""}`;
       cell.setAttribute("aria-label", `${rank.r}${suit}${isTorn ? " has a torn corner" : " has no tear"}`);
 
@@ -122,7 +168,8 @@ function renderProfilePage() {
   let holdStartedAt = 0;
   let holdTimer = null;
   let holdRaf = 0;
-  let resetTriggered = false;
+  let restoreTriggered = false;
+  let activeRestoreCell = null;
 
   const setHoldProgress = (progress) => {
     resetDeckFill.style.width = `${Math.max(0, Math.min(100, progress * 100))}%`;
@@ -141,8 +188,10 @@ function renderProfilePage() {
 
   const clearHoldVisuals = () => {
     resetDeckBtn.classList.remove("is-armed");
+    activeRestoreCell?.classList.remove("restore-hold-active");
+    activeRestoreCell = null;
     setHoldProgress(0);
-    resetDeckLabel.innerText = "Hold To Reset Deck";
+    resetDeckLabel.innerText = "Hold Torn Card To Restore";
   };
 
   const render = () => {
@@ -188,49 +237,57 @@ function renderProfilePage() {
     renderProfileCardStateGrid(cardStateGridEl, cardStateSummaryEl);
   };
 
-  const triggerDeckReset = () => {
-    resetTriggered = true;
+  const triggerCardRestore = () => {
+    const cardId = activeRestoreCell?.dataset.cardId || "";
+    const cardLabel = activeRestoreCell?.dataset.cardLabel || "Card";
+    restoreTriggered = true;
     stopHoldTracking();
-    if (typeof resetDeckAlterations === "function") {
-      resetDeckAlterations();
-    }
     resetDeckBtn.classList.remove("is-armed");
     setHoldProgress(1);
-    resetDeckLabel.innerText = "Deck Reset";
-    resetDeckStatus.innerText = "Deck alterations cleared. Card stats remain untouched.";
+    const restored = restoreProfileTornCard(cardId);
+    resetDeckLabel.innerText = restored ? "Card Restored" : "Nothing To Restore";
+    resetDeckStatus.innerText = restored
+      ? `${cardLabel} restored. Card stats remain untouched.`
+      : "That card no longer has a torn corner.";
+    activeRestoreCell?.classList.remove("restore-hold-active");
+    activeRestoreCell = null;
     renderProfileCardStateGrid(cardStateGridEl, cardStateSummaryEl);
   };
 
   const updateHoldProgress = () => {
-    if (!holdStartedAt || resetTriggered) return;
+    if (!holdStartedAt || restoreTriggered) return;
     const elapsed = performance.now() - holdStartedAt;
-    const progress = Math.min(1, elapsed / PROFILE_RESET_HOLD_DURATION_MS);
+    const progress = Math.min(1, elapsed / PROFILE_RESTORE_HOLD_DURATION_MS);
     setHoldProgress(progress);
     resetDeckLabel.innerText = progress >= 1
-      ? "Deck Reset"
-      : `Hold ${Math.max(0, Math.ceil((PROFILE_RESET_HOLD_DURATION_MS - elapsed) / 1000))}s To Reset`;
+      ? "Card Restored"
+      : `Hold ${Math.max(0, Math.ceil((PROFILE_RESTORE_HOLD_DURATION_MS - elapsed) / 1000))}s To Restore`;
 
     if (progress < 1) {
       holdRaf = requestAnimationFrame(updateHoldProgress);
     }
   };
 
-  const beginResetHold = () => {
+  const beginCardRestoreHold = (cell) => {
+    if (!cell || cell.dataset.torn !== "true") return;
     stopHoldTracking();
-    resetTriggered = false;
+    activeRestoreCell?.classList.remove("restore-hold-active");
+    activeRestoreCell = cell;
+    restoreTriggered = false;
     holdStartedAt = performance.now();
     resetDeckBtn.classList.add("is-armed");
-    resetDeckStatus.innerText = "Keep holding to clear torn corners and other deck alterations.";
-    holdTimer = setTimeout(triggerDeckReset, PROFILE_RESET_HOLD_DURATION_MS);
+    cell.classList.add("restore-hold-active");
+    resetDeckStatus.innerText = `Keep holding ${cell.dataset.cardLabel || "this card"} to restore its torn corner.`;
+    holdTimer = setTimeout(triggerCardRestore, PROFILE_RESTORE_HOLD_DURATION_MS);
     holdRaf = requestAnimationFrame(updateHoldProgress);
   };
 
-  const cancelResetHold = () => {
-    if (resetTriggered) return;
+  const cancelCardRestoreHold = () => {
+    if (restoreTriggered) return;
     stopHoldTracking();
     holdStartedAt = 0;
     clearHoldVisuals();
-    resetDeckStatus.innerText = "Clears torn corners and future physical deck changes. Card stats stay untouched.";
+    resetDeckStatus.innerText = "Hold a torn card in the grid for 5 seconds to permanently restore that corner.";
   };
 
   nameInput.addEventListener("input", () => {
@@ -245,15 +302,22 @@ function renderProfilePage() {
     window.location.href = "index.html";
   });
 
-  resetDeckBtn.addEventListener("pointerdown", (event) => {
+  cardStateGridEl.addEventListener("pointerdown", (event) => {
     if (event.button !== undefined && event.button !== 0) return;
+    const cell = event.target.closest(".profile-card-state-cell.torn");
+    if (!cell || !cardStateGridEl.contains(cell)) return;
     event.preventDefault();
-    beginResetHold();
+    cell.setPointerCapture?.(event.pointerId);
+    beginCardRestoreHold(cell);
   });
-  resetDeckBtn.addEventListener("pointerup", cancelResetHold);
-  resetDeckBtn.addEventListener("pointerleave", cancelResetHold);
-  resetDeckBtn.addEventListener("pointercancel", cancelResetHold);
-  resetDeckBtn.addEventListener("contextmenu", (event) => event.preventDefault());
+  cardStateGridEl.addEventListener("pointerup", cancelCardRestoreHold);
+  cardStateGridEl.addEventListener("pointerleave", cancelCardRestoreHold);
+  cardStateGridEl.addEventListener("pointercancel", cancelCardRestoreHold);
+  cardStateGridEl.addEventListener("contextmenu", (event) => {
+    if (event.target.closest(".profile-card-state-cell.torn")) {
+      event.preventDefault();
+    }
+  });
 
   render();
 }

@@ -42,13 +42,12 @@ body::before {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 14px;
+  padding: 14px 14px max(14px, env(safe-area-inset-bottom));
   position: relative;
 }
 
 .profile-card {
   width: min(860px, 100%);
-  max-height: calc(100dvh - 28px);
   border-radius: 26px;
   padding: clamp(18px, 3vw, 30px);
   background:
@@ -62,7 +61,7 @@ body::before {
   flex-direction: column;
   position: relative;
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: visible;
 }
 
 .profile-card::before,
@@ -290,6 +289,10 @@ h1 {
     inset 0 0 0 1px rgba(0, 0, 0, 0.12),
     0 2px 8px rgba(0, 0, 0, 0.18);
   overflow: hidden;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .profile-card-state-cell.red {
@@ -323,6 +326,14 @@ h1 {
     inset 0 0 0 2px rgba(255, 207, 114, 0.9),
     0 0 0 1px rgba(255, 207, 114, 0.45),
     0 3px 10px rgba(0, 0, 0, 0.24);
+}
+
+.profile-card-state-cell.torn.restore-hold-active {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 0 0 2px rgba(199, 255, 84, 0.98),
+    0 0 0 1px rgba(199, 255, 84, 0.55),
+    0 0 16px rgba(199, 255, 84, 0.24);
 }
 
 .profile-card-state-cell.torn::after {
@@ -378,6 +389,7 @@ h1 {
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
+  pointer-events: none;
 }
 
 .profile-hold-button.is-armed {
@@ -422,11 +434,9 @@ h1 {
   margin-top: 14px;
   display: flex;
   gap: 12px;
-  position: sticky;
-  bottom: 0;
+  position: relative;
   z-index: 1;
   padding-top: 14px;
-  background: linear-gradient(180deg, rgba(23, 14, 32, 0), rgba(23, 14, 32, 0.98) 42%);
 }
 
 .btn {
@@ -456,13 +466,12 @@ h1 {
 
 @media (max-width: 640px) {
   .profile-shell {
-    padding: 8px;
+    padding: 8px 8px max(8px, env(safe-area-inset-bottom));
     align-items: stretch;
   }
 
   .profile-card {
     width: 100%;
-    max-height: calc(100dvh - 16px);
     border-radius: 22px;
     padding: 16px 14px 14px;
   }
