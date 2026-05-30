@@ -50,6 +50,33 @@ function getProfileStampLabel(achievements) {
   return "New Challenger";
 }
 
+function getProfileRankName(rank) {
+  switch (rank) {
+    case "A":
+      return "Ace";
+    case "J":
+      return "Jack";
+    case "Q":
+      return "Queen";
+    case "K":
+      return "King";
+    default:
+      return String(rank || "");
+  }
+}
+
+function getProfileSuitName(suit) {
+  if (suit === SUITS[0]) return "Spades";
+  if (suit === SUITS[1]) return "Hearts";
+  if (suit === SUITS[2]) return "Diamonds";
+  if (suit === SUITS[3]) return "Clubs";
+  return String(suit || "");
+}
+
+function getProfileCardTextLabel(rank, suit) {
+  return `${getProfileRankName(rank)} of ${getProfileSuitName(suit)}`;
+}
+
 function syncProfileSnapshotCardBackStatus(cardId, status) {
   if (!cardId || typeof sessionStorage === "undefined" || typeof GAME_STATE_SNAPSHOT_KEY === "undefined") return;
   const raw = sessionStorage.getItem(GAME_STATE_SNAPSHOT_KEY);
@@ -111,8 +138,9 @@ function renderProfileCardStateGrid(gridEl, summaryEl) {
       const cell = document.createElement("div");
       cell.dataset.cardId = cardId;
       cell.dataset.cardLabel = `${rank.r}${suit}`;
+      cell.dataset.cardTextLabel = getProfileCardTextLabel(rank.r, suit);
       cell.dataset.torn = isTorn ? "true" : "false";
-      cell.className = `profile-card-state-cell ${suit === "♥" || suit === "♦" ? "red" : "black"} ${isTorn ? "torn" : ""}`;
+      cell.className = `profile-card-state-cell ${suit === SUITS[1] || suit === SUITS[2] ? "red" : "black"} ${isTorn ? "torn" : ""}`;
       cell.setAttribute("aria-label", `${rank.r}${suit}${isTorn ? " has a torn corner" : " has no tear"}`);
 
       const rankEl = document.createElement("span");
@@ -239,7 +267,7 @@ function renderProfilePage() {
 
   const triggerCardRestore = () => {
     const cardId = activeRestoreCell?.dataset.cardId || "";
-    const cardLabel = activeRestoreCell?.dataset.cardLabel || "Card";
+    const cardLabel = activeRestoreCell?.dataset.cardTextLabel || activeRestoreCell?.dataset.cardLabel || "Card";
     restoreTriggered = true;
     stopHoldTracking();
     resetDeckBtn.classList.remove("is-armed");
@@ -258,10 +286,12 @@ function renderProfilePage() {
     if (!holdStartedAt || restoreTriggered) return;
     const elapsed = performance.now() - holdStartedAt;
     const progress = Math.min(1, elapsed / PROFILE_RESTORE_HOLD_DURATION_MS);
+    const cardLabel = activeRestoreCell?.dataset.cardTextLabel || activeRestoreCell?.dataset.cardLabel || "card";
+    const secondsRemaining = Math.max(0, Math.ceil((PROFILE_RESTORE_HOLD_DURATION_MS - elapsed) / 1000));
     setHoldProgress(progress);
     resetDeckLabel.innerText = progress >= 1
       ? "Card Restored"
-      : `Hold ${Math.max(0, Math.ceil((PROFILE_RESTORE_HOLD_DURATION_MS - elapsed) / 1000))}s To Restore`;
+      : `Restoring ${cardLabel} (${secondsRemaining}s)`;
 
     if (progress < 1) {
       holdRaf = requestAnimationFrame(updateHoldProgress);
@@ -277,7 +307,7 @@ function renderProfilePage() {
     holdStartedAt = performance.now();
     resetDeckBtn.classList.add("is-armed");
     cell.classList.add("restore-hold-active");
-    resetDeckStatus.innerText = `Keep holding ${cell.dataset.cardLabel || "this card"} to restore its torn corner.`;
+    resetDeckStatus.innerText = "Keep holding until the restore meter fills.";
     holdTimer = setTimeout(triggerCardRestore, PROFILE_RESTORE_HOLD_DURATION_MS);
     holdRaf = requestAnimationFrame(updateHoldProgress);
   };
