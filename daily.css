@@ -591,32 +591,32 @@ td.score {
 
   th {
     font-size: 0.62rem;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
     background: rgba(22, 15, 31, 0.98);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   th:nth-child(1),
   td:nth-child(1) {
-    width: 12%;
+    width: 8%;
     text-align: center;
   }
 
   th:nth-child(2),
   td:nth-child(2) {
-    width: 34%;
+    width: 36%;
     text-align: left;
   }
 
   th:nth-child(3),
   td:nth-child(3) {
-    width: 14%;
+    width: 17%;
     text-align: right;
   }
 
   th:nth-child(4),
   td:nth-child(4) {
-    width: 18%;
+    width: 17%;
     text-align: right;
   }
 

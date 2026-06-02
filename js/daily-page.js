@@ -232,8 +232,8 @@ function renderDailyRows(entries, currentPlayerId, showScores = false) {
     return;
   }
 
-  countEl.innerText = entries.length > 100 ? "Top 100" : `${entries.length} ${entries.length === 1 ? "entry" : "entries"}`;
-  const rows = entries.slice(0, 100);
+  countEl.innerText = entries.length > 99 ? "Top 99" : `${entries.length} ${entries.length === 1 ? "entry" : "entries"}`;
+  const rows = entries.slice(0, 99);
 
   rows.forEach((entry) => {
     const tr = document.createElement("tr");
@@ -243,7 +243,7 @@ function renderDailyRows(entries, currentPlayerId, showScores = false) {
 
     const rankTd = document.createElement("td");
     rankTd.dataset.label = "Rank";
-    rankTd.innerText = String(entry.dailyDisplayRank || "");
+    rankTd.innerText = String(Math.min(99, Number(entry.dailyDisplayRank) || 0));
 
     const nameTd = document.createElement("td");
     nameTd.dataset.label = "Name";
