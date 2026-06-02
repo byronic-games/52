@@ -146,6 +146,7 @@ function normalizeDailyEntry(entry) {
       summary: "",
     };
   const rawScore = Math.max(0, Math.floor(Number(entry?.score ?? entry?.totalScore ?? entry?.total_score ?? 0) || 0));
+  const explicitTotalScore = entry?.totalScore ?? entry?.total_score;
   const explicitCardsCleared = entry?.cardsCleared ?? entry?.cards_cleared;
   const cardsCleared = explicitCardsCleared !== undefined
     ? normalizeDailyCardsCleared(explicitCardsCleared)
@@ -158,7 +159,11 @@ function normalizeDailyEntry(entry) {
     tearCount: entry?.tearCount ?? entry?.tear_count ?? 0,
   });
   const bonusScore = clampDailyBonus(entry?.bonusScore ?? entry?.bonus_score ?? inferredBonus);
-  const totalScore = Math.max(0, Math.floor(Number(entry?.totalScore ?? entry?.total_score ?? rawScore) || 0));
+  const totalScore = explicitTotalScore !== undefined && explicitTotalScore !== null && explicitTotalScore !== ""
+    ? Math.max(0, Math.floor(Number(explicitTotalScore) || 0))
+    : rawScore <= 52
+      ? Math.max(0, scoreBreakdown.cardScore + bonusScore)
+      : rawScore;
 
   return {
     dateKey: String(entry?.dateKey || ""),
