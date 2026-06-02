@@ -139,6 +139,29 @@ h1 {
   min-width: 0;
 }
 
+.daily-score-meta {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.daily-rank-pill {
+  flex: 0 0 auto;
+  min-width: 86px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(255, 207, 114, 0.14);
+  color: var(--gold);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-align: center;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: inset 0 0 0 1px rgba(255, 207, 114, 0.18);
+}
+
 .daily-share-btn {
   flex: 0 0 auto;
   min-width: 84px;
@@ -335,6 +358,114 @@ td.score {
   font-weight: 800;
 }
 
+.score-bonus {
+  color: var(--gold);
+}
+
+.score-total {
+  color: var(--lime);
+}
+
+.daily-name-button {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.daily-name-button:focus-visible {
+  outline: 2px solid rgba(51, 220, 255, 0.8);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.daily-entry-popover {
+  position: fixed;
+  z-index: 40;
+  width: min(300px, calc(100vw - 16px));
+  padding: 12px;
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 20%),
+    rgba(17, 10, 25, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 20px 42px rgba(0, 0, 0, 0.48);
+}
+
+.daily-entry-popover.hidden {
+  display: none;
+}
+
+.daily-popover-name {
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 10px;
+  overflow-wrap: anywhere;
+}
+
+.daily-popover-section + .daily-popover-section {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.daily-popover-title {
+  margin-bottom: 6px;
+  color: var(--cyan);
+  font-size: 0.64rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.daily-score-breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.32;
+}
+
+.daily-score-breakdown-row strong {
+  color: var(--text);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.daily-score-breakdown-total {
+  margin-top: 4px;
+  color: var(--text);
+}
+
+.daily-score-breakdown-total strong {
+  color: var(--lime);
+}
+
+.daily-popover-crowns .crown-badges {
+  margin-left: 0;
+  gap: 0.28em;
+}
+
+.daily-popover-crowns .crown-icon {
+  font-size: 1.18rem;
+}
+
+.daily-popover-muted {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
 .crown-badges {
   display: inline-flex;
   align-items: center;
@@ -467,19 +598,31 @@ td.score {
 
   th:nth-child(1),
   td:nth-child(1) {
-    width: 18%;
+    width: 12%;
     text-align: center;
   }
 
   th:nth-child(2),
   td:nth-child(2) {
-    width: 57%;
+    width: 34%;
     text-align: left;
   }
 
   th:nth-child(3),
   td:nth-child(3) {
-    width: 25%;
+    width: 14%;
+    text-align: right;
+  }
+
+  th:nth-child(4),
+  td:nth-child(4) {
+    width: 18%;
+    text-align: right;
+  }
+
+  th:nth-child(5),
+  td:nth-child(5) {
+    width: 22%;
     text-align: right;
   }
 
@@ -497,14 +640,26 @@ td.score {
   }
 
   tbody td:nth-child(2) {
-    font-size: 0.98rem;
-    white-space: normal;
-    overflow-wrap: anywhere;
+    font-size: 0.92rem;
+    white-space: nowrap;
+    overflow: hidden;
   }
 
   tbody td.score {
-    font-size: 1.1rem;
+    font-size: 0.9rem;
     font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+  }
+
+  tbody td.score-total {
+    font-size: 0.98rem;
+  }
+
+  .daily-rank-pill {
+    min-width: 74px;
+    padding: 6px 8px;
+    font-size: 0.64rem;
   }
 
   .crown-badges {

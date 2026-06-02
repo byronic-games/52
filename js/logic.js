@@ -235,6 +235,7 @@ function queueCardRevealAnimation(options = {}) {
     triggerGameOver: !!options.triggerGameOver,
     gameOverDetail: String(options.gameOverDetail || ""),
     initialDeal: !!options.initialDeal,
+    clearSuitedAndBootedOnFinalize: !!options.clearSuitedAndBootedOnFinalize,
   };
 }
 
@@ -1184,13 +1185,49 @@ function handleRunFinished(finalScore) {
 
   const dateKey = state.dailyDateKey || getCurrentDailyDateKey();
   const playerName = loadPreferredPlayerName();
-  const dailyScore = getRunScoreFromCorrectAnswers(finalScore);
+  const dailyCardsCleared = getRunScoreFromCorrectAnswers(finalScore);
+  const remainingCheats = Array.isArray(state.cheats)
+    ? state.cheats.filter((cheat) => cheat?.id && cheat.id !== "nudge_up" && cheat.id !== "nudge_down").length
+    : 0;
+  const remainingNudges = Math.max(0, Number(state.nudgeUpCharges) || 0) + Math.max(0, Number(state.nudgeDownCharges) || 0);
+  const tearCount = Array.isArray(state.deck)
+    ? state.deck.filter((card) => card?.id && !isJokerCard(card) && getCardBackStatus(card.id).tornCorner).length
+    : getTotalTornCardCount();
+  const dailyBreakdown = typeof buildDailyScoreBreakdown === "function"
+    ? buildDailyScoreBreakdown({
+      cardsCleared: dailyCardsCleared,
+      remainingCheats,
+      remainingNudges,
+      tearCount,
+    })
+    : {
+      cardsCleared: dailyCardsCleared,
+      cardScore: dailyCardsCleared * 100,
+      bonusScore: 0,
+      totalScore: dailyCardsCleared,
+      remainingCheats,
+      remainingNudges,
+      tearCount,
+      cheatBonus: 0,
+      nudgeBonus: 0,
+      tearPenalty: 0,
+    };
   const entry = buildDailyEntry({
     dateKey,
     seed: state.runSeed,
     playerName: playerName || "Unknown",
     playerId: getOrCreateDailyPlayerId(),
-    score: dailyScore,
+    score: dailyBreakdown.totalScore,
+    cardsCleared: dailyBreakdown.cardsCleared,
+    cardScore: dailyBreakdown.cardScore,
+    bonusScore: dailyBreakdown.bonusScore,
+    remainingCheats: dailyBreakdown.remainingCheats,
+    remainingNudges: dailyBreakdown.remainingNudges,
+    tearCount: dailyBreakdown.tearCount,
+    cheatBonus: dailyBreakdown.cheatBonus,
+    nudgeBonus: dailyBreakdown.nudgeBonus,
+    tearPenalty: dailyBreakdown.tearPenalty,
+    totalScore: dailyBreakdown.totalScore,
   });
 
   submitDailyResult(entry).finally(() => {
@@ -2952,6 +2989,7 @@ function makeGuess(type) {
   const el = document.getElementById("next-info");
   if (el) el.innerText = "";
   state.nextCardValueModifier = 0;
+  const suitedAndBootedShouldResolveOnReveal = !!state.suitedAndBootedArmed;
 
   if (isJokerCard(next)) {
     const prevCard = state.current;
@@ -2969,6 +3007,7 @@ function makeGuess(type) {
       revealEffectiveValue: null,
       effectId: "joker",
       feedbackEffect: "correct",
+      clearSuitedAndBootedOnFinalize: suitedAndBootedShouldResolveOnReveal,
     });
     appendRunDebugLog("yellow_joker_resolved", {
       guess: type,
@@ -3051,9 +3090,7 @@ function makeGuess(type) {
   state.oddOneOutArmed = false;
   state.sixSevenArmed = false;
   state.refundArmed = false;
-  state.suitedAndBootedArmed = false;
   state.equals11Armed = false;
-  state.suitedAndBootedSuit = "";
   state.blankSpaceActive = false;
   state.blankSpaceValue = null;
   state.forcedNextGuess = "";
@@ -3117,6 +3154,7 @@ function makeGuess(type) {
           cheatSpecial: true,
         })),
         triggerGameOver: true,
+        clearSuitedAndBootedOnFinalize: suitedAndBootedWasArmed,
       });
       state.currentValueModifier = 0;
       state.streak = 0;
@@ -3272,6 +3310,7 @@ function makeGuess(type) {
       })),
       triggerGameOver: true,
       gameOverDetail: gameOverMessage,
+      clearSuitedAndBootedOnFinalize: suitedAndBootedWasArmed,
     });
 
     appendRunDebugLog("guess_resolved", {
@@ -3338,6 +3377,7 @@ function makeGuess(type) {
       aceAutoWin,
       cheatSpecial,
     })),
+    clearSuitedAndBootedOnFinalize: suitedAndBootedWasArmed,
   });
   state.correctAnswers += 1;
   if (!isDevModeRun()) {

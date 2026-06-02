@@ -40,11 +40,12 @@ function buildDailyShareUrl(dateKey) {
 
 function buildDailyShareText(entry, activeDateKey, todayKey) {
   const score = Math.max(0, Number(entry?.score ?? 0));
+  const cards = Math.max(0, Number(entry?.cardsCleared ?? entry?.score ?? 0));
   const isToday = activeDateKey === todayKey;
   if (isToday) {
-    return `I scored ${score} in today's 52! Daily Challenge. Can you do better?`;
+    return `I cleared ${cards} cards and scored ${score} in today's 52! Daily Challenge. Can you do better?`;
   }
-  return `I scored ${score} in the 52! Daily Challenge for ${formatDailyDateLabel(activeDateKey)}. Can you do better?`;
+  return `I cleared ${cards} cards and scored ${score} in the 52! Daily Challenge for ${formatDailyDateLabel(activeDateKey)}. Can you do better?`;
 }
 
 async function shareDailyResult(entry, activeDateKey, todayKey, statusEl) {
@@ -83,6 +84,137 @@ async function shareDailyResult(entry, activeDateKey, todayKey, statusEl) {
   }
 }
 
+function escapeDailyHtml(value) {
+  if (typeof escapeHtml === "function") return escapeHtml(value);
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function formatDailyBonus(value) {
+  const numeric = Math.max(-999, Math.min(999, Math.floor(Number(value) || 0)));
+  return numeric > 0 ? `+${numeric}` : String(numeric);
+}
+
+function formatDailyColumnNumber(value, maxValue) {
+  return String(Math.max(0, Math.min(maxValue, Math.floor(Number(value) || 0))));
+}
+
+function getDailyRankedEntries(entries) {
+  const ranked = Array.isArray(entries) ? [...entries] : [];
+  ranked.sort(typeof compareDailyEntries === "function"
+    ? compareDailyEntries
+    : (a, b) => ((b.score || 0) - (a.score || 0)) || String(a.createdAt).localeCompare(String(b.createdAt)));
+
+  let previousScore = null;
+  let displayRank = 0;
+  ranked.forEach((entry, index) => {
+    if (entry.score !== previousScore) {
+      displayRank = index + 1;
+      previousScore = entry.score;
+    }
+    entry.dailyDisplayRank = displayRank;
+  });
+  return ranked;
+}
+
+function getDailyPlayerRank(entries, currentPlayerId) {
+  if (!currentPlayerId) return null;
+  const match = (Array.isArray(entries) ? entries : []).find((entry) => entry.playerId === currentPlayerId);
+  return match?.dailyDisplayRank || null;
+}
+
+function getDailyDeckClearHtml(entry) {
+  if (typeof getCrownBadgesHtml === "function") {
+    const badges = getCrownBadgesHtml(entry);
+    if (badges) return badges;
+  }
+  return '<span class="daily-popover-muted">None yet</span>';
+}
+
+function hideDailyEntryPopover() {
+  const popover = document.getElementById("daily-entry-popover");
+  if (!popover) return;
+  popover.classList.add("hidden");
+  popover.setAttribute("aria-hidden", "true");
+  popover.innerHTML = "";
+}
+
+function showDailyEntryPopover(entry, anchorEl) {
+  const popover = document.getElementById("daily-entry-popover");
+  if (!popover || !entry || !anchorEl) return;
+  const cardsCleared = formatDailyColumnNumber(entry.cardsCleared ?? entry.score, 52);
+  const cardScore = formatDailyColumnNumber(entry.cardScore ?? ((entry.cardsCleared || 0) * 100), 9999);
+  const bonusScore = formatDailyBonus(entry.bonusScore);
+  const totalScore = formatDailyColumnNumber(entry.score, 9999);
+  const remainingCheats = formatDailyColumnNumber(entry.remainingCheats, 999);
+  const remainingNudges = formatDailyColumnNumber(entry.remainingNudges, 999);
+  const tearCount = formatDailyColumnNumber(entry.tearCount, 999);
+  const cheatBonus = formatDailyColumnNumber(entry.cheatBonus, 999);
+  const nudgeBonus = formatDailyColumnNumber(entry.nudgeBonus, 999);
+  const tearPenalty = formatDailyColumnNumber(entry.tearPenalty, 999);
+
+  popover.innerHTML = `
+    <div class="daily-popover-name">${escapeDailyHtml(entry.playerName || "Unknown")}</div>
+    <div class="daily-popover-section">
+      <div class="daily-popover-title">Daily Score</div>
+      <div class="daily-score-breakdown-row"><span>Cards cleared</span><strong>${cardsCleared} = ${cardScore}</strong></div>
+      <div class="daily-score-breakdown-row"><span>Cheats left</span><strong>${remainingCheats} = +${cheatBonus}</strong></div>
+      <div class="daily-score-breakdown-row"><span>Nudges left</span><strong>${remainingNudges} = +${nudgeBonus}</strong></div>
+      <div class="daily-score-breakdown-row"><span>Tears</span><strong>${tearCount} = -${tearPenalty}</strong></div>
+      <div class="daily-score-breakdown-row daily-score-breakdown-total"><span>Bonus</span><strong>${bonusScore}</strong></div>
+      <div class="daily-score-breakdown-row daily-score-breakdown-total"><span>Total</span><strong>${totalScore}</strong></div>
+    </div>
+    <div class="daily-popover-section">
+      <div class="daily-popover-title">Deck Clears</div>
+      <div class="daily-popover-crowns">${getDailyDeckClearHtml(entry)}</div>
+    </div>
+  `;
+
+  popover.classList.remove("hidden");
+  popover.setAttribute("aria-hidden", "false");
+
+  const anchorRect = anchorEl.getBoundingClientRect();
+  const popoverRect = popover.getBoundingClientRect();
+  const margin = 8;
+  const left = Math.max(margin, Math.min(window.innerWidth - popoverRect.width - margin, anchorRect.left));
+  const top = Math.max(margin, Math.min(window.innerHeight - popoverRect.height - margin, anchorRect.bottom + margin));
+  popover.style.left = `${Math.round(left)}px`;
+  popover.style.top = `${Math.round(top)}px`;
+}
+
+function addDailyNameHoldHandlers(button, entry) {
+  let holdTimer = null;
+  let openedByHold = false;
+
+  const clearHold = () => {
+    if (holdTimer) {
+      window.clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+  };
+
+  button.addEventListener("pointerdown", () => {
+    openedByHold = false;
+    clearHold();
+    holdTimer = window.setTimeout(() => {
+      openedByHold = true;
+      showDailyEntryPopover(entry, button);
+    }, 420);
+  });
+  button.addEventListener("pointerup", clearHold);
+  button.addEventListener("pointercancel", clearHold);
+  button.addEventListener("pointerleave", clearHold);
+  button.addEventListener("click", (event) => {
+    event.preventDefault();
+    if (openedByHold) return;
+    showDailyEntryPopover(entry, button);
+  });
+}
+
 function renderDailyRows(entries, currentPlayerId, showScores = false) {
   const bodyEl = document.getElementById("daily-table-body");
   const countEl = document.getElementById("daily-board-count");
@@ -91,26 +223,19 @@ function renderDailyRows(entries, currentPlayerId, showScores = false) {
 
   bodyEl.innerHTML = "";
   if (scoreHeading) {
-    scoreHeading.innerText = showScores ? "Cards Cleared" : "Result";
+    scoreHeading.innerText = showScores ? "Total" : "Result";
   }
 
   if (!entries.length) {
-    bodyEl.innerHTML = "<tr><td colspan='3'>No daily scores yet. Set the pace.</td></tr>";
+    bodyEl.innerHTML = "<tr><td colspan='5'>No daily scores yet. Set the pace.</td></tr>";
     countEl.innerText = "0 entries";
     return;
   }
 
-  countEl.innerText = `${entries.length} ${entries.length === 1 ? "entry" : "entries"}`;
+  countEl.innerText = entries.length > 100 ? "Top 100" : `${entries.length} ${entries.length === 1 ? "entry" : "entries"}`;
+  const rows = entries.slice(0, 100);
 
-  let previousScore = null;
-  let displayRank = 0;
-
-  entries.forEach((entry, index) => {
-    if (entry.score !== previousScore) {
-      displayRank = index + 1;
-      previousScore = entry.score;
-    }
-
+  rows.forEach((entry) => {
     const tr = document.createElement("tr");
     if (entry.playerId && entry.playerId === currentPlayerId) {
       tr.classList.add("current-player");
@@ -118,24 +243,38 @@ function renderDailyRows(entries, currentPlayerId, showScores = false) {
 
     const rankTd = document.createElement("td");
     rankTd.dataset.label = "Rank";
-    rankTd.innerText = String(displayRank);
+    rankTd.innerText = String(entry.dailyDisplayRank || "");
 
     const nameTd = document.createElement("td");
     nameTd.dataset.label = "Name";
-    if (typeof formatNameWithCrownsHtml === "function") {
-      nameTd.innerHTML = formatNameWithCrownsHtml(entry.playerName || "Unknown", entry);
-    } else {
-      nameTd.innerText = entry.playerName || "Unknown";
-    }
+    const nameButton = document.createElement("button");
+    nameButton.className = "daily-name-button";
+    nameButton.type = "button";
+    nameButton.innerText = entry.playerName || "Unknown";
+    nameButton.setAttribute("aria-label", `Show score details for ${entry.playerName || "Unknown"}`);
+    addDailyNameHoldHandlers(nameButton, entry);
+    nameTd.appendChild(nameButton);
 
-    const scoreTd = document.createElement("td");
-    scoreTd.dataset.label = showScores ? "Cards Cleared" : "Result";
-    scoreTd.className = "score";
-    scoreTd.innerText = showScores ? String(entry.score ?? 0) : "Hidden";
+    const cardsTd = document.createElement("td");
+    cardsTd.dataset.label = "Cards";
+    cardsTd.className = "score score-cards";
+    cardsTd.innerText = showScores ? formatDailyColumnNumber(entry.cardsCleared ?? entry.score, 52) : "--";
+
+    const bonusTd = document.createElement("td");
+    bonusTd.dataset.label = "Bonus";
+    bonusTd.className = "score score-bonus";
+    bonusTd.innerText = showScores ? formatDailyBonus(entry.bonusScore) : "--";
+
+    const totalTd = document.createElement("td");
+    totalTd.dataset.label = showScores ? "Total" : "Result";
+    totalTd.className = "score score-total";
+    totalTd.innerText = showScores ? formatDailyColumnNumber(entry.score, 9999) : "Hidden";
 
     tr.appendChild(rankTd);
     tr.appendChild(nameTd);
-    tr.appendChild(scoreTd);
+    tr.appendChild(cardsTd);
+    tr.appendChild(bonusTd);
+    tr.appendChild(totalTd);
     bodyEl.appendChild(tr);
   });
 }
@@ -191,6 +330,8 @@ async function refreshDailyPageForDate(activeDateKey) {
   const statusEl = document.getElementById("daily-status");
   const boardStatusEl = document.getElementById("daily-board-status");
   const scoreEl = document.getElementById("daily-score-label");
+  const scoreMetaEl = document.getElementById("daily-score-meta");
+  const rankEl = document.getElementById("daily-rank-label");
   const resultPanel = document.getElementById("daily-result-panel");
   const startBtn = document.getElementById("daily-start-btn");
   const shareBtn = document.getElementById("daily-share-btn");
@@ -208,7 +349,14 @@ async function refreshDailyPageForDate(activeDateKey) {
   } else if (currentAttempt) {
     if (hasCompletedAttempt) {
       resultPanel?.classList.remove("hidden");
-      if (scoreEl) scoreEl.innerText = String(currentAttempt.score ?? 0);
+      if (scoreEl) scoreEl.innerText = formatDailyColumnNumber(currentAttempt.cardsCleared ?? currentAttempt.score, 52);
+      if (scoreMetaEl) {
+        scoreMetaEl.innerText = `Bonus ${formatDailyBonus(currentAttempt.bonusScore)} · Total ${formatDailyColumnNumber(currentAttempt.score, 9999)}`;
+      }
+      if (rankEl) {
+        rankEl.hidden = false;
+        rankEl.innerText = "Rank pending";
+      }
       if (statusEl) {
         statusEl.innerText = activeDateKey === todayKey
           ? "You have already played today's Daily."
@@ -216,6 +364,7 @@ async function refreshDailyPageForDate(activeDateKey) {
       }
     } else {
       resultPanel?.classList.add("hidden");
+      if (rankEl) rankEl.hidden = true;
       if (statusEl) {
         statusEl.innerText = "Daily in progress. Resume to finish.";
       }
@@ -230,6 +379,7 @@ async function refreshDailyPageForDate(activeDateKey) {
     }
   } else {
       resultPanel?.classList.add("hidden");
+      if (rankEl) rankEl.hidden = true;
       if (statusEl) {
         statusEl.innerText = activeDateKey === todayKey
           ? "One attempt. Scores reveal after your run."
@@ -276,10 +426,11 @@ async function refreshDailyPageForDate(activeDateKey) {
   }
 
   // Fetch and render leaderboard
-  const leaderboardResponse = await fetchDailyLeaderboard(activeDateKey, 100);
+  const leaderboardResponse = await fetchDailyLeaderboard(activeDateKey, 5000);
   const leaderboard = Array.isArray(leaderboardResponse)
     ? leaderboardResponse
     : (leaderboardResponse?.entries || []);
+  const rankedLeaderboard = getDailyRankedEntries(leaderboard);
   const remoteAvailable = Array.isArray(leaderboardResponse)
     ? (leaderboardResponse._remoteAvailable !== undefined ? !!leaderboardResponse._remoteAvailable : true)
     : !!leaderboardResponse?.remoteAvailable;
@@ -297,7 +448,13 @@ async function refreshDailyPageForDate(activeDateKey) {
     }
   }
 
-  renderDailyRows(leaderboard, currentPlayerId, showScores);
+  if (rankEl && hasCompletedAttempt) {
+    const playerRank = getDailyPlayerRank(rankedLeaderboard, currentPlayerId);
+    rankEl.hidden = false;
+    rankEl.innerText = playerRank ? `Rank #${playerRank}` : "Rank pending";
+  }
+
+  renderDailyRows(rankedLeaderboard, currentPlayerId, showScores);
 }
 
 async function renderDailyPage() {
@@ -324,3 +481,10 @@ async function renderDailyPage() {
 }
 
 renderDailyPage();
+
+document.addEventListener("pointerdown", (event) => {
+  const popover = document.getElementById("daily-entry-popover");
+  if (!popover || popover.classList.contains("hidden")) return;
+  if (popover.contains(event.target) || event.target.closest?.(".daily-name-button")) return;
+  hideDailyEntryPopover();
+});

@@ -207,6 +207,11 @@ function finalizePendingReveal(pending) {
     }
   }
 
+  if (pending.clearSuitedAndBootedOnFinalize) {
+    state.suitedAndBootedArmed = false;
+    state.suitedAndBootedSuit = "";
+  }
+
   if (state.pendingRevealAnimation && state.pendingRevealAnimation.id === pending.id) {
     state.pendingRevealAnimation = null;
   }
