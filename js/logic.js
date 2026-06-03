@@ -1190,9 +1190,15 @@ function handleRunFinished(finalScore) {
     ? state.cheats.filter((cheat) => cheat?.id && cheat.id !== "nudge_up" && cheat.id !== "nudge_down").length
     : 0;
   const remainingNudges = Math.max(0, Number(state.nudgeUpCharges) || 0) + Math.max(0, Number(state.nudgeDownCharges) || 0);
+  const seenCardIds = state.seenCardIds instanceof Set ? state.seenCardIds : new Set();
   const tearCount = Array.isArray(state.deck)
-    ? state.deck.filter((card) => card?.id && !isJokerCard(card) && getCardBackStatus(card.id).tornCorner).length
-    : getTotalTornCardCount();
+    ? state.deck.filter((card) =>
+      card?.id &&
+      !isJokerCard(card) &&
+      seenCardIds.has(card.id) &&
+      getCardBackStatus(card.id).tornCorner
+    ).length
+    : 0;
   const dailyBreakdown = typeof buildDailyScoreBreakdown === "function"
     ? buildDailyScoreBreakdown({
       cardsCleared: dailyCardsCleared,
