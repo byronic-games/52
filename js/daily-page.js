@@ -223,11 +223,11 @@ function renderDailyRows(entries, currentPlayerId, showScores = false) {
 
   bodyEl.innerHTML = "";
   if (scoreHeading) {
-    scoreHeading.innerText = showScores ? "Total" : "Result";
+    scoreHeading.innerText = showScores ? "Cards" : "Result";
   }
 
   if (!entries.length) {
-    bodyEl.innerHTML = "<tr><td colspan='5'>No daily scores yet. Set the pace.</td></tr>";
+    bodyEl.innerHTML = "<tr><td colspan='3'>No daily scores yet. Set the pace.</td></tr>";
     countEl.innerText = "0 entries";
     return;
   }
@@ -260,21 +260,9 @@ function renderDailyRows(entries, currentPlayerId, showScores = false) {
     cardsTd.className = "score score-cards";
     cardsTd.innerText = showScores ? formatDailyColumnNumber(entry.cardsCleared ?? entry.score, 52) : "--";
 
-    const bonusTd = document.createElement("td");
-    bonusTd.dataset.label = "Bonus";
-    bonusTd.className = "score score-bonus";
-    bonusTd.innerText = showScores ? formatDailyBonus(entry.bonusScore) : "--";
-
-    const totalTd = document.createElement("td");
-    totalTd.dataset.label = showScores ? "Total" : "Result";
-    totalTd.className = "score score-total";
-    totalTd.innerText = showScores ? formatDailyColumnNumber(entry.score, 9999) : "Hidden";
-
     tr.appendChild(rankTd);
     tr.appendChild(nameTd);
     tr.appendChild(cardsTd);
-    tr.appendChild(bonusTd);
-    tr.appendChild(totalTd);
     bodyEl.appendChild(tr);
   });
 }

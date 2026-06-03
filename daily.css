@@ -358,14 +358,6 @@ td.score {
   font-weight: 800;
 }
 
-.score-bonus {
-  color: var(--gold);
-}
-
-.score-total {
-  color: var(--lime);
-}
-
 .daily-name-button {
   width: 100%;
   min-width: 0;
@@ -590,39 +582,27 @@ td.score {
   }
 
   th {
-    font-size: 0.58rem;
-    letter-spacing: 0.08em;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
     background: rgba(22, 15, 31, 0.98);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   th:nth-child(1),
   td:nth-child(1) {
-    width: 7%;
+    width: 14%;
     text-align: center;
   }
 
   th:nth-child(2),
   td:nth-child(2) {
-    width: 34%;
+    width: 58%;
     text-align: left;
   }
 
   th:nth-child(3),
   td:nth-child(3) {
-    width: 20%;
-    text-align: right;
-  }
-
-  th:nth-child(4),
-  td:nth-child(4) {
-    width: 17%;
-    text-align: right;
-  }
-
-  th:nth-child(5),
-  td:nth-child(5) {
-    width: 22%;
+    width: 28%;
     text-align: right;
   }
 
@@ -650,10 +630,6 @@ td.score {
     font-weight: 900;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0;
-  }
-
-  tbody td.score-total {
-    font-size: 0.98rem;
   }
 
   .daily-rank-pill {
