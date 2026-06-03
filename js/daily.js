@@ -616,6 +616,48 @@ async function fetchDailyLeaderboard(dateKey, limit = 100) {
       }
     }
 
+    try {
+      const nextDateKey = incrementDateKey(dateKey);
+      const createdAtQuery =
+        `select=${activeSelect}` +
+        `&created_at=gte.${encodeURIComponent(`${dateKey}T00:00:00.000Z`)}` +
+        `&created_at=lt.${encodeURIComponent(`${nextDateKey}T00:00:00.000Z`)}` +
+        `&order=score.desc,created_at.asc&limit=${Math.max(1, limit)}`;
+      const createdAtUrl = `${config.supabaseUrl}/rest/v1/${config.table}?${createdAtQuery}`;
+      const createdAtResponse = await fetchWithTimeout(createdAtUrl, {
+        headers: {
+          apikey: config.supabaseAnonKey,
+          Authorization: `Bearer ${config.supabaseAnonKey}`,
+        },
+      });
+      if (createdAtResponse.ok) {
+        const createdAtRows = await createdAtResponse.json();
+        if (Array.isArray(createdAtRows)) {
+          const rowKeys = new Set(rows.map((row) =>
+            `${row.player_id || ""}::${row.player_name || ""}::${row.created_at || ""}::${row.score || ""}`
+          ));
+          createdAtRows.forEach((row) => {
+            const rowDateKey = String(row.date_key || "").trim();
+            const rowSeed = String(row.seed || "").trim();
+            const rowCreatedAt = String(row.created_at || "");
+            const belongsToDaily =
+              rowDateKey === dateKey ||
+              rowSeed === dailySeed ||
+              rowSeed.endsWith(`|${dateKey}`) ||
+              rowCreatedAt.startsWith(dateKey);
+            if (!belongsToDaily) return;
+            const key = `${row.player_id || ""}::${row.player_name || ""}::${row.created_at || ""}::${row.score || ""}`;
+            if (!rowKeys.has(key)) {
+              rowKeys.add(key);
+              rows.push(row);
+            }
+          });
+        }
+      }
+    } catch {
+      // Recent-row fallback is only to rescue malformed current-day metadata.
+    }
+
     const mapped = rows.map((row) =>
       buildDailyEntry({
         dateKey: row.date_key,
