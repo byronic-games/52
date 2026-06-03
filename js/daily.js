@@ -529,8 +529,10 @@ async function fetchDailyLeaderboard(dateKey, limit = 100) {
       }
     }
 
+    let activeSelect =
+      "date_key,seed,player_name,player_id,score,cards_cleared,bonus_score,remaining_cheats,remaining_nudges,tear_count,cheat_bonus,nudge_bonus,tear_penalty,total_score,blue_cleared,green_cleared,red_cleared,daily_clears,crown_summary,created_at";
     const queryPrimary =
-      `select=date_key,seed,player_name,player_id,score,cards_cleared,bonus_score,remaining_cheats,remaining_nudges,tear_count,cheat_bonus,nudge_bonus,tear_penalty,total_score,blue_cleared,green_cleared,red_cleared,daily_clears,crown_summary,created_at` +
+      `select=${activeSelect}` +
       `&date_key=eq.${encodeURIComponent(dateKey)}` +
       `&order=score.desc,created_at.asc&limit=${Math.max(1, limit)}`;
     const primaryUrl = `${config.supabaseUrl}/rest/v1/${config.table}?${queryPrimary}`;
@@ -542,8 +544,9 @@ async function fetchDailyLeaderboard(dateKey, limit = 100) {
     });
 
     if (!response.ok) {
+      activeSelect = "date_key,seed,player_name,player_id,score,blue_cleared,green_cleared,red_cleared,daily_clears,crown_summary,created_at";
       const queryCrownFallback =
-        `select=date_key,seed,player_name,player_id,score,blue_cleared,green_cleared,red_cleared,daily_clears,crown_summary,created_at` +
+        `select=${activeSelect}` +
         `&date_key=eq.${encodeURIComponent(dateKey)}` +
         `&order=score.desc,created_at.asc&limit=${Math.max(1, limit)}`;
       const crownFallbackUrl = `${config.supabaseUrl}/rest/v1/${config.table}?${queryCrownFallback}`;
@@ -556,8 +559,9 @@ async function fetchDailyLeaderboard(dateKey, limit = 100) {
     }
 
     if (!response.ok) {
+      activeSelect = "date_key,seed,player_name,player_id,score,created_at";
       const queryFallback =
-        `select=date_key,seed,player_name,player_id,score,created_at` +
+        `select=${activeSelect}` +
         `&date_key=eq.${encodeURIComponent(dateKey)}` +
         `&order=score.desc,created_at.asc&limit=${Math.max(1, limit)}`;
       const fallbackUrl = `${config.supabaseUrl}/rest/v1/${config.table}?${queryFallback}`;
@@ -576,6 +580,40 @@ async function fetchDailyLeaderboard(dateKey, limit = 100) {
     const rows = await response.json();
     if (!Array.isArray(rows)) {
       return buildDailyLeaderboardResult(localAttempt?.completed ? [localAttempt] : [], false, "offline_payload");
+    }
+
+    const dailySeed = getDailySeedForDate(dateKey);
+    if (dailySeed) {
+      try {
+        const seedQuery =
+          `select=${activeSelect}` +
+          `&seed=eq.${encodeURIComponent(dailySeed)}` +
+          `&order=score.desc,created_at.asc&limit=${Math.max(1, limit)}`;
+        const seedUrl = `${config.supabaseUrl}/rest/v1/${config.table}?${seedQuery}`;
+        const seedResponse = await fetchWithTimeout(seedUrl, {
+          headers: {
+            apikey: config.supabaseAnonKey,
+            Authorization: `Bearer ${config.supabaseAnonKey}`,
+          },
+        });
+        if (seedResponse.ok) {
+          const seedRows = await seedResponse.json();
+          if (Array.isArray(seedRows)) {
+            const rowKeys = new Set(rows.map((row) =>
+              `${row.player_id || ""}::${row.player_name || ""}::${row.created_at || ""}::${row.score || ""}`
+            ));
+            seedRows.forEach((row) => {
+              const key = `${row.player_id || ""}::${row.player_name || ""}::${row.created_at || ""}::${row.score || ""}`;
+              if (!rowKeys.has(key)) {
+                rowKeys.add(key);
+                rows.push(row);
+              }
+            });
+          }
+        }
+      } catch {
+        // The date-key query already succeeded, so seed fallback is optional.
+      }
     }
 
     const mapped = rows.map((row) =>
