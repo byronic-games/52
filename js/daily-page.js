@@ -1,5 +1,6 @@
 const DAILY_SHARE_BASE_URL = "https://byronicman.com/52/daily.html";
 const DAILY_SHARE_ENABLED = false; // Set true to enable the Daily Share button.
+let dailyEntryPopoversEnabled = false;
 
 function formatDailyDateLabel(dateKey) {
   if (!dateKey) return "-";
@@ -144,6 +145,10 @@ function hideDailyEntryPopover() {
 }
 
 function showDailyEntryPopover(entry, anchorEl) {
+  if (!dailyEntryPopoversEnabled) {
+    hideDailyEntryPopover();
+    return;
+  }
   const popover = document.getElementById("daily-entry-popover");
   if (!popover || !entry || !anchorEl) return;
   const cardsCleared = formatDailyColumnNumber(entry.cardsCleared ?? entry.score, 52);
@@ -224,6 +229,7 @@ function renderDailyRows(entries, currentPlayerId, showScores = false) {
   const scoreHeading = document.getElementById("daily-score-heading");
   if (!bodyEl || !countEl) return;
 
+  dailyEntryPopoversEnabled = !!showScores;
   if (!showScores) {
     hideDailyEntryPopover();
   }
