@@ -152,9 +152,11 @@ function showDailyEntryPopover(entry, anchorEl) {
   const totalScore = formatDailyColumnNumber(entry.score, 9999);
   const remainingCheats = formatDailyColumnNumber(entry.remainingCheats, 999);
   const remainingNudges = formatDailyColumnNumber(entry.remainingNudges, 999);
+  const powerCount = formatDailyColumnNumber(entry.powerCount, 999);
   const tearCount = formatDailyColumnNumber(entry.tearCount, 999);
   const cheatBonus = formatDailyColumnNumber(entry.cheatBonus, 999);
   const nudgeBonus = formatDailyColumnNumber(entry.nudgeBonus, 999);
+  const powerBonus = formatDailyColumnNumber(entry.powerBonus, 999);
   const tearPenalty = formatDailyColumnNumber(entry.tearPenalty, 999);
 
   popover.innerHTML = `
@@ -164,6 +166,7 @@ function showDailyEntryPopover(entry, anchorEl) {
       <div class="daily-score-breakdown-row"><span>Cards cleared</span><strong>${cardsCleared} = ${cardScore}</strong></div>
       <div class="daily-score-breakdown-row"><span>Cheats left</span><strong>${remainingCheats} = +${cheatBonus}</strong></div>
       <div class="daily-score-breakdown-row"><span>Nudges left</span><strong>${remainingNudges} = +${nudgeBonus}</strong></div>
+      <div class="daily-score-breakdown-row"><span>Powers in play</span><strong>${powerCount} = +${powerBonus}</strong></div>
       <div class="daily-score-breakdown-row"><span>Tears</span><strong>${tearCount} = -${tearPenalty}</strong></div>
       <div class="daily-score-breakdown-row daily-score-breakdown-total"><span>Bonus</span><strong>${bonusScore}</strong></div>
       <div class="daily-score-breakdown-row daily-score-breakdown-total"><span>Total</span><strong>${totalScore}</strong></div>

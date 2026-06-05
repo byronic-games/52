@@ -253,7 +253,7 @@ window.CHEAT_BALANCE_OVERRIDES = {
                           "unlockAt":  30,
                           "name":  "Cursed Shield",
                           "included":  true,
-                          "rarity":  "legendary"
+                          "rarity":  "rare"
                       },
     "next_card_nudge_up":  {
                                "stacking":  "unique",

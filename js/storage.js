@@ -628,6 +628,9 @@ function serializeGameStateSnapshot(sourceState) {
     experienceBankedCardIds: [],
     experiencePreviewUntil: 0,
     experienceMilestonesAwarded: Array.from(sourceState.experienceMilestonesAwarded || []),
+    temporaryCardBackRepairs: sourceState.temporaryCardBackRepairs && typeof sourceState.temporaryCardBackRepairs === "object"
+      ? { ...sourceState.temporaryCardBackRepairs }
+      : {},
     pendingExperienceBonuses: Array.isArray(sourceState.pendingExperienceBonuses)
       ? sourceState.pendingExperienceBonuses
       : [],
@@ -667,6 +670,9 @@ function loadGameStateSnapshot() {
       experienceBankedCardIds: new Set(Array.isArray(parsed.experienceBankedCardIds) ? parsed.experienceBankedCardIds : []),
       experiencePreviewUntil: 0,
       experienceMilestonesAwarded: new Set(Array.isArray(parsed.experienceMilestonesAwarded) ? parsed.experienceMilestonesAwarded : []),
+      temporaryCardBackRepairs: parsed.temporaryCardBackRepairs && typeof parsed.temporaryCardBackRepairs === "object"
+        ? { ...parsed.temporaryCardBackRepairs }
+        : {},
       pendingExperienceBonuses: Array.isArray(parsed.pendingExperienceBonuses) ? parsed.pendingExperienceBonuses : [],
       unusedCheatExperienceAwarded: !!parsed.unusedCheatExperienceAwarded,
       cheats: (parsed.cheats || []).map((id) => CHEATS.find((cheat) => cheat.id === id)).filter(Boolean).map((cheat) => ({ ...cheat })),

@@ -12,7 +12,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="images/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="intro.css?v=20260521c">
+  <link rel="stylesheet" href="intro.css?v=20260605a">
 </head>
 <body class="intro-page">
   <main class="intro-shell">
@@ -25,7 +25,7 @@
       <section class="intro-main">
         <img class="intro-logo" src="images/52logo.png" alt="52!" width="1222" height="1222">
         <div class="black-leader-strip" aria-live="polite">
-          <span>Current Black Deck High Score:</span>
+          <span id="leader-strip-label">Yesterday's Daily Winner:</span>
           <strong id="black-leader-value">--/52...</strong>
         </div>
 
@@ -185,8 +185,8 @@
           <ul>
             <li><strong>Daily:</strong> The Daily unlocks after your first run, gives everyone the same seeded deck and offers for the date, and currently plays as Blue Deck Level 1.</li>
             <li>Your Daily leaderboard total is <strong>cards cleared x 100</strong>, plus a resource bonus.</li>
-            <li>Unused Cheats are worth <strong>+25</strong> each, unused Nudge charges are worth <strong>+5</strong> each, and each torn card seen during the run is worth <strong>-15</strong>.</li>
-            <li>The Daily bonus is capped from <strong>-999</strong> to <strong>+999</strong>, so cards cleared remains the main score.</li>
+            <li>Unused Nudge charges are worth <strong>+5</strong> each, unused Cheats are worth <strong>+10</strong> each, and each Power in play is worth <strong>+25</strong>.</li>
+            <li>Each torn card seen during the run is worth <strong>-10</strong>, but the Daily bonus can never go below <strong>0</strong>.</li>
             <li>Hold a player name on the Daily leaderboard to see their deck clears and score breakdown.</li>
           </ul>
         </div>
@@ -217,6 +217,8 @@
       const nameInput = document.getElementById("intro-name-input");
       const dailyLaunchCard = document.getElementById("daily-launch-card");
       const dailyLaunchSub = document.getElementById("daily-launch-sub");
+      const leaderStrip = document.querySelector(".black-leader-strip");
+      const leaderStripLabel = document.getElementById("leader-strip-label");
       const blackLeaderValue = document.getElementById("black-leader-value");
       const playBtn = document.getElementById("play-open-btn");
       const deckModal = document.getElementById("deck-modal");
@@ -301,16 +303,92 @@
         }
       }
 
-      async function refreshBlackLeader() {
-        if (!blackLeaderValue || typeof fetchBlackDeckLeader !== "function") return;
-        try {
-          const leader = await fetchBlackDeckLeader();
-          blackLeaderValue.innerText = leader
-            ? `${leader.score}/52... ${leader.playerName}`
-            : "--/52...";
-        } catch {
-          blackLeaderValue.innerText = "--/52...";
+      function getUtcDateKey(date = new Date()) {
+        const year = date.getUTCFullYear();
+        const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+        const day = String(date.getUTCDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      }
+
+      function getYesterdayDateKey() {
+        const date = new Date();
+        date.setUTCDate(date.getUTCDate() - 1);
+        return getUtcDateKey(date);
+      }
+
+      function setLeaderStrip(label, value, animate = true) {
+        if (!leaderStripLabel || !blackLeaderValue) return;
+        const applyText = () => {
+          leaderStripLabel.innerText = label;
+          blackLeaderValue.innerText = value;
+          leaderStrip?.classList.remove("is-swapping");
+        };
+        if (!animate || !leaderStrip) {
+          applyText();
+          return;
         }
+        leaderStrip.classList.add("is-swapping");
+        window.setTimeout(applyText, 220);
+      }
+
+      async function fetchYesterdayDailyWinner() {
+        if (!leaderboardRemoteEnabled()) return null;
+        const dateKey = getYesterdayDateKey();
+        const query = [
+          "select=player_name,score,cards_cleared,created_at",
+          `date_key=eq.${encodeURIComponent(dateKey)}`,
+          "order=score.desc,created_at.asc",
+          "limit=1",
+        ].join("&");
+        const url = `${LEADERBOARD_CONFIG.supabaseUrl}/rest/v1/daily_52?${query}`;
+        const response = await fetch(url, {
+          headers: {
+            apikey: LEADERBOARD_CONFIG.supabaseAnonKey,
+            Authorization: `Bearer ${LEADERBOARD_CONFIG.supabaseAnonKey}`,
+          },
+        });
+        if (!response.ok) return null;
+        const rows = await response.json();
+        return Array.isArray(rows) && rows[0] ? rows[0] : null;
+      }
+
+      async function buildLeaderStripItems() {
+        const items = [];
+        try {
+          const dailyWinner = await fetchYesterdayDailyWinner();
+          items.push({
+            label: "Yesterday's Daily Winner:",
+            value: dailyWinner?.player_name ? dailyWinner.player_name : "--",
+          });
+        } catch {
+          items.push({ label: "Yesterday's Daily Winner:", value: "--" });
+        }
+
+        try {
+          if (typeof fetchBlackDeckLeader !== "function") return items;
+          const leader = await fetchBlackDeckLeader();
+          items.push({
+            label: "Current Black Deck High Score:",
+            value: leader ? `${leader.score}/52... ${leader.playerName}` : "--/52...",
+          });
+        } catch {
+          items.push({ label: "Current Black Deck High Score:", value: "--/52..." });
+        }
+
+        return items;
+      }
+
+      async function startLeaderStripRotation() {
+        if (!blackLeaderValue || !leaderStripLabel) return;
+        const items = await buildLeaderStripItems();
+        if (!items.length) return;
+        let index = 0;
+        setLeaderStrip(items[index].label, items[index].value, false);
+        if (items.length < 2) return;
+        window.setInterval(() => {
+          index = (index + 1) % items.length;
+          setLeaderStrip(items[index].label, items[index].value, true);
+        }, 10000);
       }
 
       function getDeckLevelKey(deckKey, levelNumber) {
@@ -871,7 +949,7 @@
       });
 
       refreshDailyLaunchState();
-      refreshBlackLeader();
+      startLeaderStripRotation();
 
       window.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {

@@ -74,7 +74,7 @@ const POWERS = [
   {
     id: "cheaters_prosper",
     name: "Cheaters Prosper",
-    description: "Every time you play a Cheat, gain 3 Nudge +1 and 3 Nudge -1 charges.",
+    description: "Every time you play a Cheat, gain 2 Nudge +1 and 2 Nudge -1 charges.",
     rarity: "common",
     unlockAt: 0,
     weight: 1,
@@ -396,7 +396,7 @@ function awardOnCorrectGuessPowers(guessType) {
 
 function awardCheatersProsperCheatUse(didConsume = true) {
   if (!didConsume || !runHasPower("cheaters_prosper")) return "";
-  state.nudgeUpCharges = (state.nudgeUpCharges || 0) + 3;
-  state.nudgeDownCharges = (state.nudgeDownCharges || 0) + 3;
-  return " Cheaters Prosper: gained 3 Nudge +1 and 3 Nudge -1.";
+  state.nudgeUpCharges = (state.nudgeUpCharges || 0) + 2;
+  state.nudgeDownCharges = (state.nudgeDownCharges || 0) + 2;
+  return " Cheaters Prosper: gained 2 Nudge +1 and 2 Nudge -1.";
 }

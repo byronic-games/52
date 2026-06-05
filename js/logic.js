@@ -738,6 +738,11 @@ function previewPendingRunBehindPowerChoice(deck, runMode = "standard", deckKey 
   state.cheats = [];
   state.nudgeUpCharges = 0;
   state.nudgeDownCharges = 0;
+  state.nudgeNudgeArmed = false;
+  state.fiveAliveNudgeLocked = false;
+  state.royalFlushRemaining = 0;
+  state.royalFlushSuitsSeen = {};
+  state.temporaryCardBackRepairs = {};
   state.bingoCornersAwarded = false;
   state.bingoLineAwardCount = 0;
   state.oneLifeLeftLives = 0;
@@ -1064,6 +1069,7 @@ function startRunWithPower(powerId) {
     metaProgression: loadMetaProgression(),
     cardStats: loadCardStats(),
     cardBackStatuses: loadCardBackStatuses(),
+    temporaryCardBackRepairs: {},
     temporaryCardBackMarks: {},
     deckWins: loadDeckWins(),
     deckLevelClears: loadDeckLevelClears(),
@@ -1102,6 +1108,10 @@ function startRunWithPower(powerId) {
     recentlySeenCardId: "",
     nudgeUpCharges: 0,
     nudgeDownCharges: 0,
+    nudgeNudgeArmed: false,
+    fiveAliveNudgeLocked: false,
+    royalFlushRemaining: 0,
+    royalFlushSuitsSeen: {},
     bingoCornersAwarded: false,
     bingoLineAwardCount: 0,
     energy: greenRun
@@ -1110,6 +1120,7 @@ function startRunWithPower(powerId) {
     lastJokerMessage: "",
     lucky7Armed: false,
     fiveAliveArmed: false,
+    fiveAliveNudgeLocked: false,
     marginForErrorArmed: false,
     hotOrColdArmed: false,
     stitchInTimeArmed: false,
@@ -1121,6 +1132,9 @@ function startRunWithPower(powerId) {
     lockySevensActive: false,
     oddOneOutArmed: false,
     cursedShieldArmed: false,
+    nudgeNudgeArmed: false,
+    royalFlushRemaining: 0,
+    royalFlushSuitsSeen: {},
     oneLifeLeftLives: 0,
     killerQueenLives: 0,
     suitedAndBootedArmed: false,
@@ -1190,6 +1204,7 @@ function handleRunFinished(finalScore) {
     ? state.cheats.filter((cheat) => cheat?.id && cheat.id !== "nudge_up" && cheat.id !== "nudge_down").length
     : 0;
   const remainingNudges = Math.max(0, Number(state.nudgeUpCharges) || 0) + Math.max(0, Number(state.nudgeDownCharges) || 0);
+  const powerCount = Array.isArray(state.powers) ? state.powers.filter(Boolean).length : 0;
   const seenCardIds = state.seenCardIds instanceof Set ? state.seenCardIds : new Set();
   const tearCount = Array.isArray(state.deck)
     ? state.deck.filter((card) =>
@@ -1204,6 +1219,7 @@ function handleRunFinished(finalScore) {
       cardsCleared: dailyCardsCleared,
       remainingCheats,
       remainingNudges,
+      powerCount,
       tearCount,
     })
     : {
@@ -1213,9 +1229,11 @@ function handleRunFinished(finalScore) {
       totalScore: dailyCardsCleared,
       remainingCheats,
       remainingNudges,
+      powerCount,
       tearCount,
       cheatBonus: 0,
       nudgeBonus: 0,
+      powerBonus: 0,
       tearPenalty: 0,
     };
   const entry = buildDailyEntry({
@@ -1229,9 +1247,11 @@ function handleRunFinished(finalScore) {
     bonusScore: dailyBreakdown.bonusScore,
     remainingCheats: dailyBreakdown.remainingCheats,
     remainingNudges: dailyBreakdown.remainingNudges,
+    powerCount: dailyBreakdown.powerCount,
     tearCount: dailyBreakdown.tearCount,
     cheatBonus: dailyBreakdown.cheatBonus,
     nudgeBonus: dailyBreakdown.nudgeBonus,
+    powerBonus: dailyBreakdown.powerBonus,
     tearPenalty: dailyBreakdown.tearPenalty,
     totalScore: dailyBreakdown.totalScore,
   });
@@ -1662,6 +1682,42 @@ function getAdjustedNextNudgeTarget(baseDelta) {
   return adjustValueForLockySevens(currentValue, targetValue);
 }
 
+function getActiveNudgeDelta(baseDelta) {
+  return baseDelta * (state.nudgeNudgeArmed ? 2 : 1);
+}
+
+function applyRoyalFlushReveal(card) {
+  if ((Number(state.royalFlushRemaining) || 0) <= 0) return null;
+  if (!card || isJokerCard(card) || !card.suit) return null;
+
+  if (!state.royalFlushSuitsSeen || typeof state.royalFlushSuitsSeen !== "object") {
+    state.royalFlushSuitsSeen = {};
+  }
+
+  state.royalFlushRemaining = Math.max(0, (Number(state.royalFlushRemaining) || 0) - 1);
+  const suit = card.suit;
+  const isNewSuit = !state.royalFlushSuitsSeen[suit];
+  if (isNewSuit) {
+    state.royalFlushSuitsSeen[suit] = true;
+    queueCheatAward("royal_flush");
+  }
+
+  const suitsSeen = SUITS.filter((entry) => !!state.royalFlushSuitsSeen[entry]).length;
+  const completed = suitsSeen >= 4;
+  if (completed) {
+    state.royalFlushRemaining = 0;
+    queuePowerAward("royal_flush");
+  }
+
+  return {
+    suit,
+    isNewSuit,
+    suitsSeen,
+    completed,
+    remaining: state.royalFlushRemaining,
+  };
+}
+
 function isAceWildAutoCorrect(currentComparisonValue, nextCard) {
   if (!runHasPower("aces_wild")) return false;
   return currentComparisonValue === 1 || getNextComparisonValueForGuess(nextCard) === 1;
@@ -1691,6 +1747,7 @@ function canUseNudge(direction) {
     state.pendingPowerOptions.length > 0 ||
     (state.psychoRemaining || 0) > 0 ||
     !!state.sixSevenArmed ||
+    !!state.fiveAliveNudgeLocked ||
     !!state.pauseForCheat;
   if (isBlocked) return false;
   if (!blankSpaceActive && !!state.lockCurrentCardForForcedGuess) return false;
@@ -1698,20 +1755,20 @@ function canUseNudge(direction) {
 
   if (direction === "up") {
     if (blankSpaceActive) {
-      const nextValue = getAdjustedNextNudgeTarget(1);
+      const nextValue = getAdjustedNextNudgeTarget(getActiveNudgeDelta(1));
       return nextValue !== getUpcomingCheatValue(1);
     }
     if ((state.nudgeUpCharges || 0) <= 0) return false;
-    const nextValue = getAdjustedCurrentNudgeTarget(1);
+    const nextValue = getAdjustedCurrentNudgeTarget(getActiveNudgeDelta(1));
     return nextValue !== getCurrentEffectiveValue();
   }
   if (direction === "down") {
     if (blankSpaceActive) {
-      const nextValue = getAdjustedNextNudgeTarget(-1);
+      const nextValue = getAdjustedNextNudgeTarget(getActiveNudgeDelta(-1));
       return nextValue !== getUpcomingCheatValue(1);
     }
     if ((state.nudgeDownCharges || 0) <= 0) return false;
-    const nextValue = getAdjustedCurrentNudgeTarget(-1);
+    const nextValue = getAdjustedCurrentNudgeTarget(getActiveNudgeDelta(-1));
     return nextValue !== getCurrentEffectiveValue();
   }
   return false;
@@ -1738,6 +1795,12 @@ function useNudgeCharge(direction) {
 
   if (!blankSpaceActive && isGreenDeckRun() && (state.energy || 0) <= 0) {
     state.message = "No energy left - nudges are disabled.";
+    render();
+    return;
+  }
+
+  if (!blankSpaceActive && state.fiveAliveNudgeLocked) {
+    state.message = "Five Alive has locked this 5 - it cannot be nudged.";
     render();
     return;
   }
@@ -1782,8 +1845,8 @@ function useNudgeCharge(direction) {
     ? getUpcomingCheatValue(1)
     : getCurrentEffectiveValue();
   const targetValue = direction === "up"
-    ? (blankSpaceActive ? getAdjustedNextNudgeTarget(1) : getAdjustedCurrentNudgeTarget(1))
-    : (blankSpaceActive ? getAdjustedNextNudgeTarget(-1) : getAdjustedCurrentNudgeTarget(-1));
+    ? (blankSpaceActive ? getAdjustedNextNudgeTarget(getActiveNudgeDelta(1)) : getAdjustedCurrentNudgeTarget(getActiveNudgeDelta(1)))
+    : (blankSpaceActive ? getAdjustedNextNudgeTarget(getActiveNudgeDelta(-1)) : getAdjustedCurrentNudgeTarget(getActiveNudgeDelta(-1)));
   if (!Number.isFinite(currentValue) || !Number.isFinite(targetValue)) {
     return;
   }
@@ -1821,7 +1884,7 @@ function useNudgeCharge(direction) {
   const effective = blankSpaceActive ? getUpcomingCheatValue(1) : getCurrentEffectiveValue();
   const label = blankSpaceActive
     ? `Blank Space ${direction === "up" ? "up" : "down"}`
-    : (direction === "up" ? "Nudge +1" : "Nudge -1");
+    : (direction === "up" ? `Nudge +${getActiveNudgeDelta(1)}` : `Nudge ${getActiveNudgeDelta(-1)}`);
   state.message = blankSpaceActive
     ? `Blank Space adjusted. Next card is now treated as ${valueToRank(effective)}.`
     : isGreenDeckRun()
@@ -1932,15 +1995,24 @@ function getCardCorrectPercentage(card) {
 }
 
 function getCardBackStatus(cardId) {
-  return state.cardBackStatuses[cardId] || {
+  const status = state.cardBackStatuses[cardId] || {
     tornCorner: false,
     backColor: "blue",
   };
+  return state.temporaryCardBackRepairs?.[cardId]
+    ? { ...status, tornCorner: false }
+    : status;
 }
 
 function setCardBackStatus(cardId, patch) {
-  const current = getCardBackStatus(cardId);
+  const current = state.cardBackStatuses[cardId] || {
+    tornCorner: false,
+    backColor: "blue",
+  };
   state.cardBackStatuses[cardId] = { ...current, ...patch };
+  if (state.temporaryCardBackRepairs?.[cardId]) {
+    delete state.temporaryCardBackRepairs[cardId];
+  }
   if (isDevModeRun()) return;
   saveCardBackStatuses(state.cardBackStatuses);
 }
@@ -1977,8 +2049,11 @@ function applyTearlessJoker() {
   }
 
   const unseenTornCard = unseenTornCards[Math.floor(Math.random() * unseenTornCards.length)];
-  setCardBackStatus(unseenTornCard.id, { tornCorner: false });
-  return `A Yellow Joker repaired ${describeCard(unseenTornCard)}. Persistent torn corners now: ${Math.max(0, totalTorn - 1)}.`;
+  if (!state.temporaryCardBackRepairs || typeof state.temporaryCardBackRepairs !== "object") {
+    state.temporaryCardBackRepairs = {};
+  }
+  state.temporaryCardBackRepairs[unseenTornCard.id] = true;
+  return `A Yellow Joker hid the tear on ${describeCard(unseenTornCard)} for this run. Persistent torn corners remain: ${totalTorn}.`;
 }
 
 function applyTimelessJoker() {
@@ -2036,6 +2111,7 @@ function applyTimelessJoker() {
 function clearArmedPowerEffects() {
   state.lucky7Armed = false;
   state.fiveAliveArmed = false;
+  state.fiveAliveNudgeLocked = false;
   state.marginForErrorArmed = false;
   state.stitchInTimeArmed = false;
   state.higherHigherHigherRemaining = 0;
@@ -2045,6 +2121,9 @@ function clearArmedPowerEffects() {
   state.lockySevensActive = false;
   state.oddOneOutArmed = false;
   state.cursedShieldArmed = false;
+  state.nudgeNudgeArmed = false;
+  state.royalFlushRemaining = 0;
+  state.royalFlushSuitsSeen = {};
   state.oneLifeLeftLives = 0;
   state.killerQueenLives = 0;
   state.suitedAndBootedArmed = false;
@@ -2306,6 +2385,7 @@ function makeGuessLegacy(type) {
   const equals11WasArmed = !!state.equals11Armed;
   const suitedAndBootedSuit = state.suitedAndBootedSuit || "";
   const blankSpaceWasActive = !!state.blankSpaceActive;
+  const nudgeNudgeWasArmed = !!state.nudgeNudgeArmed;
   const wlStageBeforeGuess = state.wlStage || "";
   const forcedNextGuessDirection = state.forcedNextGuess || "";
   const passiveSuitSavePower = getPassiveSuitSavePower(state.current);
@@ -2313,6 +2393,7 @@ function makeGuessLegacy(type) {
 
   state.lucky7Armed = false;
   state.fiveAliveArmed = false;
+  state.fiveAliveNudgeLocked = false;
   state.marginForErrorArmed = false;
   state.hotOrColdArmed = false;
   state.stitchInTimeArmed = false;
@@ -2328,6 +2409,7 @@ function makeGuessLegacy(type) {
   state.suitedAndBootedSuit = "";
   state.forcedNextGuess = "";
   state.lockCurrentCardForForcedGuess = false;
+  state.nudgeNudgeArmed = false;
 
   // --- Unified correct guess logic for streaks and extensibility ---
   let correct = false;
@@ -2554,6 +2636,7 @@ function makeGuessLegacy(type) {
     queueCheatAward("equals_11");
     queueCheatAward("equals_11");
   }
+  const royalFlushResult = applyRoyalFlushReveal(next);
 
   if (state.index >= state.deck.length - 1) {
     appendRunDebugLog("guess_resolved", {
@@ -2574,6 +2657,7 @@ function makeGuessLegacy(type) {
       redDeadRedemptionWasArmed,
       oddOneOutWasArmed,
       sixSevenWasArmed,
+      royalFlushResult,
     });
     if (!isDevModeRun()) {
       if (state.runMode !== "daily") {
@@ -2693,6 +2777,7 @@ function makeGuessLegacy(type) {
       rescuedByKillerQueen,
       rescuedBySuitedAndBooted,
       blankSpaceWasActive,
+      nudgeNudgeWasArmed,
       wlStageBeforeGuess,
       wlAdvancedToLoss,
       wlCompleted,
@@ -3079,6 +3164,7 @@ function makeGuess(type) {
   const suitedAndBootedWasArmed = !!state.suitedAndBootedArmed;
   const suitedAndBootedSuit = state.suitedAndBootedSuit || "";
   const blankSpaceWasActive = !!state.blankSpaceActive;
+  const nudgeNudgeWasArmed = !!state.nudgeNudgeArmed;
   const wlStageBeforeGuess = state.wlStage || "";
   const forcedNextGuessDirection = state.forcedNextGuess || "";
   const passiveSuitSavePower = getPassiveSuitSavePower(state.current);
@@ -3086,6 +3172,7 @@ function makeGuess(type) {
 
   state.lucky7Armed = false;
   state.fiveAliveArmed = false;
+  state.fiveAliveNudgeLocked = false;
   state.marginForErrorArmed = false;
   state.hotOrColdArmed = false;
   state.stitchInTimeArmed = false;
@@ -3099,6 +3186,7 @@ function makeGuess(type) {
   state.equals11Armed = false;
   state.blankSpaceActive = false;
   state.blankSpaceValue = null;
+  state.nudgeNudgeArmed = false;
   state.forcedNextGuess = "";
   state.lockCurrentCardForForcedGuess = false;
   state.wlStage = "";
@@ -3426,6 +3514,7 @@ function makeGuess(type) {
     queueCheatAward("equals_11");
     queueCheatAward("equals_11");
   }
+  const royalFlushResult = applyRoyalFlushReveal(next);
 
   if (state.index >= state.deck.length - 1) {
     appendRunDebugLog("guess_resolved", {
@@ -3450,6 +3539,7 @@ function makeGuess(type) {
       forcedNextGuessDirection,
       forcedNudgeDirection,
       forcedNudgeReward,
+      royalFlushResult,
       rescuedByCursedShield,
       rescuedByKillerQueen,
       rescuedBySuitedAndBooted,
@@ -3595,12 +3685,14 @@ function makeGuess(type) {
     rescuedByHotOrCold,
     rescuedByStitchInTime,
     blankSpaceWasActive,
+    nudgeNudgeWasArmed,
     wlStageBeforeGuess,
     wlAdvancedToLoss,
     wlCompleted,
     blankSpacePowerTriggered,
     brucieBonusTriggered,
     cheatACheaterTriggered,
+    royalFlushResult,
     cheatACheaterRemaining: state.cheatACheaterRemaining || 0,
     energyAfter: state.energy || 0,
   });
@@ -3746,6 +3838,25 @@ function makeGuess(type) {
     : "";
   const rescueBonusText = `${rescuedByCursedShield ? " Cursed Shield saved this guess." : ""}${rescuedByRedDeadRedemption ? " Red? Dead? Redemption saved this guess." : ""}${rescuedBySuitedAndBooted ? " Suited and Booted saved this guess." : ""}${rescuedByMarginForError ? " Margin For Error saved this guess." : ""}${rescuedByHotOrCold ? " Margin Of Error saved this guess." : ""}${rescuedByStitchInTime ? " A Stitch In Time saved this guess." : ""}${oneLifeLeftText}${killerQueenText}${forcedRewardText}${wlAdvanceText}${equals11MissText}${higherHigherHigherText}${refundText}${bingoAwardText}`;
 
+  if (royalFlushResult?.isNewSuit) {
+    if (state.streak >= getCheatRewardThreshold()) {
+      state.streak = 0;
+      queueCheatAward("streak");
+    }
+    const royalFlushMessage = royalFlushResult.completed
+      ? `Royal Flush! ${royalFlushResult.suit} completed all four suits - choose a bonus Cheat, then a Power.`
+      : `Royal Flush! New suit ${royalFlushResult.suit} - choose a bonus Cheat. ${royalFlushResult.suitsSeen}/4 suits found, ${royalFlushResult.remaining} reveal${royalFlushResult.remaining === 1 ? "" : "s"} left.`;
+    state.pauseForCheat = true;
+    state.message = appendEnergyFeedback(`${royalFlushMessage}${rescueBonusText}`, revealDistance);
+    render();
+    setTimeout(() => {
+      state.pauseForCheat = false;
+      const nextReason = state.pendingCheatAwardQueue.shift() || "royal_flush";
+      offerCheatChoice(nextReason);
+      render();
+    }, 1000);
+    return;
+  }
 
   if (state.streak >= getCheatRewardThreshold()) {
     state.streak = 0;

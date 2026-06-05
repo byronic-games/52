@@ -200,6 +200,12 @@ h1 {
   line-height: 1.2;
   text-align: center;
   text-transform: uppercase;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.black-leader-strip.is-swapping {
+  opacity: 0.35;
+  transform: translateY(-2px);
 }
 
 .black-leader-strip strong {

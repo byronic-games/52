@@ -98,6 +98,10 @@ function getCheatDeterministicRng(label) {
   return mulberry32(stringToSeedNumber(`${GAME_VERSION}|${seedBase}|${state.index}|${label}`));
 }
 
+function getNudgeNudgeDelta(baseDelta) {
+  return baseDelta * (state.nudgeNudgeArmed ? 2 : 1);
+}
+
 function getWeightedRandomIndex(items, getWeight, rng = Math.random) {
   const totalWeight = items.reduce((sum, item) => sum + Math.max(0, getWeight(item)), 0);
   if (totalWeight <= 0) return -1;
@@ -188,6 +192,7 @@ const CHEAT_DESCRIPTIONS = {
   "Nudge +2": "Increases the value of the current face card by two, stopping at King.",
   "Nudge -2": "Decreases the value of the current face card by two, stopping at Ace.",
   "Need The Nudge": "Swap your stored Nudge +1 and Nudge -1 charge totals.",
+  "Nudge, Nudge": "For this turn only, each Nudge moves the card twice as far while still costing one charge.",
   "+5 Energy": "Green Deck only. Gain 5 Energy instantly.",
   "Next Card Nudge Up": "Temporarily nudges the next face-down card up by 3 for the next guess, stopping at King.",
   "Next Card Nudge Down": "Temporarily nudges the next face-down card down by 3 for the next guess, stopping at Ace.",
@@ -195,10 +200,11 @@ const CHEAT_DESCRIPTIONS = {
   "Double Trouble": "Treat the current card as double its value for the next guess, up to King.",
   "Odd One Out": "For the next card only: if it is odd, you lose. Aces count as odd even under Aces Wild. Otherwise you survive.",
   "Lucky 7": "Can only be used on a 7. Your next wrong guess still counts as correct.",
-  "Five Alive": "Can only be used on a 5. If your next guess is wrong, the run still continues.",
+  "Five Alive": "Can only be used on a 5. Locks the 5 against nudges, and if your next guess is wrong, the run still continues.",
   "Psycho": "For the next three guesses, you cannot use Cheats or Nudges. Survive all three to choose a new Power.",
   "Higher, Higher, Higher": "Choose a new Power if your next three successful guesses are Higher.",
   "Back To Square One": "Treat the current face-up card as an Ace for the next guess.",
+  "Flip That Frown": "Can only be used on a 6 or 9. Treat a 6 as a 9, or a 9 as a 6, for the next guess.",
   "9 to 5": "Can only be used on a 9. Treat the current card as a 5 for the next guess.",
   "A Stitch In Time Saves...": "Can only be used on a 9. If your next guess is wrong, the run continues.",
   "Catch-22": "Can only be used on a 2. If the next card is also a 2, choose a new Power.",
@@ -228,6 +234,7 @@ const CHEAT_DESCRIPTIONS = {
   "Margin Of Error": "If your next guess is wrong by 3 or less, the run continues.",
   "Corporate Icebreaker": "Hear two true value-and-suit facts and one believable lie about the next three cards.",
   "Legends Ahead": "Your next Cheat pick offers Legendary Cheats only.",
+  "Royal Flush": "For the next five revealed cards, each new suit revealed after a correct guess gives a bonus Cheat. Reveal all four suits to choose a Power.",
   "Emergency Cord": "Gain 10 Nudge +1 and 10 Nudge -1, then shuffle two random Yellow Jokers into the face-down deck.",
   "Two's Company": "Mark the next face-down 2 in the deck with a temporary 2 on its back.",
   "Refund": "Arm this card. After your next guess, unnecessary current-card nudges used this turn are returned.",
@@ -739,7 +746,10 @@ const CHEATS = [
       if (state.lockySevensActive && current === 7) {
         return "Locky 7s active - 7s cannot be nudged.";
       }
-      const targetValue = getAdjustedCurrentNudgeTarget(1);
+      if (state.fiveAliveNudgeLocked) {
+        return "Five Alive has locked this 5 - it cannot be nudged.";
+      }
+      const targetValue = getAdjustedCurrentNudgeTarget(getNudgeNudgeDelta(1));
       if (!Number.isFinite(targetValue)) return "No current card.";
       state.currentValueModifier += targetValue - current;
       return `Current card is now treated as ${valueToRank(getCurrentEffectiveValue())} for the next guess.`;
@@ -760,7 +770,10 @@ const CHEATS = [
       if (state.lockySevensActive && current === 7) {
         return "Locky 7s active - 7s cannot be nudged.";
       }
-      const targetValue = getAdjustedCurrentNudgeTarget(-1);
+      if (state.fiveAliveNudgeLocked) {
+        return "Five Alive has locked this 5 - it cannot be nudged.";
+      }
+      const targetValue = getAdjustedCurrentNudgeTarget(getNudgeNudgeDelta(-1));
       if (!Number.isFinite(targetValue)) return "No current card.";
       state.currentValueModifier += targetValue - current;
       return `Current card is now treated as ${valueToRank(getCurrentEffectiveValue())} for the next guess.`;
@@ -781,7 +794,10 @@ const CHEATS = [
       if (state.lockySevensActive && current === 7) {
         return "Locky 7s active - 7s cannot be nudged.";
       }
-      const nextValue = getAdjustedCurrentNudgeTarget(2);
+      if (state.fiveAliveNudgeLocked) {
+        return "Five Alive has locked this 5 - it cannot be nudged.";
+      }
+      const nextValue = getAdjustedCurrentNudgeTarget(getNudgeNudgeDelta(2));
       if (!Number.isFinite(nextValue)) return "No current card.";
       state.currentValueModifier += nextValue - current;
       return `Current card is now treated as ${valueToRank(getCurrentEffectiveValue())} for the next guess.`;
@@ -802,7 +818,10 @@ const CHEATS = [
       if (state.lockySevensActive && current === 7) {
         return "Locky 7s active - 7s cannot be nudged.";
       }
-      const nextValue = getAdjustedCurrentNudgeTarget(-2);
+      if (state.fiveAliveNudgeLocked) {
+        return "Five Alive has locked this 5 - it cannot be nudged.";
+      }
+      const nextValue = getAdjustedCurrentNudgeTarget(getNudgeNudgeDelta(-2));
       if (!Number.isFinite(nextValue)) return "No current card.";
       state.currentValueModifier += nextValue - current;
       return `Current card is now treated as ${valueToRank(getCurrentEffectiveValue())} for the next guess.`;
@@ -865,6 +884,21 @@ const CHEATS = [
       state.nudgeUpCharges = downCharges;
       state.nudgeDownCharges = upCharges;
       return `Need The Nudge swapped stored nudges: +${upCharges}/-${downCharges} became +${downCharges}/-${upCharges}.`;
+    },
+  },
+  {
+    id: "nudge_nudge",
+    name: "Nudge, Nudge",
+    rarity: "uncommon",
+    weight: 1,
+    included: true,
+    unlockAt: 0,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => {
+      if (!state.current) return "No current card.";
+      state.nudgeNudgeArmed = true;
+      return "Nudge, Nudge armed - nudges are doubled until the next card is revealed.";
     },
   },
   {
@@ -950,6 +984,8 @@ const CHEATS = [
       const currentVal = getCurrentEffectiveValue();
       if (currentVal !== 5) return "Five Alive can only be used on a 5.";
       state.fiveAliveArmed = true;
+      state.fiveAliveNudgeLocked = true;
+      return "Five Alive armed - this 5 is locked against nudges, and a wrong next guess will still continue the run.";
       return "Five Alive armed — a wrong next guess will still continue the run.";
     },
   },
@@ -1023,6 +1059,26 @@ const CHEATS = [
       if (!Number.isFinite(current)) return "Back To Square One needs a normal current card.";
       state.currentValueModifier += 1 - current;
       return "Back To Square One - current card is treated as A for the next guess.";
+    },
+  },
+  {
+    id: "flip_that_frown",
+    name: "Flip That Frown",
+    rarity: "uncommon",
+    weight: 1,
+    included: true,
+    unlockAt: 0,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => {
+      if (!state.current) return "No current card.";
+      const current = getCurrentEffectiveValue();
+      if (current !== 6 && current !== 9) {
+        return "Flip That Frown can only be used on a 6 or a 9.";
+      }
+      const nextValue = current === 6 ? 9 : 6;
+      state.currentValueModifier += nextValue - current;
+      return `Flip That Frown - current card is treated as ${valueToRank(nextValue)} for the next guess.`;
     },
   },
   {
@@ -1517,6 +1573,22 @@ const CHEATS = [
     use: () => {
       state.legendaryCheatOfferArmed = true;
       return "Legends Ahead armed - your next Cheat pick will offer Legendary Cheats only.";
+    },
+  },
+  {
+    id: "royal_flush",
+    name: "Royal Flush",
+    rarity: "legendary",
+    weight: 0.75,
+    included: true,
+    unlockAt: 30,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => {
+      if (!state.current) return "No current card.";
+      state.royalFlushRemaining = 5;
+      state.royalFlushSuitsSeen = {};
+      return "Royal Flush armed - for the next five reveals, each new suit gives a bonus Cheat. Reveal all four suits to choose a Power.";
     },
   },
   {

@@ -152,7 +152,7 @@
               <li>Equal values are safe, so your run continues on a match. Aces are usually low unless a power changes that. Jacks count as 11, Queens as 12, and Kings as 13.</li>
               <li>A wrong guess ends the run immediately.</li>
               <li>Nudges temporarily change the current card's judged value before your next guess. Cheats are earned through streaks and can reveal information, protect a guess, or trigger rewards.</li>
-              <li>Daily scoring ranks by total score: cards cleared x 100, +25 per unused Cheat, +5 per unused Nudge charge, and -15 per torn card seen during the run. The bonus is capped from -999 to +999.</li>
+              <li>Daily scoring ranks by total score: cards cleared x 100, +5 per unused Nudge charge, +10 per unused Cheat, +25 per Power in play, and -10 per torn card seen during the run. The bonus can never go below 0.</li>
               <li>Hold a Daily leaderboard name to see deck clears and a detailed Daily score breakdown.</li>
             </ul>
           </div>
@@ -315,17 +315,17 @@
 
   <script src="js/fullscreen.js?v=20260506b"></script>
   <script src="js/constants.js?v=20260525f"></script>
-  <script src="js/storage.js?v=20260521c"></script>
+  <script src="js/storage.js?v=20260605a"></script>
   <script src="js/cosmetics.js?v=20260521c"></script>
-  <script src="js/state.js?v=20260522n"></script>
-  <script src="js/powers.js?v=20260522j"></script>
-  <script src="js/cheats.js?v=20260525a"></script>
-  <script src="js/cheat-balance-overrides.js?v=20260522n"></script>
+  <script src="js/state.js?v=20260605b"></script>
+  <script src="js/powers.js?v=20260605a"></script>
+  <script src="js/cheats.js?v=20260605c"></script>
+  <script src="js/cheat-balance-overrides.js?v=20260605b"></script>
   <script src="js/apply-cheat-balance-overrides.js?v=20260522o"></script>
   <script src="js/leaderboard.js?v=20260521c"></script>
-<script src="js/daily.js?v=20260602a"></script>
-  <script src="js/logic.js?v=20260603a"></script>
-  <script src="js/render.js?v=20260602a"></script>
+<script src="js/daily.js?v=20260605a"></script>
+  <script src="js/logic.js?v=20260605b"></script>
+  <script src="js/render.js?v=20260605a"></script>
   <script src="js/input.js?v=20260521c"></script>
   <script src="js/main.js?v=20260414a"></script>
   <script src="js/pwa-update.js?v=20260522p"></script>

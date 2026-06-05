@@ -5,11 +5,10 @@ const DAILY_TABLE = "daily_52";
 const DAILY_RULESET_VERSION = "daily-v1";
 const DAILY_REQUEST_TIMEOUT_MS = 8000;
 const DAILY_CARD_SCORE_VALUE = 100;
-const DAILY_UNUSED_CHEAT_BONUS = 25;
+const DAILY_UNUSED_CHEAT_BONUS = 10;
 const DAILY_UNUSED_NUDGE_BONUS = 5;
-const DAILY_TEAR_PENALTY = 15;
-const DAILY_BONUS_MIN = -999;
-const DAILY_BONUS_MAX = 999;
+const DAILY_POWER_BONUS = 25;
+const DAILY_TEAR_PENALTY = 10;
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = DAILY_REQUEST_TIMEOUT_MS) {
   const controller = new AbortController();
@@ -95,7 +94,7 @@ function saveLocalDailyAttempts(attempts) {
 
 function clampDailyBonus(value) {
   const numeric = Math.floor(Number(value) || 0);
-  return Math.max(DAILY_BONUS_MIN, Math.min(DAILY_BONUS_MAX, numeric));
+  return Math.max(0, numeric);
 }
 
 function normalizeDailyCardsCleared(value) {
@@ -106,17 +105,20 @@ function buildDailyScoreBreakdown({
   cardsCleared = 0,
   remainingCheats = 0,
   remainingNudges = 0,
+  powerCount = 0,
   tearCount = 0,
 } = {}) {
   const normalizedCards = normalizeDailyCardsCleared(cardsCleared);
   const normalizedCheats = Math.max(0, Math.floor(Number(remainingCheats) || 0));
   const normalizedNudges = Math.max(0, Math.floor(Number(remainingNudges) || 0));
+  const normalizedPowers = Math.max(0, Math.floor(Number(powerCount) || 0));
   const normalizedTears = Math.max(0, Math.floor(Number(tearCount) || 0));
   const cardScore = normalizedCards * DAILY_CARD_SCORE_VALUE;
   const cheatBonus = normalizedCheats * DAILY_UNUSED_CHEAT_BONUS;
   const nudgeBonus = normalizedNudges * DAILY_UNUSED_NUDGE_BONUS;
+  const powerBonus = normalizedPowers * DAILY_POWER_BONUS;
   const tearPenalty = normalizedTears * DAILY_TEAR_PENALTY;
-  const rawBonusScore = cheatBonus + nudgeBonus - tearPenalty;
+  const rawBonusScore = cheatBonus + nudgeBonus + powerBonus - tearPenalty;
   const bonusScore = clampDailyBonus(rawBonusScore);
 
   return {
@@ -124,9 +126,11 @@ function buildDailyScoreBreakdown({
     cardScore,
     remainingCheats: normalizedCheats,
     remainingNudges: normalizedNudges,
+    powerCount: normalizedPowers,
     tearCount: normalizedTears,
     cheatBonus,
     nudgeBonus,
+    powerBonus,
     tearPenalty,
     rawBonusScore,
     bonusScore,
@@ -156,6 +160,7 @@ function normalizeDailyEntry(entry) {
     cardsCleared,
     remainingCheats: entry?.remainingCheats ?? entry?.remaining_cheats ?? 0,
     remainingNudges: entry?.remainingNudges ?? entry?.remaining_nudges ?? 0,
+    powerCount: entry?.powerCount ?? entry?.power_count ?? 0,
     tearCount: entry?.tearCount ?? entry?.tear_count ?? 0,
   });
   const bonusScore = clampDailyBonus(entry?.bonusScore ?? entry?.bonus_score ?? inferredBonus);
@@ -176,9 +181,11 @@ function normalizeDailyEntry(entry) {
     bonusScore,
     remainingCheats: Math.max(0, Math.floor(Number(entry?.remainingCheats ?? entry?.remaining_cheats ?? scoreBreakdown.remainingCheats) || 0)),
     remainingNudges: Math.max(0, Math.floor(Number(entry?.remainingNudges ?? entry?.remaining_nudges ?? scoreBreakdown.remainingNudges) || 0)),
+    powerCount: Math.max(0, Math.floor(Number(entry?.powerCount ?? entry?.power_count ?? scoreBreakdown.powerCount) || 0)),
     tearCount: Math.max(0, Math.floor(Number(entry?.tearCount ?? entry?.tear_count ?? scoreBreakdown.tearCount) || 0)),
     cheatBonus: Math.max(0, Math.floor(Number(entry?.cheatBonus ?? entry?.cheat_bonus ?? scoreBreakdown.cheatBonus) || 0)),
     nudgeBonus: Math.max(0, Math.floor(Number(entry?.nudgeBonus ?? entry?.nudge_bonus ?? scoreBreakdown.nudgeBonus) || 0)),
+    powerBonus: Math.max(0, Math.floor(Number(entry?.powerBonus ?? entry?.power_bonus ?? scoreBreakdown.powerBonus) || 0)),
     tearPenalty: Math.max(0, Math.floor(Number(entry?.tearPenalty ?? entry?.tear_penalty ?? scoreBreakdown.tearPenalty) || 0)),
     completed: entry?.completed !== false,
     createdAt: String(entry?.createdAt || new Date().toISOString()),
@@ -230,9 +237,11 @@ function buildDailyRemotePayload(entry, includeCrownFields = true, includeScoreF
     payload.bonus_score = entry.bonusScore;
     payload.remaining_cheats = entry.remainingCheats;
     payload.remaining_nudges = entry.remainingNudges;
+    payload.power_count = entry.powerCount;
     payload.tear_count = entry.tearCount;
     payload.cheat_bonus = entry.cheatBonus;
     payload.nudge_bonus = entry.nudgeBonus;
+    payload.power_bonus = entry.powerBonus;
     payload.tear_penalty = entry.tearPenalty;
     payload.total_score = entry.score;
   }
@@ -405,9 +414,11 @@ function buildDailyEntry({
   bonusScore,
   remainingCheats,
   remainingNudges,
+  powerCount,
   tearCount,
   cheatBonus,
   nudgeBonus,
+  powerBonus,
   tearPenalty,
   totalScore,
   completed = true,
@@ -452,9 +463,11 @@ function buildDailyEntry({
     bonusScore,
     remainingCheats,
     remainingNudges,
+    powerCount,
     tearCount,
     cheatBonus,
     nudgeBonus,
+    powerBonus,
     tearPenalty,
     totalScore,
     completed,
@@ -530,7 +543,7 @@ async function fetchDailyLeaderboard(dateKey, limit = 100) {
     }
 
     let activeSelect =
-      "date_key,seed,player_name,player_id,score,cards_cleared,bonus_score,remaining_cheats,remaining_nudges,tear_count,cheat_bonus,nudge_bonus,tear_penalty,total_score,blue_cleared,green_cleared,red_cleared,daily_clears,crown_summary,created_at";
+      "date_key,seed,player_name,player_id,score,cards_cleared,bonus_score,remaining_cheats,remaining_nudges,power_count,tear_count,cheat_bonus,nudge_bonus,power_bonus,tear_penalty,total_score,blue_cleared,green_cleared,red_cleared,daily_clears,crown_summary,created_at";
     const queryPrimary =
       `select=${activeSelect}` +
       `&date_key=eq.${encodeURIComponent(dateKey)}` +
@@ -669,9 +682,11 @@ async function fetchDailyLeaderboard(dateKey, limit = 100) {
         bonusScore: row.bonus_score,
         remainingCheats: row.remaining_cheats,
         remainingNudges: row.remaining_nudges,
+        powerCount: row.power_count,
         tearCount: row.tear_count,
         cheatBonus: row.cheat_bonus,
         nudgeBonus: row.nudge_bonus,
+        powerBonus: row.power_bonus,
         tearPenalty: row.tear_penalty,
         totalScore: row.total_score,
         createdAt: row.created_at,
@@ -699,9 +714,11 @@ async function fetchDailyLeaderboard(dateKey, limit = 100) {
           bonusScore: localAttempt.bonusScore,
           remainingCheats: localAttempt.remainingCheats,
           remainingNudges: localAttempt.remainingNudges,
+          powerCount: localAttempt.powerCount,
           tearCount: localAttempt.tearCount,
           cheatBonus: localAttempt.cheatBonus,
           nudgeBonus: localAttempt.nudgeBonus,
+          powerBonus: localAttempt.powerBonus,
           tearPenalty: localAttempt.tearPenalty,
           totalScore: localAttempt.score,
           score: localAttempt.score,

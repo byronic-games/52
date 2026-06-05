@@ -1329,11 +1329,12 @@ function getActiveEffectsTooltipPayload() {
   const waiting = [];
 
   if (state.lucky7Armed) waiting.push("Lucky 7: next guess is protected.");
-  if (state.fiveAliveArmed) waiting.push("Five Alive: next wrong guess survives.");
+  if (state.fiveAliveArmed) waiting.push("Five Alive: 5 locked, next wrong guess survives.");
   if (state.marginForErrorArmed) waiting.push("Margin For Error: wrong by 2 or less survives.");
   if (state.hotOrColdArmed) waiting.push("Margin Of Error: wrong by 3 or less survives.");
   if (state.stitchInTimeArmed) waiting.push("A Stitch In Time: next wrong guess survives.");
   if (state.godSaveKingArmed) waiting.push("God Save The King: King reveal saves a wrong guess.");
+  if ((state.royalFlushRemaining || 0) > 0) waiting.push(`Royal Flush: ${state.royalFlushRemaining} reveal${state.royalFlushRemaining === 1 ? "" : "s"} left.`);
   if (state.alwaysBetBlackArmed) waiting.push("Always Bet On The Black: Club or Spade reveal saves a wrong guess.");
   if (state.redDeadRedemptionArmed) waiting.push("Red? Dead? Redemption: Heart or Diamond reveal saves a wrong guess.");
   if (state.oddOneOutArmed) waiting.push("Odd One Out: next odd card loses, otherwise survives.");
@@ -1513,11 +1514,14 @@ const CHEAT_ICON_BY_NAME = Object.freeze({
 
 function getCheatIcon(name) {
   if (name === "Need The Nudge") return "N±";
+  if (name === "Nudge, Nudge") return "N2";
   if (name === "Equals 11") return "=11";
   if (name === "WL") return "W/L";
   if (name === "Psycho") return "PSY";
+  if (name === "Royal Flush") return "RF";
   if (name === "Higher, Higher, Higher") return "^^^";
   if (name === "Back To Square One") return "A1";
+  if (name === "Flip That Frown") return "6/9";
   if (name === "9 to 5") return "9-5";
   if (name === "A Stitch In Time Saves...") return "9+";
   if (name === "Catch-22") return "22";
