@@ -164,8 +164,9 @@ function normalizeDailyEntry(entry) {
     tearCount: entry?.tearCount ?? entry?.tear_count ?? 0,
   });
   const bonusScore = clampDailyBonus(entry?.bonusScore ?? entry?.bonus_score ?? inferredBonus);
-  const totalScore = explicitTotalScore !== undefined && explicitTotalScore !== null && explicitTotalScore !== ""
-    ? Math.max(0, Math.floor(Number(explicitTotalScore) || 0))
+  const explicitTotalNumeric = Math.max(0, Math.floor(Number(explicitTotalScore) || 0));
+  const totalScore = explicitTotalScore !== undefined && explicitTotalScore !== null && explicitTotalScore !== "" && explicitTotalNumeric > 52
+    ? explicitTotalNumeric
     : rawScore <= 52
       ? Math.max(0, scoreBreakdown.cardScore + bonusScore)
       : rawScore;

@@ -224,6 +224,10 @@ function renderDailyRows(entries, currentPlayerId, showScores = false) {
   const scoreHeading = document.getElementById("daily-score-heading");
   if (!bodyEl || !countEl) return;
 
+  if (!showScores) {
+    hideDailyEntryPopover();
+  }
+
   bodyEl.innerHTML = "";
   if (scoreHeading) {
     scoreHeading.innerText = showScores ? "Cards" : "Result";
@@ -254,8 +258,13 @@ function renderDailyRows(entries, currentPlayerId, showScores = false) {
     nameButton.className = "daily-name-button";
     nameButton.type = "button";
     nameButton.innerText = entry.playerName || "Unknown";
-    nameButton.setAttribute("aria-label", `Show score details for ${entry.playerName || "Unknown"}`);
-    addDailyNameHoldHandlers(nameButton, entry);
+    if (showScores) {
+      nameButton.setAttribute("aria-label", `Show score details for ${entry.playerName || "Unknown"}`);
+      addDailyNameHoldHandlers(nameButton, entry);
+    } else {
+      nameButton.disabled = true;
+      nameButton.setAttribute("aria-label", entry.playerName || "Unknown");
+    }
     nameTd.appendChild(nameButton);
 
     const cardsTd = document.createElement("td");

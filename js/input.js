@@ -592,6 +592,10 @@ document.getElementById("restart-btn").onclick = () => {
   }
 
   if (!runIsActive) {
+    if (!state.openingPreview && Array.isArray(state.deck) && state.deck.length > 0) {
+      window.location.href = "index.html";
+      return;
+    }
     startRun(!state.openingPreview);
     return;
   }

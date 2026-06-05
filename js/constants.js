@@ -68,7 +68,7 @@ const YELLOW_JOKERS = [
     shortName: "Tearless",
     icon: "T",
     unlockLevel: 1,
-    description: "Removes one torn corner from an unseen card if more than four cards are torn.",
+    description: "Hides one torn corner from an unseen card for this run.",
   },
   {
     id: "yellow_joker_nudgeless",

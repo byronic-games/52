@@ -379,6 +379,10 @@ td.score {
   border-radius: 4px;
 }
 
+.daily-name-button:disabled {
+  cursor: default;
+}
+
 .daily-entry-popover {
   position: fixed;
   z-index: 40;

@@ -1392,6 +1392,26 @@ function getActiveEffectsTooltipPayload() {
   };
 }
 
+function getCurrentCardTooltipPayload(card) {
+  const activeEffectsPayload = getActiveEffectsTooltipPayload();
+  if (!isJokerCard(card)) {
+    return activeEffectsPayload;
+  }
+
+  const jokerName = getJokerName(card);
+  const jokerDescription = card.description || "Yellow Jokers trigger their effect when revealed, then the run continues.";
+  const sections = [
+    jokerDescription,
+    activeEffectsPayload.description,
+  ].filter(Boolean);
+
+  return {
+    enabled: true,
+    title: jokerName,
+    description: sections.join("\n\n"),
+  };
+}
+
 function setupCurrentCardEffectsTooltip(el, payload) {
   if (!el || el.dataset.currentEffectsTooltipInit === "1") {
     if (el) {
@@ -1549,7 +1569,7 @@ function renderRestartButton() {
     return;
   }
 
-  btn.innerText = hasStartedRun ? "Restart Run" : "Start Run";
+  btn.innerText = hasStartedRun ? "Main Menu" : "Start Run";
 }
 
 function renderStartPowerSelector() {
@@ -1836,10 +1856,15 @@ function renderCurrentCard() {
       nudgeFromValue: nudgeAnimation?.fromValue,
     }
   );
-  const activeEffectsPayload = getActiveEffectsTooltipPayload();
-  setupCurrentCardEffectsTooltip(currentCardEl, activeEffectsPayload);
-  currentCardEl.classList.toggle("has-active-effects-tooltip", activeEffectsPayload.enabled);
-  currentCardEl.setAttribute("aria-label", `${describeCard(cardToRender)}. Hold to view active effects.`);
+  const currentCardTooltipPayload = getCurrentCardTooltipPayload(cardToRender);
+  setupCurrentCardEffectsTooltip(currentCardEl, currentCardTooltipPayload);
+  currentCardEl.classList.toggle("has-active-effects-tooltip", currentCardTooltipPayload.enabled);
+  currentCardEl.setAttribute(
+    "aria-label",
+    isJokerCard(cardToRender)
+      ? `${describeCard(cardToRender)}. Hold to view Joker effect.`
+      : `${describeCard(cardToRender)}. Hold to view active effects.`
+  );
 
   currentValueEl.innerText = "";
 }

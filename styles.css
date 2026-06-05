@@ -836,11 +836,11 @@ a {
 }
 
 #victory-confetti {
-  position: absolute;
+  position: fixed;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-  z-index: 0;
+  z-index: 5000;
   opacity: 1;
   transition: opacity 420ms ease-in-out;
 }

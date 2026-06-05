@@ -2053,7 +2053,7 @@ function applyTearlessJoker() {
     state.temporaryCardBackRepairs = {};
   }
   state.temporaryCardBackRepairs[unseenTornCard.id] = true;
-  return `A Yellow Joker hid the tear on ${describeCard(unseenTornCard)} for this run. Persistent torn corners remain: ${totalTorn}.`;
+  return `A Yellow Joker hid one unseen tear for this run. Persistent torn corners remain: ${totalTorn}.`;
 }
 
 function applyTimelessJoker() {
