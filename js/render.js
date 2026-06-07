@@ -1539,9 +1539,13 @@ function getCheatIcon(name) {
   if (name === "WL") return "W/L";
   if (name === "Psycho") return "PSY";
   if (name === "Royal Flush") return "RF";
+  if (name === "The Number Of The Beast") return "666";
+  if (name === "Jackpot") return "777";
   if (name === "Higher, Higher, Higher") return "^^^";
   if (name === "Back To Square One") return "A1";
   if (name === "Flip That Frown") return "6/9";
+  if (name === "King For A Day") return "K";
+  if (name === "Reroll") return "RR";
   if (name === "9 to 5") return "9-5";
   if (name === "A Stitch In Time Saves...") return "9+";
   if (name === "Catch-22") return "22";
@@ -1557,6 +1561,10 @@ function renderRestartButton() {
 
   const runIsActive = !state.gameOver && !!state.current;
   const hasStartedRun = !state.openingPreview && Array.isArray(state.deck) && state.deck.length > 0;
+  const runWasCompletelyCleared =
+    state.gameOver &&
+    typeof getRunScoreFromCorrectAnswers === "function" &&
+    getRunScoreFromCorrectAnswers(state.correctAnswers) >= 52;
   if (state.runMode === "daily" && state.gameOver) {
     btn.innerText = "Daily Complete";
     btn.disabled = true;
@@ -1569,7 +1577,9 @@ function renderRestartButton() {
     return;
   }
 
-  btn.innerText = hasStartedRun ? "Main Menu" : "Start Run";
+  btn.innerText = hasStartedRun
+    ? (runWasCompletelyCleared ? "Main Menu" : "Restart Run")
+    : "Start Run";
 }
 
 function renderStartPowerSelector() {

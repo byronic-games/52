@@ -44,6 +44,21 @@ function scheduleBonusCheatChoices(count, reason, message) {
   }, 900);
 }
 
+function pullRemainingRankToTop(rank, label) {
+  if (!Array.isArray(state.deck) || !state.current) return "No active deck.";
+  const faceDownStart = state.index + 1;
+  if (faceDownStart >= state.deck.length) return "No face-down cards left.";
+
+  const faceUp = state.deck.slice(0, faceDownStart);
+  const faceDown = state.deck.slice(faceDownStart);
+  const pulled = faceDown.filter((card) => !isJokerCard(card) && card.rank === rank);
+  if (!pulled.length) return `No face-down ${label}s remain.`;
+
+  const remaining = faceDown.filter((card) => isJokerCard(card) || card.rank !== rank);
+  state.deck = [...faceUp, ...pulled, ...remaining];
+  return `${pulled.length} face-down ${label}${pulled.length === 1 ? "" : "s"} pulled to the top.`;
+}
+
 function isPrimeCardValue(value) {
   return value === 2 || value === 3 || value === 5 || value === 7 || value === 11 || value === 13;
 }
@@ -205,6 +220,8 @@ const CHEAT_DESCRIPTIONS = {
   "Higher, Higher, Higher": "Choose a new Power if your next three successful guesses are Higher.",
   "Back To Square One": "Treat the current face-up card as an Ace for the next guess.",
   "Flip That Frown": "Can only be used on a 6 or 9. Treat a 6 as a 9, or a 9 as a 6, for the next guess.",
+  "King For A Day": "Treat the current face-up card as a King for the next guess.",
+  "Reroll": "Immediately choose another Cheat using this run's normal offer size.",
   "9 to 5": "Can only be used on a 9. Treat the current card as a 5 for the next guess.",
   "A Stitch In Time Saves...": "Can only be used on a 9. If your next guess is wrong, the run continues.",
   "Catch-22": "Can only be used on a 2. If the next card is also a 2, choose a new Power.",
@@ -235,6 +252,8 @@ const CHEAT_DESCRIPTIONS = {
   "Corporate Icebreaker": "Hear two true value-and-suit facts and one believable lie about the next three cards.",
   "Legends Ahead": "Your next Cheat pick offers Legendary Cheats only.",
   "Royal Flush": "For the next five revealed cards, each new suit revealed after a correct guess gives a bonus Cheat. Reveal all four suits to choose a Power.",
+  "The Number Of The Beast": "Pull all remaining face-down 6s to the top of the face-down deck without changing any other face-down card order.",
+  "Jackpot": "Pull all remaining face-down 7s to the top of the face-down deck without changing any other face-down card order.",
   "Emergency Cord": "Gain 10 Nudge +1 and 10 Nudge -1, then shuffle two random Yellow Jokers into the face-down deck.",
   "Two's Company": "Mark the next face-down 2 in the deck with a temporary 2 on its back.",
   "Refund": "Arm this card. After your next guess, unnecessary current-card nudges used this turn are returned.",
@@ -1082,6 +1101,45 @@ const CHEATS = [
     },
   },
   {
+    id: "king_for_a_day",
+    name: "King For A Day",
+    rarity: "rare",
+    weight: 0.85,
+    included: true,
+    unlockAt: 0,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => {
+      if (!state.current) return "No current card.";
+      const current = getCurrentEffectiveValue();
+      if (!Number.isFinite(current)) return "King For A Day needs a normal current card.";
+      state.currentValueModifier += 13 - current;
+      return "King For A Day - current card is treated as K for the next guess.";
+    },
+  },
+  {
+    id: "reroll",
+    name: "Reroll",
+    rarity: "uncommon",
+    weight: 0.9,
+    included: true,
+    unlockAt: 0,
+    stacking: "repeatable",
+    consumeOnUse: true,
+    use: () => {
+      if (state.pendingCheatOptions?.length || state.pendingPowerOptions?.length) {
+        return "Finish the current choice first.";
+      }
+      state.pauseForCheat = true;
+      window.setTimeout(() => {
+        state.pauseForCheat = false;
+        offerCheatChoice("reroll");
+        render();
+      }, 0);
+      return "Reroll - choose another Cheat.";
+    },
+  },
+  {
     id: "nine_to_five",
     name: "9 to 5",
     rarity: "uncommon",
@@ -1590,6 +1648,28 @@ const CHEATS = [
       state.royalFlushSuitsSeen = {};
       return "Royal Flush armed - for the next five reveals, each new suit gives a bonus Cheat. Reveal all four suits to choose a Power.";
     },
+  },
+  {
+    id: "number_of_the_beast",
+    name: "The Number Of The Beast",
+    rarity: "legendary",
+    weight: 0.75,
+    included: true,
+    unlockAt: 30,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => pullRemainingRankToTop("6", "6"),
+  },
+  {
+    id: "jackpot",
+    name: "Jackpot",
+    rarity: "legendary",
+    weight: 0.75,
+    included: true,
+    unlockAt: 30,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => pullRemainingRankToTop("7", "7"),
   },
   {
     id: "emergency_cord",

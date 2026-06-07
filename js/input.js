@@ -582,6 +582,10 @@ window.handleTutorialCheatUsed = (cheat, result) =>
 
 document.getElementById("restart-btn").onclick = () => {
   const runIsActive = !state.gameOver && !!state.current;
+  const runWasCompletelyCleared =
+    state.gameOver &&
+    typeof getRunScoreFromCorrectAnswers === "function" &&
+    getRunScoreFromCorrectAnswers(state.correctAnswers) >= 52;
 
   if (state.runMode === "daily") {
     state.message = state.gameOver
@@ -592,7 +596,7 @@ document.getElementById("restart-btn").onclick = () => {
   }
 
   if (!runIsActive) {
-    if (!state.openingPreview && Array.isArray(state.deck) && state.deck.length > 0) {
+    if (runWasCompletelyCleared) {
       window.location.href = "index.html";
       return;
     }
@@ -602,7 +606,7 @@ document.getElementById("restart-btn").onclick = () => {
 
   if (!state.restartConfirmArmed) {
     state.restartConfirmArmed = true;
-    state.message = "Click Start Run again to confirm restart.";
+    state.message = "Click Restart Run again to confirm restart.";
     render();
     return;
   }
