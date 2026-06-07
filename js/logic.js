@@ -1204,7 +1204,11 @@ function handleRunFinished(finalScore) {
     ? state.cheats.filter((cheat) => cheat?.id && cheat.id !== "nudge_up" && cheat.id !== "nudge_down").length
     : 0;
   const remainingNudges = Math.max(0, Number(state.nudgeUpCharges) || 0) + Math.max(0, Number(state.nudgeDownCharges) || 0);
-  const powerCount = Array.isArray(state.powers) ? state.powers.filter(Boolean).length : 0;
+  const powerCount = typeof getExcludedRunPowerIds === "function"
+    ? getExcludedRunPowerIds().length
+    : Array.isArray(state.powers)
+      ? state.powers.filter((powerId) => powerId && powerId !== "nudge_engine").length
+      : 0;
   const seenCardIds = state.seenCardIds instanceof Set ? state.seenCardIds : new Set();
   const tearCount = Array.isArray(state.deck)
     ? state.deck.filter((card) =>
