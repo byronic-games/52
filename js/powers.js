@@ -134,6 +134,15 @@ const POWERS = [
     weight: 1,
     included: true,
   },
+  {
+    id: "locky_7s",
+    name: "Locky 7s",
+    description: "Gain 10 Nudge +1 and 10 Nudge -1 charges. From then on, any card that is or becomes a 7 locks at 7 and cannot be nudged.",
+    rarity: "rare",
+    unlockAt: 0,
+    weight: 1,
+    included: true,
+  },
 ];
 
 const START_POWER_SEED_RULESET = "start-power-v1";
@@ -212,6 +221,8 @@ function getPowerIcon(powerId) {
       return "+";
     case "bingo":
       return "B";
+    case "locky_7s":
+      return "7L";
     default:
       return "•";
   }
@@ -254,7 +265,7 @@ function getStartPowerOfferSeed(seedString) {
 }
 
 function isNudgeStartingPower(power) {
-  return ["balanced_nudges", "updraft", "downforce"].includes(power?.id);
+  return ["balanced_nudges", "updraft", "downforce", "locky_7s"].includes(power?.id);
 }
 
 function pickPowerOptionFromPool(pool, seeded, rng) {

@@ -1520,7 +1520,6 @@ const CHEAT_ICON_BY_NAME = Object.freeze({
   "Suited and Booted": "♠B",
   "Always Bet On The Black": "♠♣",
   "Red? Dead? Redemption": "♥♦",
-  "Locky 7s": "7🔒",
   "Margin Of Error": "±3",
   "Corporate Icebreaker": "💬",
   "Legends Ahead": "LA",

@@ -936,6 +936,25 @@ function applyRunPowerSetup(powerId) {
     case "bingo":
       initializeBingoProgressFromCurrentGrid();
       break;
+    case "locky_7s":
+      state.lockySevensActive = true;
+      state.nudgeUpCharges = (state.nudgeUpCharges || 0) + 10;
+      state.nudgeDownCharges = (state.nudgeDownCharges || 0) + 10;
+
+      if (getCurrentEffectiveValue() === 7 && state.current) {
+        state.currentValueModifier = 7 - state.current.value;
+      }
+
+      {
+        const nextValue = getUpcomingCheatValue(1);
+        if (nextValue === 7) {
+          const next = peekNext();
+          if (next) {
+            state.nextCardValueModifier = 7 - next.value;
+          }
+        }
+      }
+      break;
     default:
       break;
   }

@@ -247,7 +247,6 @@ const CHEAT_DESCRIPTIONS = {
   "Suited and Booted": "Survive your next guess regardless of outcome unless the revealed next card matches the current card's suit.",
   "Always Bet On The Black": "For the next card only: if it is a Club or a Spade, the run survives even on a wrong guess.",
   "Red? Dead? Redemption": "For the next guess, a losing guess is saved if the revealed card is a Heart or Diamond.",
-  "Locky 7s": "Gain 10 Nudge +1 and 10 Nudge -1 charges. From then on, any card that is or becomes a 7 locks at 7 and cannot be nudged.",
   "Margin Of Error": "If your next guess is wrong by 3 or less, the run continues.",
   "Corporate Icebreaker": "Hear two true value-and-suit facts and one believable lie about the next three cards.",
   "Legends Ahead": "Your next Cheat pick offers Legendary Cheats only.",
@@ -1541,35 +1540,6 @@ const CHEATS = [
     use: () => {
       state.redDeadRedemptionArmed = true;
       return "Red? Dead? Redemption armed - if the next card is a Heart or Diamond, a losing guess survives.";
-    },
-  },
-  {
-    id: "locky_7s",
-    name: "Locky 7s",
-    rarity: "rare",
-    weight: 0.8,
-    included: true,
-    unlockAt: 0,
-    stacking: "unique",
-    consumeOnUse: true,
-    use: () => {
-      state.lockySevensActive = true;
-      state.nudgeUpCharges = (state.nudgeUpCharges || 0) + 10;
-      state.nudgeDownCharges = (state.nudgeDownCharges || 0) + 10;
-
-      if (getCurrentEffectiveValue() === 7 && state.current) {
-        state.currentValueModifier = 7 - state.current.value;
-      }
-
-      const nextValue = getUpcomingCheatValue(1);
-      if (nextValue === 7) {
-        const next = peekNext();
-        if (next) {
-          state.nextCardValueModifier = 7 - next.value;
-        }
-      }
-
-      return "Locky 7s active - gained 10 Nudge +1 and 10 Nudge -1 charges. Any card that is or becomes a 7 now locks at 7.";
     },
   },
   {

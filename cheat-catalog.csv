@@ -67,7 +67,6 @@
 "suited_and_booted","Suited and Booted","uncommon","50","true","unique","0.75","","Meta progression >= 50","Survive your next guess regardless of outcome unless the revealed next card matches the current card's suit."
 "always_bet_on_the_black","Always Bet On The Black","rare","30","true","unique","0.85","","Meta progression >= 30","For the next card only: if it is a Club or a Spade, the run survives even on a wrong guess."
 "red_dead_redemption","Red? Dead? Redemption","rare","30","true","unique","0.85","","Meta progression >= 30","For the next guess, a losing guess is saved if the revealed card is a Heart or Diamond."
-"locky_7s","Locky 7s","rare","30","true","unique","0.8","","Meta progression >= 30","Gain 10 Nudge +1 and 10 Nudge -1 charges. From then on, any card that is or becomes a 7 locks at 7 and cannot be nudged."
 "margin_of_error","Margin Of Error","common","0","true","unique","1","","Available from run start","If your next guess is wrong by 3 or less, the run continues."
 "corporate_icebreaker","Corporate Icebreaker","uncommon","30","true","unique","0.8","","Meta progression >= 30","Hear two true value-and-suit facts and one lie about the next three cards."
 "legends_ahead","Legends Ahead","rare","30","true","unique","0.65","","Meta progression >= 30","Your next Cheat pick offers Legendary Cheats only."
