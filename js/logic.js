@@ -915,14 +915,14 @@ function addCheatCopiesToHand(cheatId, count) {
 function applyRunPowerSetup(powerId) {
   switch (powerId) {
     case "balanced_nudges":
-      state.nudgeUpCharges = (state.nudgeUpCharges || 0) + 4;
-      state.nudgeDownCharges = (state.nudgeDownCharges || 0) + 4;
+      state.nudgeUpCharges = (state.nudgeUpCharges || 0) + 5;
+      state.nudgeDownCharges = (state.nudgeDownCharges || 0) + 5;
       break;
     case "updraft":
-      state.nudgeUpCharges = (state.nudgeUpCharges || 0) + 8;
+      state.nudgeUpCharges = (state.nudgeUpCharges || 0) + 10;
       break;
     case "downforce":
-      state.nudgeDownCharges = (state.nudgeDownCharges || 0) + 8;
+      state.nudgeDownCharges = (state.nudgeDownCharges || 0) + 10;
       break;
     case "swap_stack":
       addCheatCopiesToHand("swap", 4);
