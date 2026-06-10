@@ -1,6 +1,7 @@
 function getDeckBackColor(deckKey) {
   const normalizedDeck = normalizeDeckKey(deckKey || "blue");
   if (normalizedDeck === "red") return "pink";
+  if (normalizedDeck === "orange") return "orange";
   if (normalizedDeck === "green") return "green";
   if (normalizedDeck === "yellow") return "yellow";
   if (normalizedDeck === "black") return "black";
@@ -1053,7 +1054,7 @@ function renderScores() {
   if (bestScoreEl) setAnimatedText(bestScoreEl, `BEST: ${state.bestScore}`);
   renderExperienceCounter(false);
   if (jokerCountEl) {
-    const showJokerCount = hudDeckKey === "yellow";
+    const showJokerCount = isJokerDeckKey(hudDeckKey);
     const remainingJokers = showJokerCount && typeof getRemainingJokerCount === "function"
       ? getRemainingJokerCount()
       : 0;
@@ -1061,7 +1062,7 @@ function renderScores() {
     jokerCountEl.setAttribute("aria-hidden", showJokerCount ? "false" : "true");
   }
   {
-    const showEnergy = !state.gameOver && !!state.current && hudDeckKey === "green";
+    const showEnergy = !state.gameOver && !!state.current && isEnergyDeckKey(hudDeckKey);
     if (energyCardEl) {
       energyCardEl.hidden = !showEnergy;
     }

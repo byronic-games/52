@@ -208,7 +208,7 @@ const CHEAT_DESCRIPTIONS = {
   "Nudge -2": "Decreases the value of the current face card by two, stopping at Ace.",
   "Need The Nudge": "Swap your stored Nudge +1 and Nudge -1 charge totals.",
   "Nudge, Nudge": "For this turn only, each Nudge moves the card twice as far while still costing one charge.",
-  "+5 Energy": "Green Deck only. Gain 5 Energy instantly.",
+  "+5 Energy": "Energy decks only. Gain 5 Energy instantly.",
   "Next Card Nudge Up": "Temporarily nudges the next face-down card up by 3 for the next guess, stopping at King.",
   "Next Card Nudge Down": "Temporarily nudges the next face-down card down by 3 for the next guess, stopping at Ace.",
   "Halve It": "Can only be used on an even card. Treat the current card as half its value for the next guess.",
@@ -1819,7 +1819,7 @@ const CHEATS = [
     stacking: "repeatable",
     consumeOnUse: true,
     use: () => {
-      if (!isGreenDeckRun()) return "This cheat only works in Green Deck runs.";
+      if (!isGreenDeckRun()) return "This cheat only works in Energy deck runs.";
       state.energy = Math.max(0, (state.energy || 0) + 5);
       return `+5 Energy applied. Energy is now ${state.energy}.`;
     },
@@ -1887,7 +1887,7 @@ function getCheatOfferOptionCount() {
   if (state.runMode === "daily") return 3;
   const currentDeckKey = normalizeDeckKey(state.currentDeckKey || state.selectedDeckKey || "blue");
   const currentLevelNumber = normalizeLevelNumber(state.currentLevelNumber || state.selectedLevelNumber || loadSelectedLevel());
-  return currentDeckKey === "blue" && currentLevelNumber >= 3 ? 2 : 3;
+  return (currentDeckKey === "blue" || currentDeckKey === "orange") && currentLevelNumber >= 3 ? 2 : 3;
 }
 
 function getRandomCheatOptions(count = 3, seedString = "", includeAll = false) {

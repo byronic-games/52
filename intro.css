@@ -1011,6 +1011,11 @@ h1 {
   color: #fff5f7;
 }
 
+.deck-choice-orange {
+  background: linear-gradient(180deg, #ffbd6f, #f26b2b);
+  color: #2f1200;
+}
+
 .deck-choice-green {
   background: linear-gradient(180deg, #a8f48b, #63c768);
   color: #0d2b16;

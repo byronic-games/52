@@ -12,8 +12,8 @@ function getProfileAchievements(stats, deckWins) {
       unlocked: (deckWins.blue || 0) >= 1,
     },
     {
-      label: "Red Deck Cleared",
-      unlocked: (deckWins.red || 0) >= 1,
+      label: "Orange Deck Cleared",
+      unlocked: (deckWins.orange || 0) >= 1,
     },
     {
       label: "Green Deck Cleared",
@@ -234,20 +234,20 @@ function renderProfilePage() {
     nameInput.value = loadPreferredHeroName();
     if (typeof getCrownBadgesHtml === "function") {
       const badgesHtml = getCrownBadgesHtml(crowns);
-      crownStripEl.innerHTML = badgesHtml || "No crowns yet. Clear Blue, Green, Red, and a Daily to earn all 4.";
+      crownStripEl.innerHTML = badgesHtml || "No crowns yet. Clear Blue, Green, Orange, and a Daily to earn all 4.";
     } else {
-      crownStripEl.textContent = crowns.summary || "No crowns yet. Clear Blue, Green, Red, and a Daily to earn all 4.";
+      crownStripEl.textContent = crowns.summary || "No crowns yet. Clear Blue, Green, Orange, and a Daily to earn all 4.";
     }
     bestRunEl.textContent = String(bestRun || 0);
     totalCorrectEl.textContent = String(stats.totalCorrectGuesses || 0);
     decksBeatenEl.textContent = String(stats.totalDecksCleared || 0);
     runsStartedEl.textContent = String(stats.runsStarted || 0);
     blueClearsEl.textContent = String(deckWins.blue || 0);
-    redClearsEl.textContent = String(deckWins.red || 0);
+    redClearsEl.textContent = String(deckWins.orange || 0);
     greenClearsEl.textContent = String(deckWins.green || 0);
     yellowClearsEl.textContent = String(deckWins.yellow || 0);
     blueRunsEl.textContent = String(stats.blueRunsStarted || 0);
-    redRunsEl.textContent = String(stats.redRunsStarted || 0);
+    redRunsEl.textContent = String(stats.orangeRunsStarted || 0);
     greenRunsEl.textContent = String(stats.greenRunsStarted || 0);
     yellowRunsEl.textContent = String(stats.yellowRunsStarted || 0);
     dailyAttemptsEl.textContent = String(stats.dailyAttempts || 0);

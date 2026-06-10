@@ -81,7 +81,7 @@ function buildRunDeck(seedString, deckKey = "blue", levelNumber = DEFAULT_LEVEL_
   const normalizedDeckKey = normalizeDeckKey(deckKey);
   const normalizedLevelNumber = normalizeLevelNumber(levelNumber);
   const deck = createDeck(seedString);
-  return normalizedDeckKey === "yellow"
+  return isJokerDeckKey(normalizedDeckKey)
     ? buildYellowDeck(deck, seedString, normalizedLevelNumber)
     : deck;
 }
@@ -1012,7 +1012,7 @@ function startRunWithPower(powerId) {
     : normalizeDeckKey(state.pendingDeckKey || selectedDeckKey);
   const blackRun = runMode !== "daily" && currentDeckKey === "black";
   const selectedPower = blackRun ? null : getPowerById(powerId);
-  const greenRun = runMode !== "daily" && currentDeckKey === "green";
+  const greenRun = runMode !== "daily" && isEnergyDeckKey(currentDeckKey);
   const currentLevelNumber = runMode === "daily"
     ? DEFAULT_LEVEL_NUMBER
     : normalizeLevelNumber(state.pendingLevelNumber || selectedLevelNumber);
@@ -1675,8 +1675,12 @@ function applyRefundNudgeResult(refundResult) {
   return ` Refund returned ${refundResult.total} unnecessary Nudge${refundResult.total === 1 ? "" : "s"}.`;
 }
 
+function isEnergyDeckRun() {
+  return isEnergyDeckKey(state.currentDeckKey || state.selectedDeckKey || "blue");
+}
+
 function isGreenDeckRun() {
-  return normalizeDeckKey(state.currentDeckKey || state.selectedDeckKey || "blue") === "green";
+  return isEnergyDeckRun();
 }
 
 function adjustValueForLockySevens(currentValue, targetValue) {

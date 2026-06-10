@@ -42,7 +42,7 @@ Mobile-first browser card game (higher/lower) with deck progression, powers, che
 - Verify Yellow deck hazard behavior across all four levels and re-check Android reveal animation where card rotates but face does not appear during flip.
 
 ## Recent Ops Notes
-- Yellow deck adds level-gated Joker hazards: Tearless, Nudgeless, Cheatless, and Powerless. Unlock Decks in settings opens Level 1 of every deck for testing.
+- Yellow deck adds level-gated Joker hazards: Tearless, Nudgeless, Cheatless, and Powerless. Orange deck combines Blue nudge rewards, Green energy costs, and Yellow Jokers. Unlock Decks in settings opens Level 1 of every visible deck for testing.
 - Players can choose Lower / Higher or Higher / Lower guess button order and Down / Up or Up / Down nudge order in Settings; the controls keep their existing styles.
 - Daily leaderboard loads retry-upload a completed local Daily attempt when that player's online row is missing.
 - Tutorial highlighting now styles the actual target element instead of a separate floating highlight box. Rendered card elements preserve the focus class across redraws, and focused tutorial targets throb again.

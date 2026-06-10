@@ -179,6 +179,7 @@ function runHasPower(powerId) {
 function getDeckName(deckKey = state?.currentDeckKey || state?.selectedDeckKey || "blue") {
   const normalizedDeck = normalizeDeckKey(deckKey);
   if (normalizedDeck === "red") return "Red";
+  if (normalizedDeck === "orange") return "Orange";
   if (normalizedDeck === "green") return "Green";
   if (normalizedDeck === "yellow") return "Yellow";
   if (normalizedDeck === "black") return "Black";
@@ -365,7 +366,7 @@ function getBaseCheatRewardThreshold(deckKey = "blue", levelNumber = DEFAULT_LEV
   const normalizedDeck = normalizeDeckKey(deckKey);
   const normalizedLevel = normalizeLevelNumber(levelNumber);
 
-  if (normalizedDeck === "blue") {
+  if (normalizedDeck === "blue" || normalizedDeck === "orange") {
     if (normalizedLevel >= 4) return 5;
     if (normalizedLevel >= 2) return 4;
     return 3;

@@ -187,16 +187,28 @@ function normalizeGuessBucket(bucket = {}) {
 function normalizeDeckKey(deckKey = "blue") {
   const normalized = String(deckKey || "").trim().toLowerCase();
   if (normalized === "red") return "red";
+  if (normalized === "orange") return "orange";
   if (normalized === "green") return "green";
   if (normalized === "yellow") return "yellow";
   if (normalized === "black") return "black";
   return "blue";
 }
 
+function isEnergyDeckKey(deckKey = "blue") {
+  const normalizedDeckKey = normalizeDeckKey(deckKey);
+  return normalizedDeckKey === "green" || normalizedDeckKey === "orange";
+}
+
+function isJokerDeckKey(deckKey = "blue") {
+  const normalizedDeckKey = normalizeDeckKey(deckKey);
+  return normalizedDeckKey === "yellow" || normalizedDeckKey === "orange";
+}
+
 function normalizeDeckWins(wins = {}) {
   return {
     blue: Number.isFinite(wins.blue) ? wins.blue : 0,
     red: Number.isFinite(wins.red) ? wins.red : 0,
+    orange: Number.isFinite(wins.orange) ? wins.orange : 0,
     green: Number.isFinite(wins.green) ? wins.green : 0,
     yellow: Number.isFinite(wins.yellow) ? wins.yellow : 0,
     black: Number.isFinite(wins.black) ? wins.black : 0,
@@ -211,6 +223,7 @@ function normalizeProfileStats(stats = {}) {
     dailyClears: Number.isFinite(stats.dailyClears) ? stats.dailyClears : 0,
     blueRunsStarted: Number.isFinite(stats.blueRunsStarted) ? stats.blueRunsStarted : 0,
     redRunsStarted: Number.isFinite(stats.redRunsStarted) ? stats.redRunsStarted : 0,
+    orangeRunsStarted: Number.isFinite(stats.orangeRunsStarted) ? stats.orangeRunsStarted : 0,
     greenRunsStarted: Number.isFinite(stats.greenRunsStarted) ? stats.greenRunsStarted : 0,
     yellowRunsStarted: Number.isFinite(stats.yellowRunsStarted) ? stats.yellowRunsStarted : 0,
     blackRunsStarted: Number.isFinite(stats.blackRunsStarted) ? stats.blackRunsStarted : 0,
@@ -386,7 +399,8 @@ function saveNudgeButtonOrder(order) {
 }
 
 function loadSelectedDeck() {
-  return normalizeDeckKey(localStorage.getItem(SELECTED_DECK_KEY) || "blue");
+  const normalizedDeckKey = normalizeDeckKey(localStorage.getItem(SELECTED_DECK_KEY) || "blue");
+  return normalizedDeckKey === "red" ? "orange" : normalizedDeckKey;
 }
 
 function saveSelectedDeck(deckKey) {
@@ -434,9 +448,10 @@ function isDeckUnlocked(deckKey) {
   if (normalizedDeckKey === "blue") return true;
   if (normalizedDeckKey === "green") return hasVerifiedDeckLevelClear("blue", 1);
   if (normalizedDeckKey === "red") return hasVerifiedDeckLevelClear("blue", 2);
-  if (normalizedDeckKey === "yellow") return hasVerifiedDeckLevelClear("blue", 3);
+  if (normalizedDeckKey === "yellow") return hasVerifiedDeckLevelClear("green", 1);
+  if (normalizedDeckKey === "orange") return hasVerifiedDeckLevelClear("yellow", 1);
   if (normalizedDeckKey === "black") {
-    return ["blue", "green", "red", "yellow"].every((deckKey) =>
+    return ["blue", "green", "orange", "yellow"].every((deckKey) =>
       [1, 2, 3, 4].every((levelNumber) => hasVerifiedDeckLevelClear(deckKey, levelNumber))
     );
   }
@@ -563,6 +578,8 @@ function recordRunStarted(deckKey, runMode = "standard") {
     const normalizedDeckKey = normalizeDeckKey(deckKey);
     if (normalizedDeckKey === "red") {
       stats.redRunsStarted += 1;
+    } else if (normalizedDeckKey === "orange") {
+      stats.orangeRunsStarted += 1;
     } else if (normalizedDeckKey === "green") {
       stats.greenRunsStarted += 1;
     } else if (normalizedDeckKey === "yellow") {

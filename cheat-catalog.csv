@@ -79,4 +79,4 @@
 "tear_corner","Tear Corner","common","40","true","unique","1","","Meta progression >= 40","Tear off the top left corner of the current face card so it can be recognised in future runs."
 "banish_it","Banish It","uncommon","30","true","unique","0.8","","Meta progression >= 30","Send the current face-up card to the back of the deck and turn over the next card."
 "swap","Swap","uncommon","0","true","repeatable","1","","Available from run start","Swap the current face-up card with the next face-down card."
-"green_energy_boost","+5 Energy","common","0","true","repeatable","1","","Available from run start","Green Deck only. Gain 5 Energy instantly."
+"green_energy_boost","+5 Energy","common","0","true","repeatable","1","","Available from run start","Energy decks only. Gain 5 Energy instantly."

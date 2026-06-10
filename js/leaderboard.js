@@ -168,7 +168,7 @@ function getLocalCrownSnapshot() {
   const snapshot = {
     blueCleared: normalizeCrownBoolean(deckWins.blue),
     greenCleared: normalizeCrownBoolean(deckWins.green),
-    redCleared: normalizeCrownBoolean(deckWins.red),
+    redCleared: normalizeCrownBoolean((deckWins.orange || 0) || deckWins.red),
     dailyCleared: Number(profileStats.dailyClears || 0) > 0,
   };
 
@@ -229,7 +229,7 @@ function getCrownBadgesHtml(entry = {}) {
     badges.push(`<span class="crown-icon crown-green" title="Green Deck cleared">${CROWN_GLYPH}</span>`);
   }
   if (snapshot.redCleared) {
-    badges.push(`<span class="crown-icon crown-red" title="Red Deck cleared">${CROWN_GLYPH}</span>`);
+    badges.push(`<span class="crown-icon crown-red" title="Orange Deck cleared">${CROWN_GLYPH}</span>`);
   }
   if (snapshot.dailyCleared) {
     badges.push(`<span class="crown-icon crown-gold" title="Daily cleared">${CROWN_GLYPH}</span>`);
