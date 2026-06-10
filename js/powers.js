@@ -266,7 +266,7 @@ function getStartPowerOfferSeed(seedString) {
 }
 
 function isNudgeStartingPower(power) {
-  return ["balanced_nudges", "updraft", "downforce", "locky_7s"].includes(power?.id);
+  return ["balanced_nudges", "updraft", "downforce"].includes(power?.id);
 }
 
 function pickPowerOptionFromPool(pool, seeded, rng) {

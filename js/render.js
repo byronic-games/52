@@ -1353,6 +1353,7 @@ function getActiveEffectsTooltipPayload() {
   if (state.forcedNextGuess) {
     waiting.push(`${state.forcedNextGuess === "higher" ? "The Higher The Better" : "The Lower The Better"}: next guess must be ${state.forcedNextGuess}.`);
   }
+  if (state.rongActive) waiting.push("RONG: Higher and Lower are swapped.");
   if (state.blankSpaceActive) {
     const blankValue = getBlankSpaceDisplayValue();
     waiting.push(`Blank Space: next card treated as ${Number.isFinite(blankValue) ? valueToRank(blankValue) : "the current value"}.`);

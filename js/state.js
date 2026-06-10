@@ -138,6 +138,7 @@ function createEmptyState() {
     bingoLineAwardCount: 0,
     energy: 0,
     lastJokerMessage: "",
+    rongActive: false,
   };
 }
 

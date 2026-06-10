@@ -102,6 +102,14 @@ const YELLOW_JOKERS = [
     unlockLevel: 2,
     description: "Shuffles recently revealed playing cards back into the deck.",
   },
+  {
+    id: "yellow_joker_rong",
+    name: "RONG",
+    shortName: "RONG",
+    icon: "R",
+    unlockLevel: 1,
+    description: "For the rest of this run, Higher means Lower and Lower means Higher.",
+  },
 ];
 
 function mulberry32(a) {

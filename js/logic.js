@@ -22,13 +22,12 @@ function getYellowJokerPool({
 function chooseYellowJokersForLevel(levelNumber = DEFAULT_LEVEL_NUMBER, seedString = "") {
   const normalizedLevel = normalizeLevelNumber(levelNumber);
   const pool = getYellowJokerPool({ includeLocked: true });
-  const tearless = pool.find((joker) => String(joker.id || "").includes("tearless")) || pool[0];
-  if (!tearless) return [];
+  if (!pool.length) return [];
 
-  const extraCount = Math.max(0, normalizedLevel - 1);
-  const otherJokers = pool.filter((joker) => joker.id !== tearless.id);
-  seededShuffle(otherJokers, `${seedString}|yellow-joker-picks|L${normalizedLevel}`);
-  return [tearless, ...otherJokers.slice(0, extraCount)];
+  const jokerCount = Math.min(pool.length, Math.max(1, normalizedLevel));
+  const shuffledJokers = [...pool];
+  seededShuffle(shuffledJokers, `${seedString}|yellow-joker-picks|L${normalizedLevel}`);
+  return shuffledJokers.slice(0, jokerCount);
 }
 
 function getYellowJokersForLevel(levelNumber = DEFAULT_LEVEL_NUMBER, seedString = "") {
@@ -152,6 +151,25 @@ function getComparisonDirection(currentValue, nextValue) {
   if (!Number.isFinite(currentValue) || !Number.isFinite(nextValue)) return "unknown";
   if (nextValue === currentValue) return "match";
   return nextValue > currentValue ? "higher" : "lower";
+}
+
+function getEffectiveGuessType(type) {
+  if (!state.rongActive) return type;
+  if (type === "higher") return "lower";
+  if (type === "lower") return "higher";
+  return type;
+}
+
+function getForcedGuessMessage(direction) {
+  const label = direction === "higher" ? "Higher" : "Lower";
+  if (!state.rongActive) {
+    return direction === "higher"
+      ? "The Higher The Better is active - you must guess Higher."
+      : "The Lower The Better is active - you must guess Lower.";
+  }
+
+  const buttonLabel = direction === "higher" ? "Lower" : "Higher";
+  return `RONG is active - press ${buttonLabel} to make a ${label} guess.`;
 }
 
 function buildRevealEffectContext({
@@ -1137,6 +1155,7 @@ function startRunWithPower(powerId) {
       ? (currentLevelNumber >= 4 ? 5 : (currentLevelNumber >= 3 ? 6 : (currentLevelNumber === 2 ? 8 : 10)))
       : 0,
     lastJokerMessage: "",
+    rongActive: false,
     lucky7Armed: false,
     fiveAliveArmed: false,
     fiveAliveNudgeLocked: false,
@@ -2172,6 +2191,10 @@ function applyYellowJokerEffect(jokerCard) {
   if (jokerId.includes("timeless")) {
     return applyTimelessJoker();
   }
+  if (jokerId.includes("rong")) {
+    state.rongActive = true;
+    return "RONG swapped Higher and Lower for the rest of this run.";
+  }
   if (jokerId.includes("nudgeless")) {
     const removed = (Number(state.nudgeUpCharges) || 0) + (Number(state.nudgeDownCharges) || 0);
     state.nudgeUpCharges = 0;
@@ -2361,14 +2384,14 @@ function makeGuessLegacy(type) {
     return;
   }
 
+  type = getEffectiveGuessType(type);
+
   let next = peekNext();
   if (!next) return;
   const currentIsJoker = isJokerCard(state.current);
 
   if (state.forcedNextGuess && type !== state.forcedNextGuess && !isJokerCard(next) && !currentIsJoker) {
-    state.message = state.forcedNextGuess === "higher"
-      ? "The Higher The Better is active - you must guess Higher."
-      : "The Lower The Better is active - you must guess Lower.";
+    state.message = getForcedGuessMessage(state.forcedNextGuess);
     render();
     return;
   }
@@ -3069,14 +3092,14 @@ function makeGuess(type) {
     return;
   }
 
+  type = getEffectiveGuessType(type);
+
   let next = peekNext();
   if (!next) return;
   const currentIsJoker = isJokerCard(state.current);
 
   if (state.forcedNextGuess && type !== state.forcedNextGuess && !isJokerCard(next) && !currentIsJoker) {
-    state.message = state.forcedNextGuess === "higher"
-      ? "The Higher The Better is active - you must guess Higher."
-      : "The Lower The Better is active - you must guess Lower.";
+    state.message = getForcedGuessMessage(state.forcedNextGuess);
     render();
     return;
   }
