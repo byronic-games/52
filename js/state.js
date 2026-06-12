@@ -36,6 +36,8 @@ function createEmptyState() {
     message: "Press Start Run.",
     temporaryMessageText: "",
     temporaryMessageUntil: 0,
+    playerLog: [],
+    lastPlayerLogMessage: "",
     gameOver: true,
     openingPreview: false,
     gameOverMessageReady: false,

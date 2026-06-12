@@ -1105,6 +1105,80 @@ function setAnimatedText(el, value) {
   el.dataset.renderValue = nextValue;
 }
 
+function cleanPlayerLogMessage(message = "") {
+  return String(message || "")
+    .replace(/[✅❌💀🏆🍀🖐️]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getShortPlayerMessage(message = "") {
+  const cleaned = cleanPlayerLogMessage(message);
+  if (!cleaned) return "";
+  if (/^Guessed higher/i.test(cleaned)) return "Guessed higher";
+  if (/^Guessed lower/i.test(cleaned)) return "Guessed lower";
+  if (/^Played .+:/i.test(cleaned)) return "Cheat played";
+  if (/YOU CLEARED THE DECK/i.test(cleaned)) return "Deck cleared";
+  if (/GAME OVER/i.test(cleaned)) return "Game over";
+  if (/Correct! Cards match/i.test(cleaned)) return "Match";
+  if (/Correct!/i.test(cleaned)) return "Correct";
+  if (/Yellow Joker:/i.test(cleaned)) {
+    const jokerPart = cleaned.replace(/^Yellow Joker:\s*/i, "");
+    return jokerPart.split(/[.!-]/)[0].slice(0, 28) || "Joker";
+  }
+  if (/saved the run/i.test(cleaned)) return "Saved";
+  if (/choose/i.test(cleaned) && /cheat/i.test(cleaned)) return "Choose a Cheat";
+  if (/choose/i.test(cleaned) && /power/i.test(cleaned)) return "Choose a Power";
+  if (/nudge/i.test(cleaned)) return cleaned.length > 38 ? "Nudge used" : cleaned;
+  if (/Run started/i.test(cleaned)) return "Run started";
+  return cleaned.length > 42 ? `${cleaned.slice(0, 39).trim()}...` : cleaned;
+}
+
+function addPlayerLogEntry(message = "", options = {}) {
+  const detail = cleanPlayerLogMessage(message);
+  if (!detail) return;
+  if (detail === "Press Start Run.") return;
+  if (state.lastPlayerLogMessage === detail) return;
+
+  const summaryOverride = cleanPlayerLogMessage(options.summary || "");
+  const entry = {
+    detail,
+    summary: summaryOverride || getShortPlayerMessage(detail),
+    cardsCleared: getDisplayedRunScore(),
+    createdAt: Date.now(),
+  };
+
+  state.playerLog = [entry, ...(Array.isArray(state.playerLog) ? state.playerLog : [])].slice(0, 120);
+  state.lastPlayerLogMessage = detail;
+  renderRunLogList();
+}
+
+function renderRunLogList() {
+  const listEl = document.getElementById("run-log-list");
+  if (!listEl) return;
+
+  const entries = Array.isArray(state.playerLog) ? state.playerLog : [];
+  if (!entries.length) {
+    listEl.innerHTML = `<p class="run-log-empty">No run events yet.</p>`;
+    return;
+  }
+
+  listEl.innerHTML = entries.map((entry) => {
+    const cardText = Number.isFinite(Number(entry.cardsCleared))
+      ? `${Math.max(0, Number(entry.cardsCleared))}/52`
+      : "--/52";
+    return `
+      <article class="run-log-entry">
+        <div class="run-log-entry-head">
+          <span>${escapeHtml(entry.summary || "Event")}</span>
+          <strong>${escapeHtml(cardText)}</strong>
+        </div>
+        <p>${escapeHtml(entry.detail || "")}</p>
+      </article>
+    `;
+  }).join("");
+}
+
 function getVisibleHeaderPowerIds(fallbackPowerId = "") {
   const ids = Array.isArray(state.powers)
     ? state.powers
@@ -2827,6 +2901,13 @@ function renderCheats() {
           ? awardCheatersProsperCheatUse(didConsume)
           : "";
         state.message = `${result}${cheatersProsperText}`;
+        const cheatName = cleanPlayerLogMessage(entry.cheat && entry.cheat.name ? entry.cheat.name : "Cheat");
+        const cheatOutput = cleanPlayerLogMessage(state.message);
+        addPlayerLogEntry(
+          cheatOutput ? `Played ${cheatName}: ${cheatOutput}` : `Played ${cheatName}.`,
+          { summary: "Cheat played" },
+        );
+        state.lastPlayerLogMessage = cleanPlayerLogMessage(state.message);
         appendRunDebugLog("cheat_used", {
           cheatId: entry.cheat.id,
           cheatName: entry.cheat.name,
@@ -3340,7 +3421,8 @@ function renderMessage() {
   }
 
   if (state.victoryMessageActive) {
-    el.innerText = state.message || "CONGRATULATIONS!";
+    addPlayerLogEntry(state.message || "Congratulations!");
+    el.innerText = getShortPlayerMessage(state.message || "Congratulations!");
     state.victoryMessageJustReleased = false;
     el.classList.add("has-message", "is-victory");
     return;
@@ -3381,6 +3463,7 @@ function renderMessage() {
   }
 
   if (state.gameOver) {
+    addPlayerLogEntry(state.message || "Game over.");
     el.innerText = "GAME OVER";
     el.classList.add("is-game-over");
     if (pendingReveal) pendingReveal.messageJustReleased = false;
@@ -3395,7 +3478,8 @@ function renderMessage() {
     return;
   }
 
-  el.innerText = state.message;
+  addPlayerLogEntry(state.message);
+  el.innerText = getShortPlayerMessage(state.message);
   if (pendingReveal) pendingReveal.messageJustReleased = false;
   el.classList.add("has-message");
   const densitySteps = ["normal", "compact", "tight"];

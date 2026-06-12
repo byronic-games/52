@@ -642,6 +642,7 @@ const menuModalCloseTimers = new Map();
 function syncBodyModalOpenClass() {
   const visibleModalIds = [
     "game-howto-modal",
+    "game-log-modal",
     "game-settings-modal",
     "victory-modal",
   ];
@@ -690,6 +691,17 @@ function closeHowToModal() {
 
 function openHowToModal() {
   openMenuModal("game-howto-modal");
+}
+
+function closeRunLogModal() {
+  closeMenuModal("game-log-modal");
+}
+
+function openRunLogModal() {
+  if (typeof renderRunLogList === "function") {
+    renderRunLogList();
+  }
+  openMenuModal("game-log-modal");
 }
 
 const SETTINGS_RESET_HOLD_MS = 5000;
@@ -968,6 +980,7 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
     setHeaderMenuOpen(false);
     closeHowToModal();
+    closeRunLogModal();
     closeSettingsModal();
   }
 });
@@ -978,6 +991,9 @@ document.getElementById("howto-open-btn")?.addEventListener("click", () => {
 });
 document.getElementById("howto-close-icon-btn")?.addEventListener("click", closeHowToModal);
 document.getElementById("howto-close-backdrop")?.addEventListener("click", closeHowToModal);
+document.getElementById("run-log-btn")?.addEventListener("click", openRunLogModal);
+document.getElementById("log-close-icon-btn")?.addEventListener("click", closeRunLogModal);
+document.getElementById("log-close-backdrop")?.addEventListener("click", closeRunLogModal);
 
 document.getElementById("settings-menu-btn")?.addEventListener("click", () => {
   setHeaderMenuOpen(false);

@@ -371,6 +371,20 @@ td.score {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.daily-board table,
+.daily-board th,
+.daily-board td,
+.daily-board .daily-name-button,
+.daily-board .score {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .daily-name-button:focus-visible {

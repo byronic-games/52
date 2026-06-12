@@ -1072,6 +1072,8 @@ function startRunWithPower(powerId) {
         : `Run started with seed ${chosenSeed}.`,
     temporaryMessageText: "",
     temporaryMessageUntil: 0,
+    playerLog: [],
+    lastPlayerLogMessage: "",
     gameOver: false,
     openingPreview: false,
     gameOverMessageReady: false,
@@ -2384,6 +2386,10 @@ function makeGuessLegacy(type) {
     return;
   }
 
+  const pressedGuessType = type === "lower" ? "lower" : "higher";
+  if (typeof addPlayerLogEntry === "function") {
+    addPlayerLogEntry(`Guessed ${pressedGuessType}`);
+  }
   type = getEffectiveGuessType(type);
 
   let next = peekNext();
@@ -3092,6 +3098,10 @@ function makeGuess(type) {
     return;
   }
 
+  const pressedGuessType = type === "lower" ? "lower" : "higher";
+  if (typeof addPlayerLogEntry === "function") {
+    addPlayerLogEntry(`Guessed ${pressedGuessType}`);
+  }
   type = getEffectiveGuessType(type);
 
   let next = peekNext();

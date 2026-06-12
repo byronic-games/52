@@ -167,6 +167,7 @@ body.game-page.black-deck-active #app-header,
 body.game-page.black-deck-active #main-layout,
 body.game-page.black-deck-active #victory-confetti,
 body.game-page.black-deck-active #game-howto-modal,
+body.game-page.black-deck-active #game-log-modal,
 body.game-page.black-deck-active #game-settings-modal,
 body.game-page.black-deck-active #victory-modal,
 body.game-page.black-deck-active #cheat-choice-container,
@@ -186,6 +187,7 @@ body.game-page.black-deck-active .header-menu {
 
 body.game-page.black-deck-active #game-settings-modal,
 body.game-page.black-deck-active #game-howto-modal,
+body.game-page.black-deck-active #game-log-modal,
 body.game-page.black-deck-active #victory-modal,
 body.game-page.black-deck-active #cheat-choice-container,
 body.game-page.black-deck-active #power-choice-container,
@@ -522,6 +524,15 @@ a {
   overflow: hidden;
 }
 
+#run-message-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--message-height, 28px);
+  height: var(--message-height, 28px);
+}
+
 #message-bar {
   display: flex;
   min-height: var(--message-height, 28px);
@@ -555,6 +566,23 @@ a {
   opacity: 0;
   transition:
     opacity 126ms ease-in-out;
+}
+
+.run-log-button {
+  width: var(--message-height, 28px);
+  height: var(--message-height, 28px);
+  border: 1px solid rgba(223, 245, 255, 0.18);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #dff5ff;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: clamp(0.56rem, 1.8cqw, 0.68rem);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 0 14px rgba(95, 228, 255, 0.08);
 }
 
 #message-bar.has-message {
@@ -2640,6 +2668,7 @@ body.choice-modal-open #controls,
 }
 
 #game-howto-modal,
+#game-log-modal,
 #game-settings-modal,
 #victory-modal,
 #cheat-choice-container,
@@ -2664,6 +2693,7 @@ body.choice-modal-open #controls,
 }
 
 #game-howto-modal.hidden,
+#game-log-modal.hidden,
 #game-settings-modal.hidden,
 #victory-modal.hidden,
 #cheat-choice-container.hidden,
@@ -2823,6 +2853,7 @@ body.choice-modal-open #controls,
 #cheat-choice-container:not(.hidden):not(.is-closing):not(.is-flying) .choice-modal,
 #power-choice-container:not(.hidden):not(.is-closing):not(.is-flying) .choice-modal,
 #game-howto-modal:not(.hidden):not(.is-closing) .help-dialog,
+#game-log-modal:not(.hidden):not(.is-closing) .help-dialog,
 #game-settings-modal:not(.hidden):not(.is-closing) .help-dialog {
   transform-origin: center center;
   animation: choice-modal-pop 432ms linear both;
@@ -2831,22 +2862,26 @@ body.choice-modal-open #controls,
 #cheat-choice-container:not(.hidden):not(.is-closing):not(.is-flying) .choice-backdrop,
 #power-choice-container:not(.hidden):not(.is-closing):not(.is-flying) .choice-backdrop,
 #game-howto-modal:not(.hidden):not(.is-closing) .help-backdrop,
+#game-log-modal:not(.hidden):not(.is-closing) .help-backdrop,
 #game-settings-modal:not(.hidden):not(.is-closing) .help-backdrop {
   animation: choice-backdrop-pop 234ms ease-out both;
 }
 
 #game-howto-modal.is-closing,
+#game-log-modal.is-closing,
 #game-settings-modal.is-closing {
   pointer-events: none;
 }
 
 #game-howto-modal.is-closing .help-dialog,
+#game-log-modal.is-closing .help-dialog,
 #game-settings-modal.is-closing .help-dialog {
   transform-origin: center center;
   animation: menu-modal-close 198ms cubic-bezier(0.34, 0.01, 0.58, 1) both;
 }
 
 #game-howto-modal.is-closing .help-backdrop,
+#game-log-modal.is-closing .help-backdrop,
 #game-settings-modal.is-closing .help-backdrop {
   animation: menu-backdrop-close 198ms ease-in both;
 }
@@ -2959,6 +2994,59 @@ body.choice-modal-open #controls,
 .help-block ul {
   margin: 0;
   padding-left: 18px;
+}
+
+.log-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.run-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.run-log-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.run-log-entry {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 22%),
+    rgba(255, 255, 255, 0.035);
+}
+
+.run-log-entry-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--cyan);
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.run-log-entry-head strong {
+  flex: 0 0 auto;
+  color: var(--lime);
+}
+
+.run-log-entry p {
+  margin: 7px 0 0;
+  color: var(--text);
+  font-size: 0.93rem;
+  line-height: 1.35;
 }
 
 .help-close-btn,
@@ -4658,6 +4746,16 @@ body.choice-modal-open #controls,
   text-align: center !important;
 }
 
+#run-message-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-height: var(--message-height, 28px) !important;
+  max-height: var(--message-height, 28px) !important;
+  height: var(--message-height, 28px) !important;
+}
+
 #message-bar {
   display: flex !important;
   align-items: center;
@@ -4665,6 +4763,7 @@ body.choice-modal-open #controls,
   min-height: var(--message-height, 28px) !important;
   max-height: var(--message-height, 28px) !important;
   height: var(--message-height, 28px) !important;
+  min-width: 0 !important;
   padding: 0 10px !important;
   border: 0 !important;
   border-radius: 0 !important;
@@ -4673,8 +4772,10 @@ body.choice-modal-open #controls,
   box-shadow: none !important;
   visibility: visible !important;
   pointer-events: auto !important;
-  overflow: visible !important;
-  }
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+}
 
 #cheats-panel {
   --nudge-card-height: min(calc(100cqh - 2px), clamp(70px, 19cqw, 92px));
