@@ -528,9 +528,9 @@ a {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 8px;
-  min-height: var(--message-height, 28px);
-  height: var(--message-height, 28px);
+  gap: 10px;
+  min-height: var(--message-height, 36px);
+  height: var(--message-height, 36px);
 }
 
 #message-bar {
@@ -569,20 +569,36 @@ a {
 }
 
 .run-log-button {
-  width: var(--message-height, 28px);
-  height: var(--message-height, 28px);
-  border: 1px solid rgba(223, 245, 255, 0.18);
-  border-radius: 9px;
-  background: rgba(255, 255, 255, 0.04);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(48px, 11cqw, 58px);
+  height: min(100%, 36px);
+  padding: 0 10px;
+  border: 1px solid rgba(223, 245, 255, 0.24);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.025)),
+    rgba(35, 44, 64, 0.74);
   color: #dff5ff;
   font-family: "Space Grotesk", sans-serif;
-  font-size: clamp(0.56rem, 1.8cqw, 0.68rem);
+  font-size: clamp(0.7rem, 2.1cqw, 0.82rem);
+  line-height: 1;
   font-weight: 900;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
-    0 0 14px rgba(95, 228, 255, 0.08);
+    inset 0 0 0 1px rgba(255, 255, 255, 0.045),
+    0 0 12px rgba(95, 228, 255, 0.12);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.run-log-button:active {
+  transform: translateY(1px);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02)),
+    rgba(25, 31, 45, 0.78);
 }
 
 #message-bar.has-message {
@@ -4750,10 +4766,10 @@ body.choice-modal-open #controls,
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: center !important;
-  gap: 8px !important;
-  min-height: var(--message-height, 28px) !important;
-  max-height: var(--message-height, 28px) !important;
-  height: var(--message-height, 28px) !important;
+  gap: 10px !important;
+  min-height: var(--message-height, 36px) !important;
+  max-height: var(--message-height, 36px) !important;
+  height: var(--message-height, 36px) !important;
 }
 
 #message-bar {
