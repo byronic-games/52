@@ -75,6 +75,7 @@ function createEmptyState() {
     cardBackStatuses: loadCardBackStatuses(),
     temporaryCardBackRepairs: {},
     temporaryCardBackMarks: {},
+    temporaryCardValues: {},
     cheatUnlocks: loadCheatUnlocks(),
     deckWins: loadDeckWins(),
     deckLevelClears: loadDeckLevelClears(),

@@ -224,12 +224,20 @@ function queueCardRevealAnimation(options = {}) {
   const revealEffectiveValue = Number.isFinite(options.revealEffectiveValue)
     ? options.revealEffectiveValue
     : revealCard?.value ?? null;
-  const revealIsTemp = !!revealCard && Number.isFinite(revealEffectiveValue) && revealEffectiveValue !== revealCard.value;
+  const revealStoredTemp = Number.isFinite(getTemporaryCardValue(revealCard));
+  const revealIsTemp = !!revealCard && (
+    revealStoredTemp ||
+    (Number.isFinite(revealEffectiveValue) && revealEffectiveValue !== revealCard.value)
+  );
   const fromCard = options.fromCard || null;
   const fromEffectiveValue = Number.isFinite(options.fromEffectiveValue)
     ? options.fromEffectiveValue
     : fromCard?.value ?? null;
-  const fromIsTemp = !!fromCard && Number.isFinite(fromEffectiveValue) && fromEffectiveValue !== fromCard.value;
+  const fromStoredTemp = Number.isFinite(getTemporaryCardValue(fromCard));
+  const fromIsTemp = !!fromCard && (
+    fromStoredTemp ||
+    (Number.isFinite(fromEffectiveValue) && fromEffectiveValue !== fromCard.value)
+  );
   if (options.triggerGameOver) {
     state.gameOverMessageReady = false;
     state.gameOverMessageJustReleased = false;
@@ -573,6 +581,10 @@ function getNextComparisonValueForGuess(nextCard = peekNext()) {
   if (isBlankSpaceActiveForNextCard(nextCard)) {
     return getBlankSpaceDisplayValue();
   }
+  const temporaryValue = getTemporaryCardValue(nextCard);
+  if (Number.isFinite(temporaryValue)) {
+    return clampCardValue(temporaryValue + (state.nextCardValueModifier || 0));
+  }
   return clampCardValue(nextCard.value + (state.nextCardValueModifier || 0));
 }
 
@@ -761,6 +773,8 @@ function previewPendingRunBehindPowerChoice(deck, runMode = "standard", deckKey 
   state.royalFlushRemaining = 0;
   state.royalFlushSuitsSeen = {};
   state.temporaryCardBackRepairs = {};
+  state.temporaryCardBackMarks = {};
+  state.temporaryCardValues = {};
   state.bingoCornersAwarded = false;
   state.bingoLineAwardCount = 0;
   state.oneLifeLeftLives = 0;
@@ -1110,6 +1124,7 @@ function startRunWithPower(powerId) {
     cardBackStatuses: loadCardBackStatuses(),
     temporaryCardBackRepairs: {},
     temporaryCardBackMarks: {},
+    temporaryCardValues: {},
     deckWins: loadDeckWins(),
     deckLevelClears: loadDeckLevelClears(),
     cheatUnlocks: loadCheatUnlocks(),
@@ -1649,18 +1664,37 @@ function getEffectiveValueForModifier(card, modifier = 0) {
   if (!card) return null;
   if (isJokerCard(card)) return null;
 
+  const baseValue = Number.isFinite(getTemporaryCardValue(card))
+    ? getTemporaryCardValue(card)
+    : card.value;
+
   if (runHasPower("aces_wild")) {
-    const zeroIndexed = card.value - 1;
+    const zeroIndexed = baseValue - 1;
     const wrapped = ((zeroIndexed + modifier) % 13 + 13) % 13;
     return wrapped + 1;
   }
 
-  return clamp(card.value + modifier, 1, 13);
+  return clamp(baseValue + modifier, 1, 13);
 }
 
 function getCurrentEffectiveValue() {
   if (!state.current) return null;
   return getEffectiveValueForModifier(state.current, state.currentValueModifier || 0);
+}
+
+function getTemporaryCardValue(card) {
+  if (!card || isJokerCard(card)) return null;
+  const value = state.temporaryCardValues?.[card.id];
+  return Number.isFinite(value) ? value : null;
+}
+
+function setTemporaryCardValue(card, value) {
+  if (!card || isJokerCard(card) || !Number.isFinite(value)) return false;
+  if (!state.temporaryCardValues || typeof state.temporaryCardValues !== "object") {
+    state.temporaryCardValues = {};
+  }
+  state.temporaryCardValues[card.id] = clampCardValue(value);
+  return true;
 }
 
 function wouldGuessBeCorrect(type, currentValue, nextValue) {

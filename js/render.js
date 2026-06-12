@@ -127,10 +127,15 @@ function renderRevealOverlayCard(pending, showFace) {
 
   const revealCard = pending.revealCard;
   const revealStatus = getCardBackStatus(revealCard.id);
+  const storedTemporaryValue = typeof getTemporaryCardValue === "function"
+    ? getTemporaryCardValue(revealCard)
+    : null;
   const revealValue = Number.isFinite(pending.revealEffectiveValue)
     ? pending.revealEffectiveValue
+    : Number.isFinite(storedTemporaryValue)
+      ? storedTemporaryValue
     : revealCard.value;
-  const revealIsTemp = !!pending.revealIsTemp;
+  const revealIsTemp = !!pending.revealIsTemp || Number.isFinite(storedTemporaryValue);
   const revealBackColor = getDeckBackColor(state.currentDeckKey || state.selectedDeckKey);
 
   overlayEl.innerHTML = "";
@@ -1542,6 +1547,8 @@ function setupCurrentCardEffectsTooltip(el, payload) {
 }
 
 const CHEAT_ICON_BY_NAME = Object.freeze({
+  "Power Parity": "P3",
+  "Emergency Services": "999",
   "Above 9?": "9↑",
   "Below 5?": "5↓",
   "5 or Under?": "5↓",
@@ -1918,7 +1925,7 @@ function renderCurrentCard() {
     ? !!pendingReveal.fromIsTemp
     : gameOverCards?.leftCard && cardToRender.id === gameOverCards.leftCard.id
       ? !!gameOverCards.leftIsTemp
-      : effectiveValue !== cardToRender.value;
+      : effectiveValue !== cardToRender.value || Number.isFinite(typeof getTemporaryCardValue === "function" ? getTemporaryCardValue(cardToRender) : null);
   const feedbackClass = state.currentCardFeedback
     ? `feedback-${state.currentCardFeedback}`
     : "";
@@ -2097,10 +2104,15 @@ function renderFaceDownDeck() {
   if (gameOverCards?.rightCard && !state.pendingRevealAnimation) {
     const revealCard = gameOverCards.rightCard;
     const revealStatus = getCardBackStatus(revealCard.id);
+    const storedTemporaryValue = typeof getTemporaryCardValue === "function"
+      ? getTemporaryCardValue(revealCard)
+      : null;
     const revealValue = Number.isFinite(gameOverCards.rightEffectiveValue)
       ? gameOverCards.rightEffectiveValue
+      : Number.isFinite(storedTemporaryValue)
+        ? storedTemporaryValue
       : revealCard.value;
-    const revealIsTemp = !!gameOverCards.rightIsTemp;
+    const revealIsTemp = !!gameOverCards.rightIsTemp || Number.isFinite(storedTemporaryValue);
 
     deckEl.className = `card-face ${isJokerCard(revealCard) ? "joker-card-face" : (isRed(revealCard) ? "red" : "black")} ${revealStatus.tornCorner ? "torn-corner-face" : ""} ${revealIsTemp ? "temporary-value" : ""}${getPreservedTutorialFocusClass(deckEl)}`.trim();
     deckEl.innerHTML = renderCardFaceMarkup(
