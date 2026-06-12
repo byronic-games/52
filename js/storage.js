@@ -442,6 +442,12 @@ function hasVerifiedDeckLevelClear(deckKey, level = DEFAULT_LEVEL_NUMBER) {
   return Number.isFinite(bestScore) && bestScore >= 51;
 }
 
+function hasLegacyRedDeckClear() {
+  const wins = loadDeckWins();
+  if ((Number(wins.red) || 0) > 0) return true;
+  return [1, 2, 3, 4].some((levelNumber) => hasVerifiedDeckLevelClear("red", levelNumber));
+}
+
 function isDeckUnlocked(deckKey) {
   const normalizedDeckKey = normalizeDeckKey(deckKey);
   if (loadUnlockDecks()) return true;
@@ -451,6 +457,7 @@ function isDeckUnlocked(deckKey) {
   if (normalizedDeckKey === "yellow") return hasVerifiedDeckLevelClear("green", 1);
   if (normalizedDeckKey === "orange") return hasVerifiedDeckLevelClear("yellow", 1);
   if (normalizedDeckKey === "black") {
+    if (hasLegacyRedDeckClear()) return true;
     return ["blue", "green", "orange", "yellow"].every((deckKey) =>
       [1, 2, 3, 4].every((levelNumber) => hasVerifiedDeckLevelClear(deckKey, levelNumber))
     );

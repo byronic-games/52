@@ -549,6 +549,17 @@
         return Number.isFinite(bestScore) && bestScore >= 51;
       }
 
+      function hasLegacyRedDeckClear() {
+        try {
+          const wins = JSON.parse(localStorage.getItem(deckWinsKey) || "{}");
+          if ((Number(wins?.red) || 0) > 0) return true;
+        } catch {
+          // ignore malformed legacy deck wins
+        }
+
+        return [1, 2, 3, 4].some((levelNumber) => hasVerifiedDeckLevelClear("red", levelNumber));
+      }
+
       function hasDebugUnlock() {
         return localStorage.getItem(unlockAllKey) === "1" || (debugUnlockEnabled && sessionStorage.getItem(redDeckDebugUnlockKey) === "1");
       }
@@ -576,6 +587,7 @@
 
       function isBlackDeckUnlocked() {
         if (hasDeckUnlock() || isDeckManuallyLevelOneUnlocked("black")) return true;
+        if (hasLegacyRedDeckClear()) return true;
         return ["blue", "green", "orange", "yellow"].every((deckKey) =>
           [1, 2, 3, 4].every((levelNumber) => hasVerifiedDeckLevelClear(deckKey, levelNumber))
         );

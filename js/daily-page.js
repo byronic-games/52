@@ -196,30 +196,60 @@ function showDailyEntryPopover(entry, anchorEl) {
 
 function addDailyNameHoldHandlers(button, entry) {
   let holdTimer = null;
-  let openedByHold = false;
+  let pointerHoldActive = false;
 
   const clearHold = () => {
     if (holdTimer) {
       window.clearTimeout(holdTimer);
       holdTimer = null;
     }
+    hideDailyEntryPopover();
   };
 
-  button.addEventListener("pointerdown", () => {
-    openedByHold = false;
+  const beginHold = (event) => {
+    if (!dailyEntryPopoversEnabled) return;
+    if (event.button !== undefined && event.button !== 0) return;
+    event.preventDefault();
     clearHold();
-    holdTimer = window.setTimeout(() => {
-      openedByHold = true;
+
+    if (event.pointerType === "mouse" || event.type === "mousedown") {
       showDailyEntryPopover(entry, button);
-    }, 420);
+      return;
+    }
+
+    holdTimer = window.setTimeout(() => {
+      showDailyEntryPopover(entry, button);
+    }, 300);
+  };
+
+  button.addEventListener("pointerdown", (event) => {
+    pointerHoldActive = true;
+    beginHold(event);
   });
-  button.addEventListener("pointerup", clearHold);
-  button.addEventListener("pointercancel", clearHold);
-  button.addEventListener("pointerleave", clearHold);
+  button.addEventListener("mousedown", (event) => {
+    if (pointerHoldActive) return;
+    beginHold(event);
+  });
+
+  const clearPointerHold = () => {
+    clearHold();
+    window.setTimeout(() => {
+      pointerHoldActive = false;
+    }, 0);
+  };
+
+  button.addEventListener("pointerup", clearPointerHold);
+  button.addEventListener("pointercancel", clearPointerHold);
+  button.addEventListener("pointerleave", clearPointerHold);
+  button.addEventListener("mouseup", () => {
+    if (pointerHoldActive) return;
+    clearHold();
+  });
   button.addEventListener("click", (event) => {
     event.preventDefault();
-    if (openedByHold) return;
-    showDailyEntryPopover(entry, button);
+  });
+  button.addEventListener("contextmenu", (event) => {
+    event.preventDefault();
   });
 }
 
@@ -487,10 +517,3 @@ async function renderDailyPage() {
 }
 
 renderDailyPage();
-
-document.addEventListener("pointerdown", (event) => {
-  const popover = document.getElementById("daily-entry-popover");
-  if (!popover || popover.classList.contains("hidden")) return;
-  if (popover.contains(event.target) || event.target.closest?.(".daily-name-button")) return;
-  hideDailyEntryPopover();
-});
