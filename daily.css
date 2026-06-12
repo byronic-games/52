@@ -377,14 +377,26 @@ td.score {
   touch-action: manipulation;
 }
 
+.daily-board .table-wrap,
 .daily-board table,
+.daily-board thead,
+.daily-board tbody,
+.daily-board tr,
 .daily-board th,
 .daily-board td,
+.daily-board td *,
 .daily-board .daily-name-button,
 .daily-board .score {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
   user-select: none;
+}
+
+.daily-board td::selection,
+.daily-board td *::selection {
+  background: transparent;
 }
 
 .daily-name-button:focus-visible {

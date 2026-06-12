@@ -209,6 +209,12 @@ function addDailyNameHoldHandlers(button, entry) {
   let holdTimer = null;
   let pointerHoldActive = false;
 
+  button.setAttribute("draggable", "false");
+
+  const suppressSelection = (event) => {
+    event.preventDefault();
+  };
+
   const clearHold = () => {
     if (holdTimer) {
       window.clearTimeout(holdTimer);
@@ -237,6 +243,10 @@ function addDailyNameHoldHandlers(button, entry) {
     pointerHoldActive = true;
     beginHold(event);
   });
+  button.addEventListener("touchstart", (event) => {
+    if (!dailyEntryPopoversEnabled) return;
+    event.preventDefault();
+  }, { passive: false });
   button.addEventListener("mousedown", (event) => {
     if (pointerHoldActive) return;
     beginHold(event);
@@ -259,6 +269,8 @@ function addDailyNameHoldHandlers(button, entry) {
   button.addEventListener("click", (event) => {
     event.preventDefault();
   });
+  button.addEventListener("selectstart", suppressSelection);
+  button.addEventListener("dragstart", suppressSelection);
   button.addEventListener("contextmenu", (event) => {
     event.preventDefault();
   });
