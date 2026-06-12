@@ -144,7 +144,7 @@ function hideDailyEntryPopover() {
   popover.innerHTML = "";
 }
 
-function showDailyEntryPopover(entry, anchorEl) {
+function showDailyEntryPopover(entry, anchorEl, pressPoint = null) {
   if (!dailyEntryPopoversEnabled) {
     hideDailyEntryPopover();
     return;
@@ -185,11 +185,22 @@ function showDailyEntryPopover(entry, anchorEl) {
   popover.classList.remove("hidden");
   popover.setAttribute("aria-hidden", "false");
 
-  const anchorRect = anchorEl.getBoundingClientRect();
   const popoverRect = popover.getBoundingClientRect();
   const margin = 8;
-  const left = Math.max(margin, Math.min(window.innerWidth - popoverRect.width - margin, anchorRect.left));
-  const top = Math.max(margin, Math.min(window.innerHeight - popoverRect.height - margin, anchorRect.bottom + margin));
+  const anchorRect = anchorEl.getBoundingClientRect();
+  const anchorX = pressPoint && Number.isFinite(pressPoint.x)
+    ? pressPoint.x
+    : anchorRect.left + (anchorRect.width / 2);
+  const anchorY = pressPoint && Number.isFinite(pressPoint.y)
+    ? pressPoint.y
+    : anchorRect.top;
+  const preferredLeft = anchorX - (popoverRect.width / 2);
+  const left = Math.max(margin, Math.min(window.innerWidth - popoverRect.width - margin, preferredLeft));
+  const preferredTop = anchorY - popoverRect.height;
+  const fallbackTop = anchorY + margin;
+  const top = preferredTop >= margin
+    ? preferredTop
+    : Math.max(margin, Math.min(window.innerHeight - popoverRect.height - margin, fallbackTop));
   popover.style.left = `${Math.round(left)}px`;
   popover.style.top = `${Math.round(top)}px`;
 }
@@ -213,12 +224,12 @@ function addDailyNameHoldHandlers(button, entry) {
     clearHold();
 
     if (event.pointerType === "mouse" || event.type === "mousedown") {
-      showDailyEntryPopover(entry, button);
+      showDailyEntryPopover(entry, button, { x: event.clientX, y: event.clientY });
       return;
     }
 
     holdTimer = window.setTimeout(() => {
-      showDailyEntryPopover(entry, button);
+      showDailyEntryPopover(entry, button, { x: event.clientX, y: event.clientY });
     }, 300);
   };
 

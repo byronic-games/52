@@ -11,7 +11,7 @@ const LEADERBOARD_CONFIG = {
 
 const CROWN_BLUE = "🔵👑";
 const CROWN_GREEN = "🟢👑";
-const CROWN_RED = "🔴👑";
+const CROWN_ORANGE = "🟠👑";
 const CROWN_DAILY = "🟡👑";
 const CROWN_GLYPH = "♛";
 
@@ -140,7 +140,7 @@ function buildCrownSummary(snapshot = {}) {
   const parts = [];
   if (snapshot.blueCleared) parts.push(CROWN_BLUE);
   if (snapshot.greenCleared) parts.push(CROWN_GREEN);
-  if (snapshot.redCleared) parts.push(CROWN_RED);
+  if (snapshot.redCleared) parts.push(CROWN_ORANGE);
   if (snapshot.dailyCleared) parts.push(CROWN_DAILY);
   return parts.join(" ");
 }
@@ -183,7 +183,7 @@ function getEntryCrownSnapshot(entry = {}) {
   const legacySummary = String(entry.crownSummary ?? entry.crown_summary ?? "").trim();
   const legacyBlue = legacySummary.includes("🔵");
   const legacyGreen = legacySummary.includes("🟢");
-  const legacyRed = legacySummary.includes("🔴");
+  const legacyRed = legacySummary.includes("🔴") || legacySummary.includes("🟠");
   const legacyDaily = legacySummary.includes("🟡") || legacySummary.includes("🥇");
 
   const blueCleared = normalizeCrownBoolean(entry.blueCleared ?? entry.blue_cleared) || legacyBlue;
@@ -229,7 +229,7 @@ function getCrownBadgesHtml(entry = {}) {
     badges.push(`<span class="crown-icon crown-green" title="Green Deck cleared">${CROWN_GLYPH}</span>`);
   }
   if (snapshot.redCleared) {
-    badges.push(`<span class="crown-icon crown-red" title="Orange Deck cleared">${CROWN_GLYPH}</span>`);
+    badges.push(`<span class="crown-icon crown-orange" title="Orange Deck cleared">${CROWN_GLYPH}</span>`);
   }
   if (snapshot.dailyCleared) {
     badges.push(`<span class="crown-icon crown-gold" title="Daily cleared">${CROWN_GLYPH}</span>`);
