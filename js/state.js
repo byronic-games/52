@@ -58,6 +58,7 @@ function createEmptyState() {
     currentNudgeUpUsed: 0,
     currentNudgeDownUsed: 0,
     currentNudgeValueModifier: 0,
+    currentNudgeLogFlushed: false,
     nextCardValueModifier: 0,
     correctAnswers: 0,
     streak: 0,

@@ -1108,6 +1108,7 @@ function startRunWithPower(powerId) {
     currentNudgeUpUsed: 0,
     currentNudgeDownUsed: 0,
     currentNudgeValueModifier: 0,
+    currentNudgeLogFlushed: false,
     correctAnswers: 0,
     streak: 0,
     bestScore: loadBestScore(currentDeckKey, currentLevelNumber),
@@ -1601,6 +1602,7 @@ function resetCurrentTurnNudgeTracking() {
   state.currentNudgeUpUsed = 0;
   state.currentNudgeDownUsed = 0;
   state.currentNudgeValueModifier = 0;
+  state.currentNudgeLogFlushed = false;
 }
 
 function removeCheatAt(index) {
@@ -1629,10 +1631,10 @@ function buildComparisonSnippet(currentCard, effectiveValue, nextCard, nextEffec
   if (!currentCard || !nextCard) return "";
   if (isJokerCard(nextCard)) return getJokerName(nextCard);
   if (nextEffectiveValue === effectiveValue) {
-    return `${formatCurrentJudgedValueForMessage(currentCard, effectiveValue)} = ${formatNextValueForMessage(nextCard, nextEffectiveValue)}`;
+    return `${formatNextValueForMessage(nextCard, nextEffectiveValue)} equals ${formatCurrentJudgedValueForMessage(currentCard, effectiveValue)}`;
   }
-  const symbol = effectiveValue < nextEffectiveValue ? "<" : ">";
-  return `${formatCurrentJudgedValueForMessage(currentCard, effectiveValue)} ${symbol} ${formatNextValueForMessage(nextCard, nextEffectiveValue)}`;
+  const relation = nextEffectiveValue > effectiveValue ? "higher" : "lower";
+  return `${formatNextValueForMessage(nextCard, nextEffectiveValue)} is ${relation} than ${formatCurrentJudgedValueForMessage(currentCard, effectiveValue)}`;
 }
 
 function formatCurrentCardForLossMessage(card, effectiveValue) {
@@ -1660,6 +1662,22 @@ function buildWrongGuessMessage(type, currentCard, currentEffectiveValue, nextCa
   }
 
   return `${prefix}${nextLabel} was higher than ${currentLabel}.`;
+}
+
+function flushCurrentNudgeLogEntry() {
+  if (state.currentNudgeLogFlushed) return;
+  const upUsed = Math.max(0, Number(state.currentNudgeUpUsed) || 0);
+  const downUsed = Math.max(0, Number(state.currentNudgeDownUsed) || 0);
+  const parts = [];
+  if (upUsed > 0) parts.push(`+${upUsed}`);
+  if (downUsed > 0) parts.push(`-${downUsed}`);
+  if (!parts.length) return;
+  state.currentNudgeLogFlushed = true;
+  if (typeof addPlayerLogEntry === "function") {
+    addPlayerLogEntry(`Player used ${parts.join(" and ")} nudge charge${upUsed + downUsed === 1 ? "" : "s"}.`, {
+      summary: "Nudges used",
+    });
+  }
 }
 
 function getEffectiveValueForModifier(card, modifier = 0) {
@@ -2432,10 +2450,6 @@ function makeGuessLegacy(type) {
     return;
   }
 
-  const pressedGuessType = type === "lower" ? "lower" : "higher";
-  if (typeof addPlayerLogEntry === "function") {
-    addPlayerLogEntry(`Guessed ${pressedGuessType}`);
-  }
   type = getEffectiveGuessType(type);
 
   let next = peekNext();
@@ -2456,6 +2470,7 @@ function makeGuessLegacy(type) {
 
   const currentComparisonValue = getCurrentEffectiveValue();
   const nextComparisonValue = getNextComparisonValueForGuess(next);
+  flushCurrentNudgeLogEntry();
   const revealDistance = Number.isFinite(nextComparisonValue) && Number.isFinite(currentComparisonValue)
     ? Math.abs(nextComparisonValue - currentComparisonValue)
     : 0;
@@ -3148,10 +3163,6 @@ function makeGuess(type) {
     return;
   }
 
-  const pressedGuessType = type === "lower" ? "lower" : "higher";
-  if (typeof addPlayerLogEntry === "function") {
-    addPlayerLogEntry(`Guessed ${pressedGuessType}`);
-  }
   type = getEffectiveGuessType(type);
 
   let next = peekNext();
@@ -3172,6 +3183,7 @@ function makeGuess(type) {
 
   const currentComparisonValue = getCurrentEffectiveValue();
   const nextComparisonValue = getNextComparisonValueForGuess(next);
+  flushCurrentNudgeLogEntry();
   const equals11WasArmed = !!state.equals11Armed;
   const revealDistance = Number.isFinite(nextComparisonValue) && Number.isFinite(currentComparisonValue)
     ? Math.abs(nextComparisonValue - currentComparisonValue)

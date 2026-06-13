@@ -1143,6 +1143,7 @@ function addPlayerLogEntry(message = "", options = {}) {
   const detail = cleanPlayerLogMessage(message);
   if (!detail) return;
   if (detail === "Press Start Run.") return;
+  if (/^(Nudge [+-]\d+ used\. Current card treated|Blank Space adjusted\.)/i.test(detail)) return;
   if (state.lastPlayerLogMessage === detail) return;
 
   const summaryOverride = cleanPlayerLogMessage(options.summary || "");

@@ -3015,13 +3015,14 @@ body.choice-modal-open #controls,
 .log-dialog {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
+  padding: 14px;
 }
 
 .run-log-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 7px;
 }
 
 .run-log-empty {
@@ -3032,8 +3033,8 @@ body.choice-modal-open #controls,
 }
 
 .run-log-entry {
-  padding: 12px;
-  border-radius: 12px;
+  padding: 8px 10px;
+  border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 22%),
@@ -3044,12 +3045,12 @@ body.choice-modal-open #controls,
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   color: var(--cyan);
   font-family: "Space Grotesk", sans-serif;
-  font-size: 0.78rem;
+  font-size: 0.64rem;
   font-weight: 900;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
@@ -3059,10 +3060,10 @@ body.choice-modal-open #controls,
 }
 
 .run-log-entry p {
-  margin: 7px 0 0;
+  margin: 4px 0 0;
   color: var(--text);
-  font-size: 0.93rem;
-  line-height: 1.35;
+  font-size: 0.78rem;
+  line-height: 1.25;
 }
 
 .help-close-btn,
