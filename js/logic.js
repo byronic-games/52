@@ -1184,6 +1184,8 @@ function startRunWithPower(powerId) {
     godSaveKingArmed: false,
     alwaysBetBlackArmed: false,
     redDeadRedemptionArmed: false,
+    suitsYouSirArmed: false,
+    suitsYouSirSuit: "",
     lockySevensActive: false,
     oddOneOutArmed: false,
     cursedShieldArmed: false,
@@ -1730,6 +1732,14 @@ function applyRefundNudgeResult(refundResult) {
   return ` Refund returned ${refundResult.total} unnecessary Nudge${refundResult.total === 1 ? "" : "s"}.`;
 }
 
+function resolveSuitsYouSirOnReveal(suitsYouSirWasArmed, armedSuit, revealedCard) {
+  if (!suitsYouSirWasArmed || !armedSuit || !revealedCard) return "";
+  if (isJokerCard(revealedCard) || !revealedCard.suit || revealedCard.suit !== armedSuit) return " Suits You, Sir missed.";
+  state.nudgeUpCharges = (state.nudgeUpCharges || 0) + 5;
+  state.nudgeDownCharges = (state.nudgeDownCharges || 0) + 5;
+  return " Suits You, Sir matched: +5 Nudge Up and +5 Nudge Down.";
+}
+
 function isEnergyDeckRun() {
   return isEnergyDeckKey(state.currentDeckKey || state.selectedDeckKey || "blue");
 }
@@ -2200,6 +2210,8 @@ function clearArmedPowerEffects() {
   state.godSaveKingArmed = false;
   state.alwaysBetBlackArmed = false;
   state.redDeadRedemptionArmed = false;
+  state.suitsYouSirArmed = false;
+  state.suitsYouSirSuit = "";
   state.lockySevensActive = false;
   state.oddOneOutArmed = false;
   state.cursedShieldArmed = false;
@@ -2465,6 +2477,8 @@ function makeGuessLegacy(type) {
   const godSaveKingWasArmed = !!state.godSaveKingArmed;
   const alwaysBetBlackWasArmed = !!state.alwaysBetBlackArmed;
   const redDeadRedemptionWasArmed = !!state.redDeadRedemptionArmed;
+  const suitsYouSirWasArmed = !!state.suitsYouSirArmed;
+  const suitsYouSirSuit = state.suitsYouSirSuit || "";
   const oddOneOutWasArmed = !!state.oddOneOutArmed;
   const sixSevenWasArmed = !!state.sixSevenArmed;
   const cursedShieldWasArmed = !!state.cursedShieldArmed;
@@ -2491,6 +2505,8 @@ function makeGuessLegacy(type) {
   state.godSaveKingArmed = false;
   state.alwaysBetBlackArmed = false;
   state.redDeadRedemptionArmed = false;
+  state.suitsYouSirArmed = false;
+  state.suitsYouSirSuit = "";
   state.oddOneOutArmed = false;
   state.sixSevenArmed = false;
   state.refundArmed = false;
@@ -3249,6 +3265,8 @@ function makeGuess(type) {
   const godSaveKingWasArmed = !!state.godSaveKingArmed;
   const alwaysBetBlackWasArmed = !!state.alwaysBetBlackArmed;
   const redDeadRedemptionWasArmed = !!state.redDeadRedemptionArmed;
+  const suitsYouSirWasArmed = !!state.suitsYouSirArmed;
+  const suitsYouSirSuit = state.suitsYouSirSuit || "";
   const oddOneOutWasArmed = !!state.oddOneOutArmed;
   const sixSevenWasArmed = !!state.sixSevenArmed;
   const cursedShieldWasArmed = !!state.cursedShieldArmed;
@@ -3274,6 +3292,8 @@ function makeGuess(type) {
   state.godSaveKingArmed = false;
   state.alwaysBetBlackArmed = false;
   state.redDeadRedemptionArmed = false;
+  state.suitsYouSirArmed = false;
+  state.suitsYouSirSuit = "";
   state.oddOneOutArmed = false;
   state.sixSevenArmed = false;
   state.refundArmed = false;
@@ -3346,8 +3366,9 @@ function makeGuess(type) {
       });
       state.currentValueModifier = 0;
       state.streak = 0;
+      const suitsYouSirText = resolveSuitsYouSirOnReveal(suitsYouSirWasArmed, suitsYouSirSuit, next);
       const lossMessage = appendEnergyFeedback(
-        `Odd One Out triggered - next card was ${formatNextCardForLossMessage(next)}.`,
+        `Odd One Out triggered - next card was ${formatNextCardForLossMessage(next)}.${suitsYouSirText}`,
         -revealDistance
       );
       appendRunDebugLog("guess_resolved", {
@@ -3467,7 +3488,8 @@ function makeGuess(type) {
   }
 
   const refundResult = correct ? getRefundNudgeResult(refundWasArmed, type, nextComparisonValue) : null;
-  const refundText = applyRefundNudgeResult(refundResult);
+  const suitsYouSirText = resolveSuitsYouSirOnReveal(suitsYouSirWasArmed, suitsYouSirSuit, next);
+  const refundText = `${suitsYouSirText}${applyRefundNudgeResult(refundResult)}`;
 
   if (!correct) {
     const lossCurrentCard = state.current;
@@ -3477,8 +3499,8 @@ function makeGuess(type) {
     state.currentValueModifier = lockySevenCarryModifier;
     state.streak = 0;
     const lossDetail = sixSevenWasArmed
-      ? `6/7 failed - ${buildWrongGuessMessage(type, lossCurrentCard, currentComparisonValue, next, nextComparisonValue)}`
-      : buildWrongGuessMessage(type, lossCurrentCard, currentComparisonValue, next, nextComparisonValue);
+      ? `6/7 failed - ${buildWrongGuessMessage(type, lossCurrentCard, currentComparisonValue, next, nextComparisonValue)}${suitsYouSirText}`
+      : `${buildWrongGuessMessage(type, lossCurrentCard, currentComparisonValue, next, nextComparisonValue)}${suitsYouSirText}`;
     const gameOverMessage = `❌ ${lossDetail}`;
     queueCardRevealAnimation({
       outcome: "wrong",

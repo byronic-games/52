@@ -1440,20 +1440,15 @@ const CHEATS = [
     included: true,
     unlockAt: 0,
     stacking: "unique",
-    consumeOnUse: true,
+    consumeOnUse: false,
+    shouldConsumeResult: (result) => typeof result === "string" && result.startsWith("Suits You, Sir armed"),
     use: () => {
       if (!state.current) return "No current card.";
-      const next = getNextCardAt(1);
-      if (!next) return "No next card.";
-      const nextSuit = getUpcomingCheatSuit(1);
-      if (nextSuit !== state.current.suit) {
-        return nextSuit
-          ? `No match - current ${state.current.suit}, next ${nextSuit}.`
-          : "Next card has no suit - no suit match.";
-      }
-      state.nudgeUpCharges = (state.nudgeUpCharges || 0) + 5;
-      state.nudgeDownCharges = (state.nudgeDownCharges || 0) + 5;
-      return `Suit match! Gained 5 Nudge +1 and 5 Nudge -1 charges.`;
+      if (!state.current.suit) return "Suits You, Sir needs a suited current card.";
+      if (!getNextCardAt(1)) return "Suits You, Sir needs a next card.";
+      state.suitsYouSirArmed = true;
+      state.suitsYouSirSuit = state.current.suit;
+      return "Suits You, Sir armed - it will resolve when the next card is revealed.";
     },
   },
   {

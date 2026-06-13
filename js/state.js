@@ -101,6 +101,8 @@ function createEmptyState() {
     godSaveKingArmed: false,
     alwaysBetBlackArmed: false,
     redDeadRedemptionArmed: false,
+    suitsYouSirArmed: false,
+    suitsYouSirSuit: "",
     lockySevensActive: false,
     oddOneOutArmed: false,
     cursedShieldArmed: false,

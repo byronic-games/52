@@ -457,8 +457,7 @@ function isDeckUnlocked(deckKey) {
   if (normalizedDeckKey === "yellow") return hasVerifiedDeckLevelClear("green", 1);
   if (normalizedDeckKey === "orange") return hasVerifiedDeckLevelClear("yellow", 1);
   if (normalizedDeckKey === "black") {
-    if (hasLegacyRedDeckClear()) return true;
-    return ["blue", "green", "orange", "yellow"].every((deckKey) =>
+    return ["blue", "green", "yellow", "orange"].every((deckKey) =>
       [1, 2, 3, 4].every((levelNumber) => hasVerifiedDeckLevelClear(deckKey, levelNumber))
     );
   }

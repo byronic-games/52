@@ -1417,6 +1417,7 @@ function getActiveEffectsTooltipPayload() {
   if ((state.royalFlushRemaining || 0) > 0) waiting.push(`Royal Flush: ${state.royalFlushRemaining} reveal${state.royalFlushRemaining === 1 ? "" : "s"} left.`);
   if (state.alwaysBetBlackArmed) waiting.push("Always Bet On The Black: Club or Spade reveal saves a wrong guess.");
   if (state.redDeadRedemptionArmed) waiting.push("Red? Dead? Redemption: Heart or Diamond reveal saves a wrong guess.");
+  if (state.suitsYouSirArmed) waiting.push("Suits You, Sir: resolves when the next card is revealed.");
   if (state.oddOneOutArmed) waiting.push("Odd One Out: next odd card loses, otherwise survives.");
   if (state.cursedShieldArmed) waiting.push("Cursed Shield: next wrong guess survives.");
   if ((state.oneLifeLeftLives || 0) > 0) waiting.push(`One Life Left: ${state.oneLifeLeftLives} ${state.oneLifeLeftLives === 1 ? "life" : "lives"} stored.`);
@@ -2937,6 +2938,8 @@ function renderCheats() {
             godSaveKing: !!state.godSaveKingArmed,
             alwaysBetBlack: !!state.alwaysBetBlackArmed,
             redDeadRedemption: !!state.redDeadRedemptionArmed,
+            suitsYouSir: !!state.suitsYouSirArmed,
+            suitsYouSirSuit: state.suitsYouSirSuit || "",
             oddOneOut: !!state.oddOneOutArmed,
             cursedShield: !!state.cursedShieldArmed,
             oneLifeLeftLives: Number(state.oneLifeLeftLives) || 0,

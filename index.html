@@ -12,7 +12,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="images/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="intro.css?v=20260610a">
+  <link rel="stylesheet" href="intro.css?v=20260613a">
 </head>
 <body class="intro-page">
   <main class="intro-shell">
@@ -96,13 +96,13 @@
               <span class="deck-choice-label">Green Deck</span>
               <span class="deck-choice-desc" id="deck-green-desc">Unlock: clear Blue L1.</span>
             </button>
-            <button class="deck-choice-card deck-choice-orange locked" id="deck-pick-red" type="button">
-              <span class="deck-choice-label">Orange Deck</span>
-              <span class="deck-choice-desc" id="deck-red-desc">Unlock: clear Yellow L1.</span>
-            </button>
             <button class="deck-choice-card deck-choice-yellow locked" id="deck-pick-yellow" type="button">
               <span class="deck-choice-label">Yellow Deck</span>
               <span class="deck-choice-desc" id="deck-yellow-desc">Unlock: clear Green L1.</span>
+            </button>
+            <button class="deck-choice-card deck-choice-orange locked" id="deck-pick-red" type="button">
+              <span class="deck-choice-label">Orange Deck</span>
+              <span class="deck-choice-desc" id="deck-red-desc">Unlock: clear Yellow L1.</span>
             </button>
             <button class="deck-choice-card deck-choice-black locked" id="deck-pick-black" type="button">
               <span class="deck-choice-label">Black Deck</span>
@@ -206,8 +206,8 @@
   </main>
 
   <script src="js/fullscreen.js?v=20260427a"></script>
-  <script src="js/leaderboard.js?v=20260612b"></script>
-  <script src="js/pwa-update.js?v=20260522p"></script>
+  <script src="js/leaderboard.js?v=20260613a"></script>
+  <script src="js/pwa-update.js?v=20260613a"></script>
   <script>
     (function () {
       const modal = document.getElementById("howto-modal");
@@ -587,8 +587,7 @@
 
       function isBlackDeckUnlocked() {
         if (hasDeckUnlock() || isDeckManuallyLevelOneUnlocked("black")) return true;
-        if (hasLegacyRedDeckClear()) return true;
-        return ["blue", "green", "orange", "yellow"].every((deckKey) =>
+        return ["blue", "green", "yellow", "orange"].every((deckKey) =>
           [1, 2, 3, 4].every((levelNumber) => hasVerifiedDeckLevelClear(deckKey, levelNumber))
         );
       }
@@ -725,9 +724,11 @@
         return "Unlock requirements not available.";
       }
 
-      function setChoiceCardState(cardEl, unlocked) {
+      function setChoiceCardState(cardEl, unlocked, options = {}) {
         if (!cardEl) return;
-        cardEl.disabled = !unlocked;
+        const disableLocked = options.disableLocked !== false;
+        cardEl.disabled = disableLocked && !unlocked;
+        cardEl.setAttribute("aria-disabled", unlocked ? "false" : "true");
         cardEl.classList.toggle("locked", !unlocked);
         cardEl.classList.toggle("unlocked", !!unlocked);
       }
@@ -760,11 +761,11 @@
         const greenManual = isDeckManuallyLevelOneUnlocked("green");
         const yellowManual = isDeckManuallyLevelOneUnlocked("yellow");
         const blackManual = isDeckManuallyLevelOneUnlocked("black");
-        setChoiceCardState(blueDeckBtn, true);
-        setChoiceCardState(redDeckBtn, redUnlocked);
-        setChoiceCardState(greenDeckBtn, greenUnlocked);
-        setChoiceCardState(yellowDeckBtn, yellowUnlocked);
-        setChoiceCardState(blackDeckBtn, blackUnlocked);
+        setChoiceCardState(blueDeckBtn, true, { disableLocked: false });
+        setChoiceCardState(greenDeckBtn, greenUnlocked, { disableLocked: false });
+        setChoiceCardState(yellowDeckBtn, yellowUnlocked, { disableLocked: false });
+        setChoiceCardState(redDeckBtn, redUnlocked, { disableLocked: false });
+        setChoiceCardState(blackDeckBtn, blackUnlocked, { disableLocked: false });
         redDeckDesc.textContent = redUnlocked
           ? (redManual
             ? "Testing unlock active."
@@ -899,7 +900,9 @@
           }
         }
 
-        buttonEl.addEventListener("pointerdown", () => {
+        buttonEl.addEventListener("pointerdown", (event) => {
+          if (event.button !== undefined && event.button !== 0) return;
+          event.preventDefault();
           holdTriggered = false;
           clearHoldTimer();
           holdTimer = window.setTimeout(() => {
@@ -907,6 +910,10 @@
             holdTriggered = true;
             refreshDeckOptions();
           }, 10000);
+        });
+
+        buttonEl.addEventListener("contextmenu", (event) => {
+          if (!holdTriggered) event.preventDefault();
         });
 
         ["pointerup", "pointercancel", "pointerleave"].forEach((eventName) => {
