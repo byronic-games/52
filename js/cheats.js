@@ -303,6 +303,7 @@ const CHEAT_DESCRIPTIONS = {
   "WL": "Win your next guess, then lose the one after. If you do, the run survives and you choose 3 extra cheats.",
   "You Can Cheat A Cheater": "After your next three correct guesses, choose two extra Cheats in addition to any normal rewards.",
   "Suits You, Sir": "If the next card is the same suit as the current card, gain 5 Nudge +1 and 5 Nudge -1 charges.",
+  "All In": "Stake all current Nudges. Get the next three guesses correct to win double the staked Nudges back.",
   "Lucky 13": "Arm this card. If the next revealed card is a King, gain 5 Nudge +1 and 5 Nudge -1 charges.",
   "Cursed Shield": "Lose all currently stored nudges now. Your next wrong guess is survived.",
   "One Life Left": "Adds one stored life. Each life survives one wrong guess, and multiple lives can be stacked.",
@@ -1581,6 +1582,30 @@ const CHEATS = [
       state.suitsYouSirArmed = true;
       state.suitsYouSirSuit = state.current.suit;
       return "Suits You, Sir armed - it will resolve when the next card is revealed.";
+    },
+  },
+  {
+    id: "all_in",
+    name: "All In",
+    rarity: "rare",
+    weight: 0.75,
+    included: true,
+    unlockAt: 0,
+    stacking: "unique",
+    consumeOnUse: false,
+    shouldConsumeResult: (result) => typeof result === "string" && result.startsWith("All In armed"),
+    use: () => {
+      if (!state.current) return "No current card.";
+      if ((Number(state.allInRemaining) || 0) > 0) return "All In is already active.";
+      const upStake = Math.max(0, Number(state.nudgeUpCharges) || 0);
+      const downStake = Math.max(0, Number(state.nudgeDownCharges) || 0);
+      if (upStake + downStake <= 0) return "All In needs at least one stored Nudge.";
+      state.nudgeUpCharges = 0;
+      state.nudgeDownCharges = 0;
+      state.allInRemaining = 3;
+      state.allInNudgeUpStake = upStake;
+      state.allInNudgeDownStake = downStake;
+      return `All In armed - staked ${upStake} Nudge Up and ${downStake} Nudge Down. Get 3 correct guesses to win +${upStake * 2}/+${downStake * 2}.`;
     },
   },
   {

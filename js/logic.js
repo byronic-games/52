@@ -782,6 +782,9 @@ function previewPendingRunBehindPowerChoice(deck, runMode = "standard", deckKey 
   state.killerQueenLives = 0;
   state.redDeadRedemptionArmed = false;
   state.lucky13Armed = false;
+  state.allInRemaining = 0;
+  state.allInNudgeUpStake = 0;
+  state.allInNudgeDownStake = 0;
   state.energy = 0;
   state.lastJokerMessage = "";
   state.currentDeckKey = normalizedDeckKey;
@@ -1208,6 +1211,9 @@ function startRunWithPower(powerId) {
     refundArmed: false,
     legendaryCheatOfferArmed: false,
     cheatACheaterRemaining: 0,
+    allInRemaining: 0,
+    allInNudgeUpStake: 0,
+    allInNudgeDownStake: 0,
     equals11Armed: false,
     catch22Armed: false,
     wlStage: "",
@@ -1779,6 +1785,32 @@ function resolveLucky13OnReveal(lucky13WasArmed, revealedCard) {
   return " Lucky 13 hit: +5 Nudge Up and +5 Nudge Down.";
 }
 
+function clearAllInStake() {
+  state.allInRemaining = 0;
+  state.allInNudgeUpStake = 0;
+  state.allInNudgeDownStake = 0;
+}
+
+function resolveAllInOnReveal(guessWasCorrect) {
+  if ((Number(state.allInRemaining) || 0) <= 0) return "";
+  if (!guessWasCorrect) {
+    clearAllInStake();
+    return " All In failed.";
+  }
+
+  state.allInRemaining = Math.max(0, (Number(state.allInRemaining) || 0) - 1);
+  if (state.allInRemaining > 0) {
+    return ` All In: ${state.allInRemaining} correct ${state.allInRemaining === 1 ? "guess" : "guesses"} left.`;
+  }
+
+  const upReward = Math.max(0, Number(state.allInNudgeUpStake) || 0) * 2;
+  const downReward = Math.max(0, Number(state.allInNudgeDownStake) || 0) * 2;
+  state.nudgeUpCharges = (state.nudgeUpCharges || 0) + upReward;
+  state.nudgeDownCharges = (state.nudgeDownCharges || 0) + downReward;
+  clearAllInStake();
+  return ` All In paid out: +${upReward} Nudge Up and +${downReward} Nudge Down.`;
+}
+
 function isEnergyDeckRun() {
   return isEnergyDeckKey(state.currentDeckKey || state.selectedDeckKey || "blue");
 }
@@ -2282,6 +2314,9 @@ function clearArmedPowerEffects() {
   state.forcedNextGuess = "";
   state.lockCurrentCardForForcedGuess = false;
   state.cheatACheaterRemaining = 0;
+  state.allInRemaining = 0;
+  state.allInNudgeUpStake = 0;
+  state.allInNudgeDownStake = 0;
   state.sixSevenArmed = false;
   state.catch22Armed = false;
   state.sixSevenRewardChoicesRemaining = 0;
@@ -2591,6 +2626,7 @@ function makeGuessLegacy(type) {
   let rescuedByMarginForError = false;
   let rescuedByHotOrCold = false;
   let rescuedByStitchInTime = false;
+  let allInGuessWasCorrect = false;
 
   const forcedNudgeDirection =
     forcedNextGuessDirection === "higher"
@@ -2650,6 +2686,7 @@ function makeGuessLegacy(type) {
   if (!cheatSpecial && nextComparisonValue === currentComparisonValue) {
     match = true;
     correct = true;
+    allInGuessWasCorrect = true;
   }
 
   const aceAutoWin =
@@ -2660,11 +2697,13 @@ function makeGuessLegacy(type) {
   if (aceAutoWin) {
     cheatSpecial = true;
     correct = true;
+    allInGuessWasCorrect = true;
   }
 
   if (jokerAutoCorrect) {
     cheatSpecial = true;
     correct = true;
+    allInGuessWasCorrect = true;
   }
 
   // Standard higher/lower logic
@@ -2672,6 +2711,7 @@ function makeGuessLegacy(type) {
     const comparisonCorrect =
       (type === "higher" && nextComparisonValue > currentComparisonValue) ||
       (type === "lower" && nextComparisonValue < currentComparisonValue);
+    allInGuessWasCorrect = comparisonCorrect;
     const rescuedByLucky7 = !comparisonCorrect && lucky7WasArmed;
     const rescuedByFiveAlive = !comparisonCorrect && fiveAliveWasArmed;
     rescuedByMarginForError = !comparisonCorrect && marginForErrorWasArmed && revealDistance <= 2;
@@ -2733,6 +2773,7 @@ function makeGuessLegacy(type) {
 
   if (!correct) {
     const lucky13Text = resolveLucky13OnReveal(lucky13WasArmed, next);
+    const allInText = resolveAllInOnReveal(false);
     const lossCurrentCard = state.current;
     recordCurrentCardGuess(state.current, type, false);
     recordFaceDownOutcome(next, true, currentWasBase);
@@ -2763,10 +2804,11 @@ function makeGuessLegacy(type) {
         rescuedBySuitSave,
         rescuedByAlwaysBetBlack,
         rescuedByRedDeadRedemption,
-        message: `${lossDetail}${lucky13Text}`,
+        message: `${lossDetail}${lucky13Text}${allInText}`,
       });
-    triggerGameOverEffect(`${lossDetail}${lucky13Text}`);
+    triggerGameOverEffect(`${lossDetail}${lucky13Text}${allInText}`);
     state.message = `❌ ${lossDetail}`;
+    state.message += allInText;
     state.gameOver = true;
     updateBestScoreIfNeeded();
     render();
@@ -2798,6 +2840,7 @@ function makeGuessLegacy(type) {
   const equals11Total = equals11Resolved ? currentComparisonValue + nextComparisonValue : null;
   const equals11Hit = equals11Resolved && equals11Total === 11;
   const lucky13CorrectText = resolveLucky13OnReveal(lucky13WasArmed, next);
+  const allInText = resolveAllInOnReveal(allInGuessWasCorrect);
   if (equals11Hit && state.index < state.deck.length - 1) {
     queueCheatAward("equals_11");
     queueCheatAward("equals_11");
@@ -2851,7 +2894,7 @@ function makeGuessLegacy(type) {
   }
 
   const powerAwards = awardOnCorrectGuessPowers(type);
-  const bingoAwardText = `${formatBingoAwardText(bingoAwards)}${lucky13CorrectText}`;
+  const bingoAwardText = `${formatBingoAwardText(bingoAwards)}${lucky13CorrectText}${allInText}`;
   const blankSpacePowerTriggered = blankSpaceWasActive;
   const brucieBonusTriggered = runHasPower("brucie_bonus") && match;
   let cheatACheaterTriggered = false;
@@ -3547,10 +3590,13 @@ function makeGuess(type) {
     }
   }
 
+  const allInGuessWasCorrect = comparisonCorrect || match || aceAutoWin || jokerAutoCorrect;
+
   const lucky13Text = resolveLucky13OnReveal(lucky13WasArmed, next);
   const refundResult = correct ? getRefundNudgeResult(refundWasArmed, type, nextComparisonValue) : null;
   const suitsYouSirText = resolveSuitsYouSirOnReveal(suitsYouSirWasArmed, suitsYouSirSuit, next);
   const refundText = `${suitsYouSirText}${lucky13Text}${applyRefundNudgeResult(refundResult)}`;
+  const allInText = resolveAllInOnReveal(allInGuessWasCorrect);
 
   if (!correct) {
     const lossCurrentCard = state.current;
@@ -3580,7 +3626,7 @@ function makeGuess(type) {
         cheatSpecial,
       })),
       triggerGameOver: true,
-      gameOverDetail: gameOverMessage,
+      gameOverDetail: `${gameOverMessage}${allInText}`,
       clearSuitedAndBootedOnFinalize: suitedAndBootedWasArmed,
     });
 
@@ -3621,7 +3667,7 @@ function makeGuess(type) {
       message: lossDetail,
     });
 
-    state.message = gameOverMessage;
+    state.message = `${gameOverMessage}${allInText}`;
     state.gameOver = true;
     updateBestScoreIfNeeded();
     render();
@@ -3732,7 +3778,7 @@ function makeGuess(type) {
         recordDailyClearProgress();
       }
     }
-    state.message = appendEnergyFeedback(` YOU CLEARED THE DECK!${refundText}`, revealDistance);
+    state.message = appendEnergyFeedback(` YOU CLEARED THE DECK!${refundText}${allInText}`, revealDistance);
     state.gameOver = true;
     render();
     triggerVictoryEffect();
@@ -3748,7 +3794,7 @@ function makeGuess(type) {
   }
 
   const powerAwards = awardOnCorrectGuessPowers(type);
-  const bingoAwardText = formatBingoAwardText(bingoAwards);
+  const bingoAwardText = `${formatBingoAwardText(bingoAwards)}${allInText}`;
   const blankSpacePowerTriggered = blankSpaceWasActive;
   const brucieBonusTriggered = runHasPower("brucie_bonus") && match;
   let cheatACheaterTriggered = false;

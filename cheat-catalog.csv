@@ -63,6 +63,7 @@
 "wl","WL","uncommon","60","true","unique","0.8","","Meta progression >= 60","Win your next guess, then lose the one after. If you do, the run survives and you choose 3 extra cheats."
 "you_can_cheat_a_cheater","You Can Cheat A Cheater","rare","20","true","unique","0.8","","Meta progression >= 20","After your next three correct guesses, choose two extra Cheats in addition to any normal rewards."
 "suits_you_sir","Suits You, Sir","uncommon","0","true","unique","0.85","","Available from run start","If the next card is the same suit as the current card, gain 5 Nudge +1 and 5 Nudge -1 charges."
+"all_in","All In","rare","0","true","unique","0.75","","Available from run start","Stake all current Nudges. Get the next three guesses correct to win double the staked Nudges back."
 "lucky_13","Lucky 13","uncommon","0","true","unique","0.85","","Available from run start","Arm this card. If the next revealed card is a King, gain 5 Nudge +1 and 5 Nudge -1 charges."
 "cursed_shield","Cursed Shield","rare","30","true","unique","0.75","","Meta progression >= 30","Lose all currently stored nudges now. Your next wrong guess is survived."
 "one_life_left","One Life Left","legendary","30","true","stackable","0.75","","Meta progression >= 30","Adds one stored life. Each life survives one wrong guess, and multiple lives can be stacked."

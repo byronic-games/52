@@ -1449,6 +1449,9 @@ function getActiveEffectsTooltipPayload() {
   if ((state.cheatACheaterRemaining || 0) > 0) {
     waiting.push(`You Can Cheat A Cheater: ${state.cheatACheaterRemaining} correct ${state.cheatACheaterRemaining === 1 ? "guess" : "guesses"} left.`);
   }
+  if ((state.allInRemaining || 0) > 0) {
+    waiting.push(`All In: ${state.allInRemaining} correct ${state.allInRemaining === 1 ? "guess" : "guesses"} left for +${(state.allInNudgeUpStake || 0) * 2}/+${(state.allInNudgeDownStake || 0) * 2} Nudges.`);
+  }
   if (state.wlStage === "need_win") waiting.push("WL: win this guess, then lose the next.");
   if (state.wlStage === "need_loss") waiting.push("WL: lose this guess to claim 3 Cheats.");
 
@@ -1623,6 +1626,7 @@ function getCheatIcon(name) {
   if (name === "False Shuffle") return "FS";
   if (name === "The River") return "RVR";
   if (name === "Lucky 13") return "13";
+  if (name === "All In") return "ALL";
   if (name === "Need The Nudge") return "N±";
   if (name === "Nudge, Nudge") return "N2";
   if (name === "Equals 11") return "=11";
