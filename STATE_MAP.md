@@ -15,6 +15,7 @@
 - `hl_prototype_daily_attempts_local`
 - `hl_prototype_hero_name`
 - `hl_prototype_heroes_local`
+- `hl_prototype_black_scores_local`
 
 ## Supporting `localStorage`
 - `hl_prototype_card_stats`
@@ -26,10 +27,11 @@
 - tutorial flags/state
 
 ## Deck Progression Shape
-- Deck stats normalize `blue`, `green`, `red`, and `yellow`.
-- Yellow unlocks after a verified Blue Level 3 clear unless `hl_prototype_unlock_decks` or `hl_prototype_unlock_all` is enabled.
+- Deck stats normalize `blue`, `green`, `red`, `orange`, `yellow`, and `black`; `red` remains for legacy/internal compatibility.
+- Visible progression is Blue -> Green -> Yellow -> Orange -> Black.
+- Green unlocks after a verified Blue Level 1 clear. Yellow unlocks after Green Level 1. Orange unlocks after Yellow Level 1. Black unlocks after every level of Blue/Green/Yellow/Orange is cleared.
 - `hl_prototype_unlock_decks` unlocks Level 1 of every deck only; higher levels still require same-deck clears unless `hl_prototype_unlock_all` is enabled.
-- Yellow Joker effects can mutate persistent card-back status, specifically Tearless removing a torn corner from a remaining card when the total torn-card count is above four.
+- Yellow/Orange Joker effects can mutate run state and persistent card-back status. Tearless hides one torn corner from a remaining card, RONG reverses guess meanings, Gridless clears the visible grid, Timeless rewinds revealed cards into the deck, Nudgeless clears nudge charges, Cheatless clears held Cheats, and Powerless clears persistent/armed effects.
 
 ## `sessionStorage`
 - `hl_prototype_game_state_snapshot`

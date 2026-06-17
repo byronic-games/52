@@ -12,7 +12,7 @@ You are taking over project `52!` in folder `USETHIS`.
 
 ## Hard Constraints
 - Do not clear/reset storage unless explicitly requested.
-- Preserve deck unlock order: Blue -> Green -> Red.
+- Preserve deck unlock order: Blue -> Green -> Yellow -> Orange -> Black.
 - Keep mobile layout stable.
 - Use minimal targeted patches (avoid broad refactors).
 - Bump HTML query versions after JS/CSS edits.
@@ -21,6 +21,8 @@ You are taking over project `52!` in folder `USETHIS`.
 - Gameplay layout is split between `game.html` spacer/gap rows and late-file `styles.css` grid/container-query rules.
 - `js/fullscreen.js` writes `--app-height` from `visualViewport.height`; Android browser/standalone sizing matters.
 - `js/render.js` emits NEW-theme card markup and toggles choice modal body classes.
+- Current deck model: Blue is base, Green adds Energy costs, Yellow adds Joker hazards, Orange combines Blue/Green/Yellow rules, and Black is a pure run with no Powers, Cheats, or Nudges.
+- Red remains in some legacy/internal paths, but visible progression uses Orange in that slot.
 
 ## Current Priority
 - Fix Android reveal animation where card rotates but face does not appear.

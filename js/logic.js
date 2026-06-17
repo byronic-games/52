@@ -781,6 +781,7 @@ function previewPendingRunBehindPowerChoice(deck, runMode = "standard", deckKey 
   state.oneLifeLeftLives = 0;
   state.killerQueenLives = 0;
   state.redDeadRedemptionArmed = false;
+  state.lucky13Armed = false;
   state.energy = 0;
   state.lastJokerMessage = "";
   state.currentDeckKey = normalizedDeckKey;
@@ -1185,6 +1186,7 @@ function startRunWithPower(powerId) {
     higherHigherHigherRemaining: 0,
     psychoRemaining: 0,
     godSaveKingArmed: false,
+    lucky13Armed: false,
     alwaysBetBlackArmed: false,
     redDeadRedemptionArmed: false,
     suitsYouSirArmed: false,
@@ -1769,6 +1771,14 @@ function resolveSuitsYouSirOnReveal(suitsYouSirWasArmed, armedSuit, revealedCard
   return " Suits You, Sir matched: +5 Nudge Up and +5 Nudge Down.";
 }
 
+function resolveLucky13OnReveal(lucky13WasArmed, revealedCard) {
+  if (!lucky13WasArmed || !revealedCard) return "";
+  if (isJokerCard(revealedCard) || getNextComparisonValueForGuess(revealedCard) !== 13) return " Lucky 13 missed.";
+  state.nudgeUpCharges = (state.nudgeUpCharges || 0) + 5;
+  state.nudgeDownCharges = (state.nudgeDownCharges || 0) + 5;
+  return " Lucky 13 hit: +5 Nudge Up and +5 Nudge Down.";
+}
+
 function isEnergyDeckRun() {
   return isEnergyDeckKey(state.currentDeckKey || state.selectedDeckKey || "blue");
 }
@@ -2254,6 +2264,7 @@ function clearArmedPowerEffects() {
   state.stitchInTimeArmed = false;
   state.higherHigherHigherRemaining = 0;
   state.godSaveKingArmed = false;
+  state.lucky13Armed = false;
   state.alwaysBetBlackArmed = false;
   state.redDeadRedemptionArmed = false;
   state.suitsYouSirArmed = false;
@@ -2521,6 +2532,7 @@ function makeGuessLegacy(type) {
   const psychoRemainingBeforeGuess = Number(state.psychoRemaining || 0);
   const catch22WasArmed = !!state.catch22Armed;
   const godSaveKingWasArmed = !!state.godSaveKingArmed;
+  const lucky13WasArmed = !!state.lucky13Armed;
   const alwaysBetBlackWasArmed = !!state.alwaysBetBlackArmed;
   const redDeadRedemptionWasArmed = !!state.redDeadRedemptionArmed;
   const suitsYouSirWasArmed = !!state.suitsYouSirArmed;
@@ -2549,6 +2561,7 @@ function makeGuessLegacy(type) {
   state.stitchInTimeArmed = false;
   state.catch22Armed = false;
   state.godSaveKingArmed = false;
+  state.lucky13Armed = false;
   state.alwaysBetBlackArmed = false;
   state.redDeadRedemptionArmed = false;
   state.suitsYouSirArmed = false;
@@ -2719,6 +2732,7 @@ function makeGuessLegacy(type) {
   }
 
   if (!correct) {
+    const lucky13Text = resolveLucky13OnReveal(lucky13WasArmed, next);
     const lossCurrentCard = state.current;
     recordCurrentCardGuess(state.current, type, false);
     recordFaceDownOutcome(next, true, currentWasBase);
@@ -2749,9 +2763,9 @@ function makeGuessLegacy(type) {
         rescuedBySuitSave,
         rescuedByAlwaysBetBlack,
         rescuedByRedDeadRedemption,
-        message: lossDetail,
+        message: `${lossDetail}${lucky13Text}`,
       });
-    triggerGameOverEffect(lossDetail);
+    triggerGameOverEffect(`${lossDetail}${lucky13Text}`);
     state.message = `❌ ${lossDetail}`;
     state.gameOver = true;
     updateBestScoreIfNeeded();
@@ -2783,6 +2797,7 @@ function makeGuessLegacy(type) {
   const equals11Resolved = equals11WasArmed && Number.isFinite(currentComparisonValue) && Number.isFinite(nextComparisonValue);
   const equals11Total = equals11Resolved ? currentComparisonValue + nextComparisonValue : null;
   const equals11Hit = equals11Resolved && equals11Total === 11;
+  const lucky13CorrectText = resolveLucky13OnReveal(lucky13WasArmed, next);
   if (equals11Hit && state.index < state.deck.length - 1) {
     queueCheatAward("equals_11");
     queueCheatAward("equals_11");
@@ -2836,7 +2851,7 @@ function makeGuessLegacy(type) {
   }
 
   const powerAwards = awardOnCorrectGuessPowers(type);
-  const bingoAwardText = formatBingoAwardText(bingoAwards);
+  const bingoAwardText = `${formatBingoAwardText(bingoAwards)}${lucky13CorrectText}`;
   const blankSpacePowerTriggered = blankSpaceWasActive;
   const brucieBonusTriggered = runHasPower("brucie_bonus") && match;
   let cheatACheaterTriggered = false;
@@ -3306,6 +3321,7 @@ function makeGuess(type) {
   const psychoRemainingBeforeGuess = Number(state.psychoRemaining || 0);
   const catch22WasArmed = !!state.catch22Armed;
   const godSaveKingWasArmed = !!state.godSaveKingArmed;
+  const lucky13WasArmed = !!state.lucky13Armed;
   const alwaysBetBlackWasArmed = !!state.alwaysBetBlackArmed;
   const redDeadRedemptionWasArmed = !!state.redDeadRedemptionArmed;
   const suitsYouSirWasArmed = !!state.suitsYouSirArmed;
@@ -3333,6 +3349,7 @@ function makeGuess(type) {
   state.stitchInTimeArmed = false;
   state.catch22Armed = false;
   state.godSaveKingArmed = false;
+  state.lucky13Armed = false;
   state.alwaysBetBlackArmed = false;
   state.redDeadRedemptionArmed = false;
   state.suitsYouSirArmed = false;
@@ -3530,9 +3547,10 @@ function makeGuess(type) {
     }
   }
 
+  const lucky13Text = resolveLucky13OnReveal(lucky13WasArmed, next);
   const refundResult = correct ? getRefundNudgeResult(refundWasArmed, type, nextComparisonValue) : null;
   const suitsYouSirText = resolveSuitsYouSirOnReveal(suitsYouSirWasArmed, suitsYouSirSuit, next);
-  const refundText = `${suitsYouSirText}${applyRefundNudgeResult(refundResult)}`;
+  const refundText = `${suitsYouSirText}${lucky13Text}${applyRefundNudgeResult(refundResult)}`;
 
   if (!correct) {
     const lossCurrentCard = state.current;
@@ -3578,6 +3596,7 @@ function makeGuess(type) {
       lucky7WasArmed,
       fiveAliveWasArmed,
       godSaveKingWasArmed,
+      lucky13WasArmed,
       alwaysBetBlackWasArmed,
       redDeadRedemptionWasArmed,
       oddOneOutWasArmed,

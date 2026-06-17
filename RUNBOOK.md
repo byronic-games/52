@@ -8,20 +8,27 @@
 1. Start Blue run.
 2. Confirm `Cards Cleared` starts at 1 and `Cards Remaining` at 51.
 3. Make one correct guess and one wrong guess path.
-4. Confirm deck picker order is Blue, Green, Red, Yellow.
+4. Confirm deck picker order is Blue, Green, Yellow, Orange, Black.
 5. Confirm locked decks/levels are visibly greyed out.
 6. Open `daily.html`, `heroes.html`, `profile.html` and confirm no load errors.
 
 ## Yellow Deck Check
-1. Enable Settings -> Unlock Decks and confirm Yellow Level 1 can be selected without clearing Blue 3.
+1. Enable Settings -> Unlock Decks and confirm Yellow Level 1 can be selected without clearing Green L1.
 2. Start Yellow Level 1 and confirm `Jokers left: 1` appears in the compact next-card info area.
 3. Make enough guesses for the Joker to appear; either Higher or Lower should resolve the Joker and show a Yellow Joker message.
 4. Repeat Level 4 and confirm `Jokers left: 4` at run start.
-5. Trigger each effect if possible: Tearless repairs a torn corner only when more than four torn cards exist, Nudgeless clears banked Nudges, Cheatless clears held Cheats, and Powerless clears persistent power effects.
+5. Trigger each effect if possible: Tearless temporarily hides one unseen torn corner, RONG reverses Higher/Lower meanings, Gridless clears the visible found-card grid, Timeless shuffles recently revealed cards back into the deck, Nudgeless clears banked Nudges, Cheatless clears held Cheats, and Powerless clears persistent power effects.
 6. Turn Unlock Decks off and confirm normal progression gates return.
 
+## Orange / Black Deck Check
+1. Enable Settings -> Unlock Decks and confirm Orange Level 1 and Black Deck can be selected for testing.
+2. Start Orange Level 1 and confirm Energy is visible, nudge rewards still accrue on correct guesses, nudge use spends Energy, and `JOKERS: 1` appears.
+3. Repeat Orange Level 4 and confirm it starts at 5 Energy with 4 Jokers.
+4. Start Black Deck and confirm it skips power choice, hides power/cheat/nudge controls, uses the Black visual treatment, and records/submits pure score rather than opening the normal Heroes victory prompt.
+5. Turn Unlock Decks off and confirm Orange requires Yellow Level 1 and Black requires all Blue/Green/Yellow/Orange levels.
+
 ## Settings Check
-1. In both `game.html` Settings and `settings.html`, confirm Unlock Decks is visible and only opens Level 1 for locked decks.
+1. In both `game.html` Settings and `settings.html`, confirm Unlock Decks is visible and opens Level 1 for locked decks, including Black for pure-run testing.
 2. Switch button order to Higher / Lower and confirm the green Higher button moves left while preserving its styling.
 3. Switch back to Lower / Higher and confirm the pink Lower button returns to the left.
 

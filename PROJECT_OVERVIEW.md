@@ -1,13 +1,13 @@
 # Project Overview (Concise)
 
 ## What It Is
-- `52!` is a browser-based higher/lower card game with progression, powers, cheats, and shared Daily mode.
+- `52!` is a browser-based higher/lower card game with progression, powers, cheats, shared Daily mode, and a final pure-score Black Deck.
 - Mobile-first UI; desktop is supported but not primary.
 - HTML is now served as revalidating content via `.htaccess`; versioned JS/CSS assets are expected to be cache-busted when changed.
 
 ## Core Surfaces
 - `index.html`: entry hub
-- `game.html`: run gameplay
+- `game.html`: run gameplay for Blue/Green/Yellow/Orange/Black
 - `daily.html`: daily challenge + leaderboard
 - `heroes.html`: clear board
 - `profile.html`: local player stats/crowns
@@ -30,20 +30,24 @@
 - Start: Blue Level 1 unlocked.
 - Daily unlocks after first run started.
 - Green L1 unlocks after Blue L1 clear.
-- Red L1 unlocks after Blue L2 clear.
-- Yellow L1 unlocks after Blue L3 clear.
+- Yellow L1 unlocks after Green L1 clear.
+- Orange L1 unlocks after Yellow L1 clear.
+- Black unlocks after every level of Blue, Green, Yellow, and Orange has been cleared.
 - Higher levels unlock by clearing previous level in same deck.
-- Level cap currently 4 on Blue/Green/Red/Yellow.
+- Level cap currently 4 on Blue/Green/Yellow/Orange. Black is Level 1 only.
 - Settings include an Unlock Decks toggle (`hl_prototype_unlock_decks`) for testing Level 1 of every deck without changing recorded wins. A separate `hl_prototype_unlock_all` helper still exists for full level bypasses.
 - Settings also include `hl_prototype_guess_button_order`, which swaps the visual order of the existing Higher/Lower buttons without changing their styling.
+- Red remains as legacy/internal storage and stats code, but the visible progression path now routes the old red deck picker slot to Orange.
 
 ## Gameplay Notes
 - Aces are low.
 - Equal-value comparisons continue the run.
 - Cards-cleared model is now "start at 1" (starting face-up card counts).
 - Nudges use separate + / - charge pools.
-- Yellow runs insert level-gated Joker hazard cards after the first four deck positions, so they can only appear after three correct guesses. A Joker consumes the next-card reveal without caring whether the player guessed Higher or Lower, applies its negative effect, resets streak, and leaves the current normal card in play.
-- Yellow Joker levels: L1 Tearless repairs one persistent torn corner from a remaining card if total torn cards are above four; L2 adds Nudgeless to clear banked Nudges; L3 adds Cheatless to clear held Cheat cards; L4 adds Powerless to clear persistent power effects.
+- Yellow and Orange runs insert 1-4 Joker hazard cards after the first four deck positions, so they can only appear after three correct guesses. A Joker consumes the next-card reveal without caring whether the player guessed Higher or Lower, applies its negative effect, resets streak, and leaves the current normal card in play.
+- Yellow Joker pool: Tearless hides one torn corner from an unseen card, RONG reverses Higher/Lower meanings for the rest of the run, Gridless clears the visible found-card grid, Nudgeless clears banked Nudges, Timeless shuffles recently revealed playing cards back into the deck, Cheatless clears held Cheats, and Powerless clears persistent/armed effects. Higher levels add more Jokers from this pool.
+- Orange combines Blue nudge rewards, Green Energy costs, and Yellow Joker hazards. Energy starts at 10/8/6/5 for Levels 1-4.
+- Black is the final pure run: no Powers, Cheats, or Nudges, with high-score submission handled separately from normal Heroes victory prompts.
 - Daily/Heroes support Supabase + local fallback behavior.
 
 ## Main Code Ownership
@@ -52,10 +56,10 @@
 - `js/input.js`: controls/input gating + tutorial flow
 - `js/storage.js`: persistence/migrations
 - `js/daily.js` + `js/daily-page.js`: Daily data flow/UI
-- `js/leaderboard.js` + `js/heroes.js`: Heroes/crowns rendering
+- `js/leaderboard.js` + `js/heroes.js`: Heroes/crowns rendering and Black Deck leader display
 - `js/profile-page.js`: profile stats/crowns
 - `js/fullscreen.js`: viewport-height handling, including Android standalone/home-screen mode
-- `styles.css`: gameplay vertical layout grid, responsive card sizing, NEW visual theme, cheat coin styling, and power shield styling
+- `styles.css`: gameplay vertical layout grid, responsive card sizing, NEW visual theme, cheat coin styling, power shield styling, and Black Deck starfield/pure-run treatment
 
 ## Current Critical Risk
 - Reveal animation on some Android browsers still fails to show face mid-flip.

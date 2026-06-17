@@ -101,6 +101,7 @@ function createEmptyState() {
     higherHigherHigherRemaining: 0,
     psychoRemaining: 0,
     godSaveKingArmed: false,
+    lucky13Armed: false,
     alwaysBetBlackArmed: false,
     redDeadRedemptionArmed: false,
     suitsYouSirArmed: false,

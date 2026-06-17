@@ -30,9 +30,25 @@ Expected fields in use:
 Required permissions:
 - anon `SELECT`
 
+### `public.black_deck_scores_52`
+Used by:
+- `index.html`
+- `js/leaderboard.js`
+
+Expected fields in use:
+- `player_name`, `score`, `seed`, `game_version`, `created_at`
+
+Required permissions:
+- anon `SELECT`
+- anon `INSERT`
+
+Expected behavior:
+- Black Deck scores are submitted separately from normal Heroes deck-clear entries.
+- The intro leader strip fetches the current Black Deck high score when online and falls back to `--/52...` when unavailable.
+
 ## Crown Rules (Current)
 - Blue/Green/Red crowns derive from clear booleans.
-- Yellow clears are local-only for now; do not send `yellow_cleared` unless the Supabase schema is deliberately extended.
+- Yellow, Orange, and Black clears are local-only for now; do not send newer deck clear columns unless the Supabase schema is deliberately extended.
 - Gold crown derives from daily clear signal + legacy fallback path.
 - Daily board crown display should be based on row enrichment, not viewer-local profile state.
 

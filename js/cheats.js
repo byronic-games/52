@@ -116,6 +116,56 @@ function formatCardIdentityForCheat(card, offset = 0) {
   return `${valueToRank(value)}${suit}`;
 }
 
+function getSuitColourLabel(suit = "") {
+  return suit === SUITS[1] || suit === SUITS[2] ? "red" : "black";
+}
+
+function shuffleCheatFacts(facts, label) {
+  const shuffled = [...facts];
+  const rng = getCheatDeterministicRng(label);
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const swapIndex = Math.floor(rng() * (i + 1));
+    [shuffled[i], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[i]];
+  }
+  return shuffled;
+}
+
+function buildLuckyDipFacts(card) {
+  if (!card) return [];
+  if (isJokerCard(card)) {
+    return [
+      "The next card is a Joker.",
+      "It has no normal suit.",
+      "It is neither higher nor lower than 7.",
+    ];
+  }
+
+  const value = getUpcomingCheatValue(1);
+  const rank = getUpcomingCheatRank(1);
+  const suit = getUpcomingCheatSuit(1);
+  const suitName = SUIT_NAMES[suit] || "unknown suit";
+  const currentValue = getCurrentEffectiveValue();
+  const remainingRankCount = countUnseenCardsOfRank(rank);
+  const relationToCurrent = Number.isFinite(currentValue)
+    ? value > currentValue
+      ? "higher than the current card"
+      : value < currentValue
+        ? "lower than the current card"
+        : "equal to the current card"
+    : "";
+
+  return [
+    `Its suit colour is ${getSuitColourLabel(suit)}.`,
+    `Its suit is ${suitName}.`,
+    value > 7 ? "It is higher than 7." : value < 7 ? "It is lower than 7." : "It is exactly 7.",
+    value >= 11 ? "It is a face card." : "It is not a face card.",
+    `There ${remainingRankCount === 1 ? "is" : "are"} ${remainingRankCount} ${rank}${remainingRankCount === 1 ? "" : "s"} left face down, including it.`,
+    value % 2 === 0 ? "Its value is even." : "Its value is odd.",
+    value >= 8 ? "It sits in the top half of the deck values." : "It sits in the bottom half of the deck values.",
+    relationToCurrent ? `It is ${relationToCurrent}.` : "",
+  ].filter(Boolean);
+}
+
 function getCheatDeterministicRng(label) {
   const seedBase = normalizeSeed(state.runSeed || "") || "NO-SEED";
   return mulberry32(stringToSeedNumber(`${GAME_VERSION}|${seedBase}|${state.index}|${label}`));
@@ -245,10 +295,15 @@ const CHEAT_DESCRIPTIONS = {
   "Banish It": "Send the current face-up card to the back of the deck and turn over the next card without increasing the found count.",
   "Jack Of All Trades": "Can only be used on a Jack. Swap the current Jack with the next face-down card and reveal that new current card.",
   "Fortune Teller": "Reveals the values of the next three face-down cards in a random order.",
+  "Lucky Dip": "Reveals one random true fact about the next face-down card.",
+  "Split the Difference": "Reveals the value difference between the current card and the next face-down card.",
+  "False Shuffle": "Rearranges the next three face-down cards into ascending value order.",
+  "The River": "Reveals the values of the next five face-down cards in a random order.",
   "Equals 11": "Arm this card. If it and the next revealed card total 11, choose 3 extra cheats.",
   "WL": "Win your next guess, then lose the one after. If you do, the run survives and you choose 3 extra cheats.",
   "You Can Cheat A Cheater": "After your next three correct guesses, choose two extra Cheats in addition to any normal rewards.",
   "Suits You, Sir": "If the next card is the same suit as the current card, gain 5 Nudge +1 and 5 Nudge -1 charges.",
+  "Lucky 13": "Arm this card. If the next revealed card is a King, gain 5 Nudge +1 and 5 Nudge -1 charges.",
   "Cursed Shield": "Lose all currently stored nudges now. Your next wrong guess is survived.",
   "One Life Left": "Adds one stored life. Each life survives one wrong guess, and multiple lives can be stacked.",
   "Killer Queen": "Adds one stored save. It continues the run when you guess Lower on a Queen and reveal a King.",
@@ -260,7 +315,7 @@ const CHEAT_DESCRIPTIONS = {
   "Margin Of Error": "If your next guess is wrong by 3 or less, the run continues.",
   "Corporate Icebreaker": "Hear two true value-and-suit facts and one believable lie about the next three cards.",
   "Legends Ahead": "Your next Cheat pick offers Legendary Cheats only.",
-  "Royal Flush": "For the next five revealed cards, each new suit revealed after a correct guess gives a bonus Cheat. Reveal all four suits to choose a Power.",
+  "Royal Flush": "Reveals whether the next face-down card is a royal card: 10, J, Q, K, or A.",
   "The Number Of The Beast": "Pull all remaining face-down 6s to the top of the face-down deck without changing any other face-down card order.",
   "Jackpot": "Pull all remaining face-down 7s to the top of the face-down deck without changing any other face-down card order.",
   "Emergency Cord": "Gain 10 Nudge +1 and 10 Nudge -1, then shuffle two random Yellow Jokers into the face-down deck.",
@@ -1379,6 +1434,83 @@ const CHEATS = [
     },
   },
   {
+    id: "lucky_dip",
+    name: "Lucky Dip",
+    rarity: "common",
+    weight: 1,
+    included: true,
+    unlockAt: 0,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => {
+      const next = getNextCardAt(1);
+      if (!next) return "No next card.";
+      const facts = buildLuckyDipFacts(next);
+      if (!facts.length) return "Lucky Dip found nothing useful.";
+      return `Lucky Dip: ${shuffleCheatFacts(facts, "lucky_dip")[0]}`;
+    },
+  },
+  {
+    id: "split_the_difference",
+    name: "Split the Difference",
+    rarity: "common",
+    weight: 1,
+    included: true,
+    unlockAt: 0,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => {
+      if (!state.current) return "No current card.";
+      const next = getNextCardAt(1);
+      if (!next) return "No next card.";
+      if (isJokerCard(next)) return "Split the Difference: next card is a Joker.";
+      const currentValue = getCurrentEffectiveValue();
+      const nextValue = getUpcomingCheatValue(1);
+      if (!Number.isFinite(currentValue) || !Number.isFinite(nextValue)) return "Split the Difference needs normal card values.";
+      const difference = Math.abs(nextValue - currentValue);
+      return `Split the Difference: the gap is ${difference}.`;
+    },
+  },
+  {
+    id: "false_shuffle",
+    name: "False Shuffle",
+    rarity: "legendary",
+    weight: 0.75,
+    included: true,
+    unlockAt: 30,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => {
+      if (!Array.isArray(state.deck) || !state.current) return "No active deck.";
+      const start = state.index + 1;
+      const nextThree = state.deck.slice(start, start + 3);
+      if (nextThree.length < 3) return "False Shuffle needs three face-down cards.";
+      const sorted = [...nextThree].sort((a, b) => {
+        const aValue = isJokerCard(a) ? 0 : clampCardValue(a.value);
+        const bValue = isJokerCard(b) ? 0 : clampCardValue(b.value);
+        return aValue - bValue;
+      });
+      state.deck.splice(start, 3, ...sorted);
+      return "False Shuffle: the next three face-down cards are now in ascending order.";
+    },
+  },
+  {
+    id: "the_river",
+    name: "The River",
+    rarity: "legendary",
+    weight: 0.75,
+    included: true,
+    unlockAt: 30,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => {
+      const upcoming = [1, 2, 3, 4, 5].map((offset) => getNextCardAt(offset)).filter(Boolean);
+      if (upcoming.length < 5) return "The River needs five face-down cards.";
+      const values = upcoming.map((card, index) => isJokerCard(card) ? "Joker" : formatCheatValue(getUpcomingCheatValue(index + 1)));
+      return `The River: ${shuffleCheatFacts(values, "the_river").join(", ")}`;
+    },
+  },
+  {
     id: "equals_11",
     name: "Equals 11",
     rarity: "uncommon",
@@ -1449,6 +1581,24 @@ const CHEATS = [
       state.suitsYouSirArmed = true;
       state.suitsYouSirSuit = state.current.suit;
       return "Suits You, Sir armed - it will resolve when the next card is revealed.";
+    },
+  },
+  {
+    id: "lucky_13",
+    name: "Lucky 13",
+    rarity: "uncommon",
+    weight: 0.85,
+    included: true,
+    unlockAt: 0,
+    stacking: "unique",
+    consumeOnUse: false,
+    shouldConsumeResult: (result) => typeof result === "string" && result.startsWith("Lucky 13 armed"),
+    use: () => {
+      if (!state.current) return "No current card.";
+      const next = getNextCardAt(1);
+      if (!next) return "Lucky 13 needs a next card.";
+      state.lucky13Armed = true;
+      return "Lucky 13 armed - if the next revealed card is a King, gain 5 Nudge +1 and 5 Nudge -1.";
     },
   },
   {
@@ -1637,17 +1787,21 @@ const CHEATS = [
   {
     id: "royal_flush",
     name: "Royal Flush",
-    rarity: "legendary",
-    weight: 0.75,
+    rarity: "uncommon",
+    weight: 0.9,
     included: true,
-    unlockAt: 30,
+    unlockAt: 0,
     stacking: "unique",
     consumeOnUse: true,
     use: () => {
-      if (!state.current) return "No current card.";
-      state.royalFlushRemaining = 5;
-      state.royalFlushSuitsSeen = {};
-      return "Royal Flush armed - for the next five reveals, each new suit gives a bonus Cheat. Reveal all four suits to choose a Power.";
+      const next = getNextCardAt(1);
+      if (!next) return "No next card.";
+      if (isJokerCard(next)) return "Royal Flush: no, the next card is a Joker.";
+      const royalRanks = new Set(["10", "J", "Q", "K", "A"]);
+      const rank = getUpcomingCheatRank(1);
+      return royalRanks.has(rank)
+        ? "Royal Flush: yes, the next card is 10, J, Q, K, or A."
+        : "Royal Flush: no, the next card is not 10, J, Q, K, or A.";
     },
   },
   {

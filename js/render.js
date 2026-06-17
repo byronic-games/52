@@ -1415,6 +1415,7 @@ function getActiveEffectsTooltipPayload() {
   if (state.hotOrColdArmed) waiting.push("Margin Of Error: wrong by 3 or less survives.");
   if (state.stitchInTimeArmed) waiting.push("A Stitch In Time: next wrong guess survives.");
   if (state.godSaveKingArmed) waiting.push("God Save The King: King reveal saves a wrong guess.");
+  if (state.lucky13Armed) waiting.push("Lucky 13: King reveal gives +5 Nudge Up and +5 Nudge Down.");
   if ((state.royalFlushRemaining || 0) > 0) waiting.push(`Royal Flush: ${state.royalFlushRemaining} reveal${state.royalFlushRemaining === 1 ? "" : "s"} left.`);
   if (state.alwaysBetBlackArmed) waiting.push("Always Bet On The Black: Club or Spade reveal saves a wrong guess.");
   if (state.redDeadRedemptionArmed) waiting.push("Red? Dead? Redemption: Heart or Diamond reveal saves a wrong guess.");
@@ -1617,6 +1618,11 @@ const CHEAT_ICON_BY_NAME = Object.freeze({
 });
 
 function getCheatIcon(name) {
+  if (name === "Lucky Dip") return "LD";
+  if (name === "Split the Difference") return "DIFF";
+  if (name === "False Shuffle") return "FS";
+  if (name === "The River") return "RVR";
+  if (name === "Lucky 13") return "13";
   if (name === "Need The Nudge") return "N±";
   if (name === "Nudge, Nudge") return "N2";
   if (name === "Equals 11") return "=11";

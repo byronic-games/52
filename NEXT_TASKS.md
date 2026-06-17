@@ -10,6 +10,9 @@
 - Re-test with nudged/temporary next-card values.
 
 ## P0 - Regression Pass After Animation Fix
+- Verify deck unlock path: Blue L1 -> Green L1 -> Yellow L1 -> Orange L1, and Black only after all Blue/Green/Yellow/Orange levels are cleared.
+- Verify Orange combines nudge awards, Energy spend, and Joker insertion without cross-deck state leaks.
+- Verify Black starts directly without a power choice and hides Powers, Cheats, and Nudges.
 - Verify tutorial flow still works, including throbbing current-card and face-down-card highlights.
 - Verify tutorial step progression reaches cheat choice cleanly and power choice remains tappable.
 - Verify `Higher / Lower` stays hidden whenever power or cheat choice modals are open.

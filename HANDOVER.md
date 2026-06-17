@@ -11,9 +11,11 @@
 ## Product Snapshot
 - Mobile-first static web app.
 - Main surfaces: `index.html`, `game.html`, `daily.html`, `heroes.html`, `profile.html`, `settings.html`.
-- Deck progression order: Blue -> Green -> Red -> Yellow.
-- Levels: 1-4 currently wired for Blue, Green, Red, and Yellow.
-- Yellow Level 1 unlocks after Blue Level 3. Yellow levels add Joker hazards: Tearless, Nudgeless, Cheatless, then Powerless.
+- Deck progression order: Blue -> Green -> Yellow -> Orange -> Black.
+- Levels 1-4 are wired for Blue, Green, Yellow, and Orange. Black is a single final pure-score deck.
+- Green Level 1 unlocks after Blue Level 1, Yellow Level 1 after Green Level 1, Orange Level 1 after Yellow Level 1, and Black after every level of Blue/Green/Yellow/Orange is cleared.
+- Red remains legacy/internal in a few storage and stats paths, but the visible deck slot now routes to Orange.
+- Yellow and Orange levels add 1-4 Joker hazards from the expanded Yellow pool: Tearless, RONG, Gridless, Nudgeless, Timeless, Cheatless, and Powerless.
 - Settings include an Unlock Decks toggle for testing Level 1 of locked decks without changing clear history, plus guess-button and nudge-button order preferences.
 - Daily and Heroes use Supabase when online; local fallback exists.
 - Daily leaderboard loads now retry-upload a completed local Daily attempt if the matching `date_key` + `player_id` row is missing online.
@@ -21,7 +23,8 @@
 - Android standalone/home-screen sizing was tightened using `visualViewport.height` plus short-screen CSS compression.
 - The gameplay screen has a structured fixed-height vertical layout: `game.html` supplies spacer/gap rows, while `styles.css` uses container-query grid rows to fit the header, cards, message bar, cheat coins, controls, and memory grid into `--app-height`.
 - The default `NEW` visual mode renders white card faces with image suit icons, circular rarity cheat coins, and shield-shaped power cards/header chip.
-- Yellow runs display remaining Jokers in the compact `next-info` area; Joker effect copy uses the existing message bar to avoid crowding mobile.
+- Yellow and Orange runs display remaining Jokers in the compact `next-info` area; Joker effect copy uses the existing message bar to avoid crowding mobile.
+- Orange combines Blue nudge rewards, Green Energy costs, and Yellow Jokers. Black hides Powers/Cheats/Nudges and submits a pure score instead of showing the normal victory prompt.
 - Mobile cache behavior is now split:
   - HTML / manifest-style files revalidate via `.htaccess`
   - versioned JS / CSS assets remain aggressively cacheable
@@ -69,13 +72,13 @@
 
 ## Crown/Leaderboard Rules (Current)
 - Daily board should render crowns from row-backed enrichment only (not viewer-local state).
-- Blue/Green/Red crowns from clear booleans. Yellow clears are tracked locally, but the current Supabase crown schema has not been extended for Yellow.
+- Blue/Green/Red crowns from existing Supabase clear booleans. Yellow/Orange/Black clears are tracked locally, but the current Supabase crown schema has not been extended for those newer deck colors.
 - Gold daily crown from durable daily clear signal and legacy fallback logic.
 
 ## Quick "Do First" For New AI
 1. Run `RUNBOOK.md` smoke checks.
 2. Reproduce current flip bug on Android profile.
-3. Re-test layout on a short mobile viewport before changing adjacent UI; confirm card pair, message bar, cheat coins, controls, and memory grid all remain visible without page scroll.
+3. Re-test layout on a short mobile viewport before changing adjacent UI; confirm card pair, message bar, cheat coins, controls, and memory grid all remain visible without page scroll. Also check Black Deck, where the same layout hides power/cheat/nudge controls.
 4. Re-test tutorial overlays and choice-modal behavior on mobile before changing adjacent UI; confirm current-card and next-card highlights are visible and throbbing.
 5. Patch minimally and verify Daily/Heroes/Profile did not regress.
 6. If Daily sharing is being revisited, start in `js/daily-page.js` and keep the toggle code-only unless explicitly asked to expose it in the UI.
