@@ -110,6 +110,14 @@ const YELLOW_JOKERS = [
     unlockLevel: 1,
     description: "For the rest of this run, Higher means Lower and Lower means Higher.",
   },
+  {
+    id: "yellow_joker_gridless",
+    name: "Gridless",
+    shortName: "Gridless",
+    icon: "G",
+    unlockLevel: 1,
+    description: "Clears the visible found-card grid without changing cards cleared.",
+  },
 ];
 
 function mulberry32(a) {

@@ -27,6 +27,15 @@ const POWERS = [
     included: true,
   },
   {
+    id: "double_bubble",
+    name: "Double Bubble",
+    description: "Each Nudge charge moves the card twice as far.",
+    rarity: "common",
+    unlockAt: 0,
+    weight: 1,
+    included: true,
+  },
+  {
     id: "quick_fingers",
     name: "Quick Fingers",
     description: "Choose a new Cheat every 2 successful guesses instead of every 3.",
@@ -198,6 +207,8 @@ function getPowerIcon(powerId) {
       return "↑";
     case "downforce":
       return "↓";
+    case "double_bubble":
+      return "2x";
     case "quick_fingers":
       return "»";
     case "swap_stack":
@@ -266,7 +277,7 @@ function getStartPowerOfferSeed(seedString) {
 }
 
 function isNudgeStartingPower(power) {
-  return ["balanced_nudges", "updraft", "downforce"].includes(power?.id);
+  return ["balanced_nudges", "updraft", "downforce", "double_bubble"].includes(power?.id);
 }
 
 function pickPowerOptionFromPool(pool, seeded, rng) {

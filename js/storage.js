@@ -645,6 +645,7 @@ function serializeGameStateSnapshot(sourceState) {
     ...sourceState,
     openingPreview: false,
     seenCardIds: Array.from(sourceState.seenCardIds || []),
+    gridCardIds: Array.from(sourceState.gridCardIds || sourceState.seenCardIds || []),
     experience: loadExperience(),
     displayExperience: null,
     experienceBanking: null,
@@ -688,6 +689,11 @@ function loadGameStateSnapshot() {
       ...parsed,
       openingPreview: false,
       seenCardIds: new Set(Array.isArray(parsed.seenCardIds) ? parsed.seenCardIds : []),
+      gridCardIds: new Set(Array.isArray(parsed.gridCardIds)
+        ? parsed.gridCardIds
+        : Array.isArray(parsed.seenCardIds)
+          ? parsed.seenCardIds
+          : []),
       displayExperience: null,
       experienceBanking: null,
       experienceBankedCardIds: new Set(Array.isArray(parsed.experienceBankedCardIds) ? parsed.experienceBankedCardIds : []),

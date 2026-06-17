@@ -64,6 +64,7 @@ function createEmptyState() {
     streak: 0,
     bestScore: loadBestScore(loadSelectedDeck(), loadSelectedLevel()),
     seenCardIds: new Set(),
+    gridCardIds: new Set(),
     powers: [],
     selectedStartPowerId: null,
     selectedDeckKey: loadSelectedDeck(),

@@ -765,6 +765,7 @@ function previewPendingRunBehindPowerChoice(deck, runMode = "standard", deckKey 
   state.correctAnswers = 0;
   state.streak = 0;
   state.seenCardIds = new Set();
+  state.gridCardIds = new Set();
   state.cheats = [];
   state.nudgeUpCharges = 0;
   state.nudgeDownCharges = 0;
@@ -1113,6 +1114,7 @@ function startRunWithPower(powerId) {
     streak: 0,
     bestScore: loadBestScore(currentDeckKey, currentLevelNumber),
     seenCardIds: new Set([deck[0].id]),
+    gridCardIds: new Set([deck[0].id]),
     powers: activePowers,
     selectedStartPowerId: selectedPowerId,
     selectedDeckKey,
@@ -1420,6 +1422,7 @@ function winCurrentRunForDev() {
   state.current = state.deck[state.index] || state.current;
   state.correctAnswers = Math.max(Number(state.correctAnswers) || 0, Math.max(0, state.deck.length - 1));
   state.seenCardIds = new Set(state.deck.map((card) => card?.id).filter(Boolean));
+  state.gridCardIds = new Set(state.seenCardIds);
   state.pendingCheatOptions = [];
   state.pendingPowerOptions = [];
   state.pendingCheatAwardQueue = [];
@@ -1465,6 +1468,7 @@ function nearlyCompleteRunForDev() {
       .map((card) => card?.id)
       .filter(Boolean)
   );
+  state.gridCardIds = new Set(state.seenCardIds);
   state.gameOver = false;
   state.openingPreview = false;
   state.gameOverDisplayCards = null;
@@ -1579,8 +1583,12 @@ function markCardSeen(card, options = {}) {
   if (!(state.seenCardIds instanceof Set)) {
     state.seenCardIds = new Set();
   }
+  if (!(state.gridCardIds instanceof Set)) {
+    state.gridCardIds = new Set(state.seenCardIds);
+  }
   const wasSeen = state.seenCardIds.has(card.id);
   state.seenCardIds.add(card.id);
+  state.gridCardIds.add(card.id);
   setRecentlySeenCard(card.id);
   return !wasSeen && options.awardBingo ? maybeAwardBingoMilestones() : [];
 }
@@ -1588,6 +1596,9 @@ function markCardSeen(card, options = {}) {
 function unmarkCardSeen(card) {
   if (!card || isJokerCard(card)) return;
   state.seenCardIds.delete(card.id);
+  if (state.gridCardIds instanceof Set) {
+    state.gridCardIds.delete(card.id);
+  }
 }
 
 function advanceToCard(card, options = {}) {
@@ -1793,7 +1804,9 @@ function getAdjustedNextNudgeTarget(baseDelta) {
 }
 
 function getActiveNudgeDelta(baseDelta) {
-  return baseDelta * (state.nudgeNudgeArmed ? 2 : 1);
+  const powerMultiplier = runHasPower("double_bubble") ? 2 : 1;
+  const cheatMultiplier = state.nudgeNudgeArmed ? 2 : 1;
+  return baseDelta * powerMultiplier * cheatMultiplier;
 }
 
 function applyRoyalFlushReveal(card) {
@@ -2192,6 +2205,9 @@ function applyTimelessJoker() {
 
   cardsToReturn.forEach((card) => {
     state.seenCardIds.delete(card.id);
+    if (state.gridCardIds instanceof Set) {
+      state.gridCardIds.delete(card.id);
+    }
   });
   if (returnIds.has(state.recentlySeenCardId)) {
     state.recentlySeenCardId = "";
@@ -2216,6 +2232,18 @@ function applyTimelessJoker() {
   });
 
   return `Timeless shuffled ${cardsToReturn.length} revealed playing ${cardsToReturn.length === 1 ? "card" : "cards"} back into the deck.`;
+}
+
+function applyGridlessJoker() {
+  const visibleCount = state.gridCardIds instanceof Set
+    ? state.gridCardIds.size
+    : state.seenCardIds instanceof Set
+      ? state.seenCardIds.size
+      : 0;
+  state.gridCardIds = new Set();
+  return visibleCount > 0
+    ? `Gridless wiped ${visibleCount} card${visibleCount === 1 ? "" : "s"} from the visible grid.`
+    : "Gridless found no visible grid cards to wipe.";
 }
 
 function clearArmedPowerEffects() {
@@ -2256,6 +2284,9 @@ function applyYellowJokerEffect(jokerCard) {
   }
   if (jokerId.includes("timeless")) {
     return applyTimelessJoker();
+  }
+  if (jokerId.includes("gridless")) {
+    return applyGridlessJoker();
   }
   if (jokerId.includes("rong")) {
     state.rongActive = true;

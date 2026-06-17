@@ -3359,6 +3359,7 @@ function renderSeenGrid() {
 
   grid.innerHTML = "";
   const foundCount = state.seenCardIds instanceof Set ? state.seenCardIds.size : 0;
+  const gridCardIds = state.gridCardIds instanceof Set ? state.gridCardIds : state.seenCardIds;
 
   if (labelEl) {
     setAnimatedText(labelEl, `FOUND: ${foundCount}/52`);
@@ -3373,7 +3374,7 @@ function renderSeenGrid() {
         value: rank.v,
       };
       const cardId = getCardId(suit, rank.r);
-      const seen = state.seenCardIds.has(cardId);
+      const seen = gridCardIds.has(cardId);
       const isFresh = state.recentlySeenCardId === cardId;
       const isBanked = state.experienceBankedCardIds instanceof Set && state.experienceBankedCardIds.has(cardId);
       const cell = document.createElement("div");
