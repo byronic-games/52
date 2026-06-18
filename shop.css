@@ -514,12 +514,30 @@ body.collection-page {
   line-height: 1.35;
 }
 
+.collection-card-backs-section {
+  grid-template-rows: auto auto 18px 58px;
+}
+
+.collection-card-backs-section .collection-section-head {
+  grid-template-rows: auto 2.8em;
+}
+
+.collection-card-backs-section #shop-note {
+  min-height: 2.8em;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
 .collection-page .shop-carousel {
   grid-template-columns: 40px minmax(0, 1fr) 40px;
+  min-height: clamp(330px, 47svh, 430px);
+  align-items: center;
 }
 
 .collection-page .shop-cosmetic {
-  grid-template-rows: auto auto;
+  grid-template-rows: clamp(176px, 31svh, 238px) 6.2em;
   align-content: center;
 }
 
@@ -536,12 +554,24 @@ body.collection-page {
 }
 
 .collection-page .shop-cosmetic-copy {
-  grid-template-rows: auto auto auto;
+  grid-template-rows: 1.3em 2.8em 1.35em;
+  align-content: start;
+  min-height: 5.45em;
 }
 
-.collection-shop-actions,
 .collection-shop-actions {
   grid-template-rows: none;
+  min-height: 58px;
+}
+
+.collection-page .shop-dots {
+  min-height: 18px;
+  align-self: center;
+}
+
+.collection-page .shop-primary-btn {
+  min-height: 58px;
+  height: 58px;
 }
 
 .collection-deck-actions {
@@ -743,7 +773,7 @@ body.collection-page {
   }
 
   .collection-page .shop-cosmetic {
-    grid-template-rows: auto auto;
+    grid-template-rows: clamp(176px, 30svh, 232px) 6.2em;
   }
 
   .collection-discovery-grid {
