@@ -771,8 +771,6 @@ function previewPendingRunBehindPowerChoice(deck, runMode = "standard", deckKey 
   state.nudgeDownCharges = 0;
   state.nudgeNudgeArmed = false;
   state.fiveAliveNudgeLocked = false;
-  state.royalFlushRemaining = 0;
-  state.royalFlushSuitsSeen = {};
   state.temporaryCardBackRepairs = {};
   state.temporaryCardBackMarks = {};
   state.temporaryCardValues = {};
@@ -782,6 +780,8 @@ function previewPendingRunBehindPowerChoice(deck, runMode = "standard", deckKey 
   state.killerQueenLives = 0;
   state.redDeadRedemptionArmed = false;
   state.lucky13Armed = false;
+  state.newSuitsRemaining = 0;
+  state.newSuitsSeen = {};
   state.allInRemaining = 0;
   state.allInNudgeUpStake = 0;
   state.allInNudgeDownStake = 0;
@@ -1171,8 +1171,6 @@ function startRunWithPower(powerId) {
     nudgeDownCharges: 0,
     nudgeNudgeArmed: false,
     fiveAliveNudgeLocked: false,
-    royalFlushRemaining: 0,
-    royalFlushSuitsSeen: {},
     bingoCornersAwarded: false,
     bingoLineAwardCount: 0,
     energy: greenRun
@@ -1194,12 +1192,12 @@ function startRunWithPower(powerId) {
     redDeadRedemptionArmed: false,
     suitsYouSirArmed: false,
     suitsYouSirSuit: "",
+    newSuitsRemaining: 0,
+    newSuitsSeen: {},
     lockySevensActive: false,
     oddOneOutArmed: false,
     cursedShieldArmed: false,
     nudgeNudgeArmed: false,
-    royalFlushRemaining: 0,
-    royalFlushSuitsSeen: {},
     oneLifeLeftLives: 0,
     killerQueenLives: 0,
     suitedAndBootedArmed: false,
@@ -1785,6 +1783,45 @@ function resolveLucky13OnReveal(lucky13WasArmed, revealedCard) {
   return " Lucky 13 hit: +5 Nudge Up and +5 Nudge Down.";
 }
 
+function resolveNewSuitsOnReveal(revealedCard) {
+  if ((Number(state.newSuitsRemaining) || 0) <= 0) return { text: "", completed: false, awardCount: 0 };
+  if (!state.newSuitsSeen || typeof state.newSuitsSeen !== "object") {
+    state.newSuitsSeen = {};
+  }
+
+  state.newSuitsRemaining = Math.max(0, (Number(state.newSuitsRemaining) || 0) - 1);
+  if (revealedCard && !isJokerCard(revealedCard) && revealedCard.suit) {
+    state.newSuitsSeen[revealedCard.suit] = true;
+  }
+
+  const suitsSeen = SUITS.filter((suit) => !!state.newSuitsSeen[suit]);
+  if (state.newSuitsRemaining > 0) {
+    return {
+      text: ` New Suits: ${suitsSeen.length}/4 suits found, ${state.newSuitsRemaining} reveal${state.newSuitsRemaining === 1 ? "" : "s"} left.`,
+      completed: false,
+      awardCount: 0,
+    };
+  }
+
+  const awardCount = suitsSeen.length;
+  state.newSuitsSeen = {};
+
+  return {
+    text: awardCount > 0
+      ? ` New Suits complete: ${awardCount} suit${awardCount === 1 ? "" : "s"} found, ${awardCount} bonus Cheat${awardCount === 1 ? "" : "s"} queued.`
+      : " New Suits complete: no suited cards found.",
+    completed: true,
+    awardCount,
+  };
+}
+
+function queueNewSuitsAwards(newSuitsResult) {
+  const awardCount = Math.max(0, Number(newSuitsResult?.awardCount) || 0);
+  for (let index = 0; index < awardCount; index += 1) {
+    queueCheatAward("new_suits");
+  }
+}
+
 function clearAllInStake() {
   state.allInRemaining = 0;
   state.allInNudgeUpStake = 0;
@@ -1849,38 +1886,6 @@ function getActiveNudgeDelta(baseDelta) {
   const powerMultiplier = runHasPower("double_bubble") ? 2 : 1;
   const cheatMultiplier = state.nudgeNudgeArmed ? 2 : 1;
   return baseDelta * powerMultiplier * cheatMultiplier;
-}
-
-function applyRoyalFlushReveal(card) {
-  if ((Number(state.royalFlushRemaining) || 0) <= 0) return null;
-  if (!card || isJokerCard(card) || !card.suit) return null;
-
-  if (!state.royalFlushSuitsSeen || typeof state.royalFlushSuitsSeen !== "object") {
-    state.royalFlushSuitsSeen = {};
-  }
-
-  state.royalFlushRemaining = Math.max(0, (Number(state.royalFlushRemaining) || 0) - 1);
-  const suit = card.suit;
-  const isNewSuit = !state.royalFlushSuitsSeen[suit];
-  if (isNewSuit) {
-    state.royalFlushSuitsSeen[suit] = true;
-    queueCheatAward("royal_flush");
-  }
-
-  const suitsSeen = SUITS.filter((entry) => !!state.royalFlushSuitsSeen[entry]).length;
-  const completed = suitsSeen >= 4;
-  if (completed) {
-    state.royalFlushRemaining = 0;
-    queuePowerAward("royal_flush");
-  }
-
-  return {
-    suit,
-    isNewSuit,
-    suitsSeen,
-    completed,
-    remaining: state.royalFlushRemaining,
-  };
 }
 
 function isAceWildAutoCorrect(currentComparisonValue, nextCard) {
@@ -2301,12 +2306,12 @@ function clearArmedPowerEffects() {
   state.redDeadRedemptionArmed = false;
   state.suitsYouSirArmed = false;
   state.suitsYouSirSuit = "";
+  state.newSuitsRemaining = 0;
+  state.newSuitsSeen = {};
   state.lockySevensActive = false;
   state.oddOneOutArmed = false;
   state.cursedShieldArmed = false;
   state.nudgeNudgeArmed = false;
-  state.royalFlushRemaining = 0;
-  state.royalFlushSuitsSeen = {};
   state.oneLifeLeftLives = 0;
   state.killerQueenLives = 0;
   state.suitedAndBootedArmed = false;
@@ -2774,6 +2779,7 @@ function makeGuessLegacy(type) {
   if (!correct) {
     const lucky13Text = resolveLucky13OnReveal(lucky13WasArmed, next);
     const allInText = resolveAllInOnReveal(false);
+    const newSuitsResult = resolveNewSuitsOnReveal(next);
     const lossCurrentCard = state.current;
     recordCurrentCardGuess(state.current, type, false);
     recordFaceDownOutcome(next, true, currentWasBase);
@@ -2804,11 +2810,11 @@ function makeGuessLegacy(type) {
         rescuedBySuitSave,
         rescuedByAlwaysBetBlack,
         rescuedByRedDeadRedemption,
-        message: `${lossDetail}${lucky13Text}${allInText}`,
+        message: `${lossDetail}${lucky13Text}${allInText}${newSuitsResult.text}`,
       });
-    triggerGameOverEffect(`${lossDetail}${lucky13Text}${allInText}`);
+    triggerGameOverEffect(`${lossDetail}${lucky13Text}${allInText}${newSuitsResult.text}`);
     state.message = `❌ ${lossDetail}`;
-    state.message += allInText;
+    state.message += `${allInText}${newSuitsResult.text}`;
     state.gameOver = true;
     updateBestScoreIfNeeded();
     render();
@@ -2841,13 +2847,12 @@ function makeGuessLegacy(type) {
   const equals11Hit = equals11Resolved && equals11Total === 11;
   const lucky13CorrectText = resolveLucky13OnReveal(lucky13WasArmed, next);
   const allInText = resolveAllInOnReveal(allInGuessWasCorrect);
+  const newSuitsResult = resolveNewSuitsOnReveal(next);
   if (equals11Hit && state.index < state.deck.length - 1) {
     queueCheatAward("equals_11");
     queueCheatAward("equals_11");
     queueCheatAward("equals_11");
   }
-  const royalFlushResult = applyRoyalFlushReveal(next);
-
   if (state.index >= state.deck.length - 1) {
     appendRunDebugLog("guess_resolved", {
       guess: type,
@@ -2867,7 +2872,6 @@ function makeGuessLegacy(type) {
       redDeadRedemptionWasArmed,
       oddOneOutWasArmed,
       sixSevenWasArmed,
-      royalFlushResult,
     });
     if (!isDevModeRun()) {
       if (state.runMode !== "daily") {
@@ -2878,7 +2882,7 @@ function makeGuessLegacy(type) {
         recordDailyClearProgress();
       }
     }
-    state.message = " YOU CLEARED THE DECK!";
+    state.message = ` YOU CLEARED THE DECK!${newSuitsResult.text}`;
     state.gameOver = true;
     render();
     triggerVictoryEffect();
@@ -2894,7 +2898,7 @@ function makeGuessLegacy(type) {
   }
 
   const powerAwards = awardOnCorrectGuessPowers(type);
-  const bingoAwardText = `${formatBingoAwardText(bingoAwards)}${lucky13CorrectText}${allInText}`;
+  const bingoAwardText = `${formatBingoAwardText(bingoAwards)}${lucky13CorrectText}${allInText}${newSuitsResult.text}`;
   const blankSpacePowerTriggered = blankSpaceWasActive;
   const brucieBonusTriggered = runHasPower("brucie_bonus") && match;
   let cheatACheaterTriggered = false;
@@ -2924,6 +2928,8 @@ function makeGuessLegacy(type) {
     queueCheatAward("wl");
     queueCheatAward("wl");
   }
+
+  queueNewSuitsAwards(newSuitsResult);
 
   appendRunDebugLog("guess_resolved", {
     guess: type,
@@ -2994,6 +3000,8 @@ function makeGuessLegacy(type) {
       blankSpacePowerTriggered,
       brucieBonusTriggered,
       cheatACheaterTriggered,
+      newSuitsCompleted: !!newSuitsResult.completed,
+      newSuitsAwardCount: newSuitsResult.awardCount || 0,
     cheatACheaterRemaining: state.cheatACheaterRemaining || 0,
   });
 
@@ -3106,6 +3114,19 @@ function makeGuessLegacy(type) {
     setTimeout(() => {
       state.pauseForCheat = false;
       const nextReason = state.pendingCheatAwardQueue.shift() || "cheat_a_cheater";
+      offerCheatChoice(nextReason);
+      render();
+    }, 1000);
+    return;
+  }
+
+  if (newSuitsResult.completed && newSuitsResult.awardCount > 0) {
+    state.pauseForCheat = true;
+    state.message = `New Suits complete! Choose ${newSuitsResult.awardCount} bonus Cheat${newSuitsResult.awardCount === 1 ? "" : "s"}.`;
+    render();
+    setTimeout(() => {
+      state.pauseForCheat = false;
+      const nextReason = state.pendingCheatAwardQueue.shift() || "new_suits";
       offerCheatChoice(nextReason);
       render();
     }, 1000);
@@ -3470,8 +3491,9 @@ function makeGuess(type) {
       state.currentValueModifier = 0;
       state.streak = 0;
       const suitsYouSirText = resolveSuitsYouSirOnReveal(suitsYouSirWasArmed, suitsYouSirSuit, next);
+      const newSuitsResult = resolveNewSuitsOnReveal(next);
       const lossMessage = appendEnergyFeedback(
-        `Odd One Out triggered - next card was ${formatNextCardForLossMessage(next)}.${suitsYouSirText}`,
+        `Odd One Out triggered - next card was ${formatNextCardForLossMessage(next)}.${suitsYouSirText}${newSuitsResult.text}`,
         -revealDistance
       );
       appendRunDebugLog("guess_resolved", {
@@ -3595,7 +3617,10 @@ function makeGuess(type) {
   const lucky13Text = resolveLucky13OnReveal(lucky13WasArmed, next);
   const refundResult = correct ? getRefundNudgeResult(refundWasArmed, type, nextComparisonValue) : null;
   const suitsYouSirText = resolveSuitsYouSirOnReveal(suitsYouSirWasArmed, suitsYouSirSuit, next);
-  const refundText = `${suitsYouSirText}${lucky13Text}${applyRefundNudgeResult(refundResult)}`;
+  const newSuitsResult = resolveNewSuitsOnReveal(next);
+  const refundNudgeText = applyRefundNudgeResult(refundResult);
+  const revealBonusText = `${suitsYouSirText}${lucky13Text}${refundNudgeText}`;
+  const refundText = `${revealBonusText}${newSuitsResult.text}`;
   const allInText = resolveAllInOnReveal(allInGuessWasCorrect);
 
   if (!correct) {
@@ -3738,8 +3763,6 @@ function makeGuess(type) {
     queueCheatAward("equals_11");
     queueCheatAward("equals_11");
   }
-  const royalFlushResult = applyRoyalFlushReveal(next);
-
   if (state.index >= state.deck.length - 1) {
     appendRunDebugLog("guess_resolved", {
       guess: type,
@@ -3763,7 +3786,6 @@ function makeGuess(type) {
       forcedNextGuessDirection,
       forcedNudgeDirection,
       forcedNudgeReward,
-      royalFlushResult,
       rescuedByCursedShield,
       rescuedByKillerQueen,
       rescuedBySuitedAndBooted,
@@ -3832,6 +3854,8 @@ function makeGuess(type) {
     queueCheatAward("wl");
     queueCheatAward("wl");
   }
+
+  queueNewSuitsAwards(newSuitsResult);
 
   appendRunDebugLog("guess_resolved", {
     guess: type,
@@ -3916,7 +3940,8 @@ function makeGuess(type) {
     blankSpacePowerTriggered,
     brucieBonusTriggered,
     cheatACheaterTriggered,
-    royalFlushResult,
+    newSuitsCompleted: !!newSuitsResult.completed,
+    newSuitsAwardCount: newSuitsResult.awardCount || 0,
     cheatACheaterRemaining: state.cheatACheaterRemaining || 0,
     energyAfter: state.energy || 0,
   });
@@ -4062,26 +4087,6 @@ function makeGuess(type) {
     : "";
   const rescueBonusText = `${rescuedByCursedShield ? " Cursed Shield saved this guess." : ""}${rescuedByRedDeadRedemption ? " Red? Dead? Redemption saved this guess." : ""}${rescuedBySuitedAndBooted ? " Suited and Booted saved this guess." : ""}${rescuedByMarginForError ? " Margin For Error saved this guess." : ""}${rescuedByHotOrCold ? " Margin Of Error saved this guess." : ""}${rescuedByStitchInTime ? " A Stitch In Time saved this guess." : ""}${oneLifeLeftText}${killerQueenText}${forcedRewardText}${wlAdvanceText}${equals11MissText}${higherHigherHigherText}${refundText}${bingoAwardText}`;
 
-  if (royalFlushResult?.isNewSuit) {
-    if (state.streak >= getCheatRewardThreshold()) {
-      state.streak = 0;
-      queueCheatAward("streak");
-    }
-    const royalFlushMessage = royalFlushResult.completed
-      ? `Royal Flush! ${royalFlushResult.suit} completed all four suits - choose a bonus Cheat, then a Power.`
-      : `Royal Flush! New suit ${royalFlushResult.suit} - choose a bonus Cheat. ${royalFlushResult.suitsSeen}/4 suits found, ${royalFlushResult.remaining} reveal${royalFlushResult.remaining === 1 ? "" : "s"} left.`;
-    state.pauseForCheat = true;
-    state.message = appendEnergyFeedback(`${royalFlushMessage}${rescueBonusText}`, revealDistance);
-    render();
-    setTimeout(() => {
-      state.pauseForCheat = false;
-      const nextReason = state.pendingCheatAwardQueue.shift() || "royal_flush";
-      offerCheatChoice(nextReason);
-      render();
-    }, 1000);
-    return;
-  }
-
   if (state.streak >= getCheatRewardThreshold()) {
     state.streak = 0;
     let pauseMsg = "✅ Correct!";
@@ -4123,6 +4128,19 @@ function makeGuess(type) {
     setTimeout(() => {
       state.pauseForCheat = false;
       const nextReason = state.pendingCheatAwardQueue.shift() || "cheat_a_cheater";
+      offerCheatChoice(nextReason);
+      render();
+    }, 1000);
+    return;
+  }
+
+  if (newSuitsResult.completed && newSuitsResult.awardCount > 0) {
+    state.pauseForCheat = true;
+    state.message = appendEnergyFeedback(`New Suits complete! Choose ${newSuitsResult.awardCount} bonus Cheat${newSuitsResult.awardCount === 1 ? "" : "s"}.${revealBonusText}${bingoAwardText}`, revealDistance);
+    render();
+    setTimeout(() => {
+      state.pauseForCheat = false;
+      const nextReason = state.pendingCheatAwardQueue.shift() || "new_suits";
       offerCheatChoice(nextReason);
       render();
     }, 1000);

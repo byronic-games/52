@@ -1120,9 +1120,34 @@ function cleanPlayerLogMessage(message = "") {
 function getShortPlayerMessage(message = "") {
   const cleaned = cleanPlayerLogMessage(message);
   if (!cleaned) return "";
+  const playedMatch = cleaned.match(/^Played\s+([^:]+):/i);
+  if (playedMatch) return `Played ${playedMatch[1].trim()}`.slice(0, 24);
+  const matchingMatch = cleaned.match(/^(\d+)\s+matching\s+cards?\s+remain/i);
+  if (matchingMatch) return `${matchingMatch[1]} matches left`;
+  if (/^Royal Flush:\s*yes/i.test(cleaned)) return "RF: Yes";
+  if (/^Royal Flush:\s*no/i.test(cleaned)) return "RF: No";
+  if (/^Lucky Dip:/i.test(cleaned)) return "Lucky Dip";
+  if (/^Split the Difference:/i.test(cleaned)) return "Difference shown";
+  if (/^The River:/i.test(cleaned)) return "River shown";
+  if (/^False Shuffle:/i.test(cleaned)) return "False Shuffle";
+  if (/^New Suits/i.test(cleaned)) return cleaned.includes("complete") ? "New Suits paid" : "New Suits";
+  if (/^All In/i.test(cleaned)) return cleaned.includes("paid out") ? "All In paid" : cleaned.includes("failed") ? "All In failed" : "All In";
+  if (/^Suits You, Sir/i.test(cleaned)) return "Suits You";
+  if (/^Lucky 13/i.test(cleaned)) return "Lucky 13";
+  if (/^Refund/i.test(cleaned)) return "Refund";
+  if (/^Equals 11/i.test(cleaned)) return "Equals 11";
+  if (/^WL/i.test(cleaned)) return "WL";
+  if (/^Higher, Higher, Higher/i.test(cleaned)) return "HHH";
+  if (/^Catch-22/i.test(cleaned)) return "Catch-22";
+  if (/^Psycho/i.test(cleaned)) return "Psycho";
+  if (/^Brucie Bonus/i.test(cleaned)) return "Brucie Bonus";
+  if (/^You Can Cheat A Cheater/i.test(cleaned)) return "Cheater paid";
+  if (/^Power gained:/i.test(cleaned)) return "Power gained";
+  if (/^Unlocked:/i.test(cleaned)) return "Unlocked";
+  if (/^Choose/i.test(cleaned) && /cheat/i.test(cleaned)) return "Choose Cheat";
+  if (/^Choose/i.test(cleaned) && /power/i.test(cleaned)) return "Choose Power";
   if (/^Guessed higher/i.test(cleaned)) return "Guessed higher";
   if (/^Guessed lower/i.test(cleaned)) return "Guessed lower";
-  if (/^Played .+:/i.test(cleaned)) return "Cheat played";
   if (/YOU CLEARED THE DECK/i.test(cleaned)) return "Deck cleared";
   if (/GAME OVER/i.test(cleaned)) return "Game over";
   if (/Correct! Cards match/i.test(cleaned)) return "Match";
@@ -1136,7 +1161,7 @@ function getShortPlayerMessage(message = "") {
   if (/choose/i.test(cleaned) && /power/i.test(cleaned)) return "Choose a Power";
   if (/nudge/i.test(cleaned)) return cleaned.length > 38 ? "Nudge used" : cleaned;
   if (/Run started/i.test(cleaned)) return "Run started";
-  return cleaned.length > 42 ? `${cleaned.slice(0, 39).trim()}...` : cleaned;
+  return cleaned.length > 24 ? `${cleaned.slice(0, 21).trim()}...` : cleaned;
 }
 
 function addPlayerLogEntry(message = "", options = {}) {
@@ -1416,10 +1441,15 @@ function getActiveEffectsTooltipPayload() {
   if (state.stitchInTimeArmed) waiting.push("A Stitch In Time: next wrong guess survives.");
   if (state.godSaveKingArmed) waiting.push("God Save The King: King reveal saves a wrong guess.");
   if (state.lucky13Armed) waiting.push("Lucky 13: King reveal gives +5 Nudge Up and +5 Nudge Down.");
-  if ((state.royalFlushRemaining || 0) > 0) waiting.push(`Royal Flush: ${state.royalFlushRemaining} reveal${state.royalFlushRemaining === 1 ? "" : "s"} left.`);
   if (state.alwaysBetBlackArmed) waiting.push("Always Bet On The Black: Club or Spade reveal saves a wrong guess.");
   if (state.redDeadRedemptionArmed) waiting.push("Red? Dead? Redemption: Heart or Diamond reveal saves a wrong guess.");
   if (state.suitsYouSirArmed) waiting.push("Suits You, Sir: resolves when the next card is revealed.");
+  if ((state.newSuitsRemaining || 0) > 0) {
+    const seen = state.newSuitsSeen && typeof state.newSuitsSeen === "object"
+      ? Object.keys(state.newSuitsSeen).filter((suit) => !!state.newSuitsSeen[suit]).length
+      : 0;
+    waiting.push(`New Suits: ${seen}/4 suits found, ${state.newSuitsRemaining} reveal${state.newSuitsRemaining === 1 ? "" : "s"} left.`);
+  }
   if (state.oddOneOutArmed) waiting.push("Odd One Out: next odd card loses, otherwise survives.");
   if (state.cursedShieldArmed) waiting.push("Cursed Shield: next wrong guess survives.");
   if ((state.oneLifeLeftLives || 0) > 0) waiting.push(`One Life Left: ${state.oneLifeLeftLives} ${state.oneLifeLeftLives === 1 ? "life" : "lives"} stored.`);
@@ -1626,6 +1656,7 @@ function getCheatIcon(name) {
   if (name === "False Shuffle") return "FS";
   if (name === "The River") return "RVR";
   if (name === "Lucky 13") return "13";
+  if (name === "New Suits") return "NS";
   if (name === "All In") return "ALL";
   if (name === "Need The Nudge") return "N±";
   if (name === "Nudge, Nudge") return "N2";

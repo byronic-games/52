@@ -76,6 +76,7 @@
 "margin_of_error","Margin Of Error","common","0","true","unique","1","","Available from run start","If your next guess is wrong by 3 or less, the run continues."
 "corporate_icebreaker","Corporate Icebreaker","uncommon","30","true","unique","0.8","","Meta progression >= 30","Hear two true value-and-suit facts and one lie about the next three cards."
 "legends_ahead","Legends Ahead","rare","30","true","unique","0.65","","Meta progression >= 30","Your next Cheat pick offers Legendary Cheats only."
+"new_suits","New Suits","uncommon","0","true","unique","0.85","","Available from run start","Watch the next four reveals. After the fourth, choose one bonus Cheat for each different suit found."
 "royal_flush","Royal Flush","uncommon","0","true","unique","0.9","","Available from run start","Reveals whether the next face-down card is a royal card: 10, J, Q, K, or A."
 "number_of_the_beast","The Number Of The Beast","legendary","30","true","unique","0.75","","Meta progression >= 30","Pulls all remaining face-down 6s to the top of the face-down deck, preserving every other face-down card's order."
 "jackpot","Jackpot","legendary","30","true","unique","0.75","","Meta progression >= 30","Pulls all remaining face-down 7s to the top of the face-down deck, preserving every other face-down card's order."
