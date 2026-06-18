@@ -621,6 +621,22 @@ function recordDiscoveredPowers(ids) {
   return saveDiscoveredPowers(Array.from(discovered));
 }
 
+function loadDiscoveredJokers() {
+  return loadDiscoveredSet(DISCOVERED_JOKERS_KEY);
+}
+
+function saveDiscoveredJokers(ids) {
+  return saveDiscoveredSet(DISCOVERED_JOKERS_KEY, ids);
+}
+
+function recordDiscoveredJokers(ids) {
+  const discovered = loadDiscoveredJokers();
+  (Array.isArray(ids) ? ids : [ids]).forEach((id) => {
+    if (id) discovered.add(String(id));
+  });
+  return saveDiscoveredJokers(Array.from(discovered));
+}
+
 function recordRunStarted(deckKey, runMode = "standard") {
   const stats = loadProfileStats();
   stats.runsStarted += 1;

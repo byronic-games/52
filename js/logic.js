@@ -3328,6 +3328,9 @@ function makeGuess(type) {
     state.equals11Armed = false;
     advanceToCard(next);
     state.currentValueModifier = 0;
+    if (typeof recordDiscoveredJokers === "function") {
+      recordDiscoveredJokers(next.jokerId || next.id);
+    }
     const jokerMessage = applyYellowJokerEffect(next);
     state.streak = 0;
     state.lastJokerMessage = jokerMessage;

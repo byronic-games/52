@@ -46,6 +46,7 @@ const GAME_STATE_SNAPSHOT_KEY = "hl_prototype_game_state_snapshot";
     const SELECTED_CARD_BACK_COSMETIC_KEY = "hl_prototype_selected_card_back_cosmetic";
     const DISCOVERED_CHEATS_KEY = "hl_prototype_discovered_cheats";
     const DISCOVERED_POWERS_KEY = "hl_prototype_discovered_powers";
+    const DISCOVERED_JOKERS_KEY = "hl_prototype_discovered_jokers";
     const RUN_SEED_KEY = "hl_prototype_last_seed";
     const META_PROGRESSION_KEY = "hl_prototype_meta_progression";
     const GAME_VERSION = "v0.1";

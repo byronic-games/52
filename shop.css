@@ -514,6 +514,32 @@ body.collection-page {
   line-height: 1.35;
 }
 
+.collection-discovery-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.collection-discovery-tabs button {
+  min-height: 30px;
+  border: 0;
+  border-radius: 8px;
+  padding: 6px 8px;
+  color: rgba(244, 235, 255, 0.72);
+  background: rgba(255, 255, 255, 0.08);
+  font: inherit;
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.collection-discovery-tabs button.active {
+  color: #10212a;
+  background: linear-gradient(180deg, #74e8ff, #35c4f1);
+}
+
 .collection-card-backs-section {
   grid-template-rows: auto auto 18px 58px;
 }
@@ -664,6 +690,11 @@ body.collection-page {
   gap: 6px;
 }
 
+.collection-discovery-grid.locked-view {
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 5px;
+}
+
 .collection-discovery-card {
   position: relative;
   min-height: 72px;
@@ -694,6 +725,21 @@ body.collection-page {
 .collection-discovery-card.locked {
   color: rgba(245, 235, 255, 0.6);
   filter: saturate(0.5);
+}
+
+.collection-discovery-grid.locked-view .collection-discovery-card {
+  min-height: 42px;
+  place-items: center;
+  padding: 4px;
+}
+
+.collection-discovery-grid.locked-view .collection-discovery-rarity {
+  display: none;
+}
+
+.collection-discovery-grid.locked-view .collection-discovery-card strong {
+  font-size: 1rem;
+  line-height: 1;
 }
 
 .collection-discovery-card strong {
@@ -744,6 +790,13 @@ body.collection-page {
   text-transform: uppercase;
 }
 
+.collection-discovery-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
 @media (max-width: 560px) {
   .collection-card {
     width: 100%;
@@ -781,7 +834,16 @@ body.collection-page {
     gap: 7px;
   }
 
+  .collection-discovery-grid.locked-view {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 5px;
+  }
+
   .collection-discovery-card {
     min-height: 74px;
+  }
+
+  .collection-discovery-grid.locked-view .collection-discovery-card {
+    min-height: 38px;
   }
 }

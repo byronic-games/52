@@ -18,8 +18,10 @@
   const resetDeckStatus = document.getElementById("collection-reset-deck-status");
   const cheatsGridEl = document.getElementById("collection-cheats-grid");
   const powersGridEl = document.getElementById("collection-powers-grid");
+  const jokersGridEl = document.getElementById("collection-jokers-grid");
   const cheatsSummaryEl = document.getElementById("collection-cheats-summary");
   const powersSummaryEl = document.getElementById("collection-powers-summary");
+  const jokersSummaryEl = document.getElementById("collection-jokers-summary");
 
   let currentIndex = Math.max(0, cosmetics.findIndex((cosmetic) => cosmetic.id === loadSelectedCardBackCosmetic()));
   let resetConfirmUntil = 0;
@@ -27,6 +29,11 @@
   let activeRestoreCell = null;
   let discoveryHoldTimer = null;
   let activeDiscoveryCard = null;
+  const discoveryViews = {
+    Cheat: "found",
+    Power: "found",
+    Joker: "found",
+  };
 
   function getBalance() {
     return typeof loadExperience === "function" ? loadExperience() : 0;
@@ -205,6 +212,32 @@
     return "";
   }
 
+  function ensureDiscoveryTabs(gridEl, typeLabel, onChange) {
+    const section = gridEl?.closest(".collection-section");
+    const head = section?.querySelector(".collection-section-head");
+    if (!head) return;
+    let tabs = head.querySelector(".collection-discovery-tabs");
+    if (!tabs) {
+      tabs = document.createElement("div");
+      tabs.className = "collection-discovery-tabs";
+      ["found", "locked", "all"].forEach((view) => {
+        const tab = document.createElement("button");
+        tab.type = "button";
+        tab.dataset.view = view;
+        tab.textContent = view === "found" ? "Found" : view === "locked" ? "Locked" : "All";
+        tab.addEventListener("click", () => {
+          discoveryViews[typeLabel] = view;
+          onChange();
+        });
+        tabs.appendChild(tab);
+      });
+      head.appendChild(tabs);
+    }
+    tabs.querySelectorAll("button").forEach((tab) => {
+      tab.classList.toggle("active", tab.dataset.view === discoveryViews[typeLabel]);
+    });
+  }
+
   function clearDiscoveryHold() {
     if (discoveryHoldTimer) {
       clearTimeout(discoveryHoldTimer);
@@ -243,11 +276,32 @@
   function renderDiscoveryGrid(gridEl, summaryEl, entries, discoveredSet, typeLabel) {
     if (!gridEl) return;
     const included = entries.filter((entry) => entry?.included !== false && entry?.id);
-    const discoveredCount = included.filter((entry) => discoveredSet.has(entry.id)).length;
+    const discoveredEntries = included.filter((entry) => discoveredSet.has(entry.id));
+    const lockedEntries = included.filter((entry) => !discoveredSet.has(entry.id));
+    const discoveredCount = discoveredEntries.length;
+    const activeView = discoveryViews[typeLabel] || "found";
+    const visibleEntries = activeView === "found"
+      ? discoveredEntries
+      : activeView === "locked"
+        ? lockedEntries
+        : included;
     if (summaryEl) summaryEl.innerText = `${discoveredCount}/${included.length} discovered`;
+    ensureDiscoveryTabs(gridEl, typeLabel, renderDiscovery);
 
     gridEl.innerHTML = "";
-    included.forEach((entry) => {
+    gridEl.classList.toggle("locked-view", activeView === "locked");
+    gridEl.classList.toggle("found-view", activeView === "found");
+    gridEl.classList.toggle("all-view", activeView === "all");
+    if (!visibleEntries.length) {
+      const empty = document.createElement("p");
+      empty.className = "collection-discovery-empty";
+      empty.textContent = activeView === "found"
+        ? `No ${typeLabel.toLowerCase()} items found yet.`
+        : `No ${activeView} ${typeLabel.toLowerCase()} items.`;
+      gridEl.appendChild(empty);
+      return;
+    }
+    visibleEntries.forEach((entry) => {
       const discovered = discoveredSet.has(entry.id);
       const button = document.createElement("button");
       const rarity = document.createElement("span");
@@ -260,7 +314,10 @@
       button.dataset.hasDetail = detailText ? "true" : "false";
       rarity.className = "collection-discovery-rarity";
       rarity.textContent = discovered ? (entry.rarity || "common") : "undiscovered";
-      name.textContent = discovered ? entry.name : `Unknown ${typeLabel}`;
+      name.textContent = discovered ? entry.name : "?";
+      if (!discovered && activeView !== "locked") {
+        name.textContent = `Unknown ${typeLabel}`;
+      }
       button.append(rarity, name);
       if (detailText) {
         detail.className = "collection-discovery-detail";
@@ -283,8 +340,10 @@
   function renderDiscovery() {
     const discoveredCheats = typeof loadDiscoveredCheats === "function" ? loadDiscoveredCheats() : new Set();
     const discoveredPowers = typeof loadDiscoveredPowers === "function" ? loadDiscoveredPowers() : new Set();
+    const discoveredJokers = typeof loadDiscoveredJokers === "function" ? loadDiscoveredJokers() : new Set();
     renderDiscoveryGrid(cheatsGridEl, cheatsSummaryEl, Array.isArray(CHEATS) ? CHEATS : [], discoveredCheats, "Cheat");
     renderDiscoveryGrid(powersGridEl, powersSummaryEl, Array.isArray(POWERS) ? POWERS : [], discoveredPowers, "Power");
+    renderDiscoveryGrid(jokersGridEl, jokersSummaryEl, Array.isArray(YELLOW_JOKERS) ? YELLOW_JOKERS : [], discoveredJokers, "Joker");
   }
 
   actionBtn?.addEventListener("click", () => {
