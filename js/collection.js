@@ -210,7 +210,8 @@
       clearTimeout(discoveryHoldTimer);
       discoveryHoldTimer = null;
     }
-    activeDiscoveryCard?.classList.remove("detail-open");
+    activeDiscoveryCard?.classList.remove("detail-holding");
+    document.querySelector(".collection-discovery-detail.is-visible")?.classList.remove("is-visible");
     activeDiscoveryCard = null;
   }
 
@@ -219,7 +220,22 @@
     clearDiscoveryHold();
     activeDiscoveryCard = card;
     discoveryHoldTimer = setTimeout(() => {
-      card.classList.add("detail-open");
+      const detail = card.querySelector(".collection-discovery-detail");
+      if (!detail) return;
+      detail.style.visibility = "hidden";
+      detail.classList.add("is-visible");
+      const detailWidth = detail.offsetWidth;
+      const detailHeight = detail.offsetHeight;
+      const rect = card.getBoundingClientRect();
+      const top = Math.max(12, rect.top - detailHeight - 10);
+      const left = Math.min(
+        window.innerWidth - detailWidth - 10,
+        Math.max(10, rect.left + (rect.width / 2) - (detailWidth / 2))
+      );
+      detail.style.setProperty("--detail-top", `${top}px`);
+      detail.style.setProperty("--detail-left", `${left}px`);
+      card.classList.add("detail-holding");
+      detail.style.visibility = "";
       discoveryHoldTimer = null;
     }, 420);
   }
@@ -252,6 +268,7 @@
         button.appendChild(detail);
         button.addEventListener("pointerdown", (event) => {
           if (event.button !== undefined && event.button !== 0) return;
+          event.preventDefault();
           button.setPointerCapture?.(event.pointerId);
           beginDiscoveryHold(button);
         });

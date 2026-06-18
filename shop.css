@@ -630,19 +630,19 @@ body.collection-page {
 
 .collection-discovery-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(138px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
 }
 
 .collection-discovery-card {
   position: relative;
-  min-height: 116px;
+  min-height: 72px;
   display: grid;
   align-content: start;
-  gap: 6px;
-  padding: 10px;
+  gap: 4px;
+  padding: 8px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 7px;
   text-align: left;
   font: inherit;
   color: var(--text);
@@ -650,6 +650,9 @@ body.collection-page {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   overflow: visible;
   touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .collection-discovery-card.discovered {
@@ -664,18 +667,25 @@ body.collection-page {
 }
 
 .collection-discovery-card strong {
-  font-size: 0.96rem;
-  line-height: 1.05;
+  font-size: clamp(0.62rem, 1.8vw, 0.8rem);
+  line-height: 1.08;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .collection-discovery-detail {
-  position: absolute;
-  z-index: 4;
-  inset: 8px;
+  position: fixed;
+  z-index: 50;
+  top: var(--detail-top, 12px);
+  left: var(--detail-left, 12px);
+  width: min(250px, calc(100vw - 20px));
+  max-height: min(190px, 34vh);
   display: none;
   align-content: center;
-  padding: 10px;
-  border-radius: 7px;
+  padding: 9px 10px;
+  border-radius: 8px;
   color: var(--text);
   background:
     linear-gradient(180deg, rgba(39, 25, 54, 0.98), rgba(18, 11, 28, 0.98));
@@ -683,18 +693,22 @@ body.collection-page {
     0 14px 28px rgba(0, 0, 0, 0.34),
     inset 0 0 0 1px rgba(255, 255, 255, 0.12);
   color: var(--muted);
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   line-height: 1.3;
   overflow-y: auto;
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
-.collection-discovery-card.detail-open .collection-discovery-detail {
+.collection-discovery-detail.is-visible {
   display: grid;
 }
 
 .collection-discovery-rarity {
   color: var(--lime);
-  font-size: 0.58rem;
+  font-size: clamp(0.42rem, 1.25vw, 0.52rem);
   font-weight: 900;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -734,5 +748,10 @@ body.collection-page {
 
   .collection-discovery-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .collection-discovery-card {
+    min-height: 74px;
   }
 }
