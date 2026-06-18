@@ -25,6 +25,8 @@
   let resetConfirmUntil = 0;
   let holdTimer = null;
   let activeRestoreCell = null;
+  let discoveryHoldTimer = null;
+  let activeDiscoveryCard = null;
 
   function getBalance() {
     return typeof loadExperience === "function" ? loadExperience() : 0;
@@ -194,6 +196,34 @@
     }, RESTORE_HOLD_DURATION_MS);
   }
 
+  function getEntryDescription(entry, typeLabel) {
+    if (!entry) return "";
+    if (entry.description) return entry.description;
+    if (typeLabel === "Cheat" && typeof CHEAT_DESCRIPTIONS !== "undefined") {
+      return CHEAT_DESCRIPTIONS?.[entry.name] || "";
+    }
+    return "";
+  }
+
+  function clearDiscoveryHold() {
+    if (discoveryHoldTimer) {
+      clearTimeout(discoveryHoldTimer);
+      discoveryHoldTimer = null;
+    }
+    activeDiscoveryCard?.classList.remove("detail-open");
+    activeDiscoveryCard = null;
+  }
+
+  function beginDiscoveryHold(card) {
+    if (!card || card.dataset.hasDetail !== "true") return;
+    clearDiscoveryHold();
+    activeDiscoveryCard = card;
+    discoveryHoldTimer = setTimeout(() => {
+      card.classList.add("detail-open");
+      discoveryHoldTimer = null;
+    }, 420);
+  }
+
   function renderDiscoveryGrid(gridEl, summaryEl, entries, discoveredSet, typeLabel) {
     if (!gridEl) return;
     const included = entries.filter((entry) => entry?.included !== false && entry?.id);
@@ -207,17 +237,28 @@
       const rarity = document.createElement("span");
       const name = document.createElement("strong");
       const detail = document.createElement("span");
+      const detailText = discovered ? getEntryDescription(entry, typeLabel) : "";
       button.type = "button";
       button.className = `collection-discovery-card ${discovered ? "discovered" : "locked"}`;
       button.dataset.entryId = entry.id;
+      button.dataset.hasDetail = detailText ? "true" : "false";
       rarity.className = "collection-discovery-rarity";
       rarity.textContent = discovered ? (entry.rarity || "common") : "undiscovered";
       name.textContent = discovered ? entry.name : `Unknown ${typeLabel}`;
-      detail.textContent = discovered ? (entry.description || "No details yet.") : "Find this during a run to reveal it.";
-      button.append(rarity, name, detail);
-      button.addEventListener("click", () => {
-        button.classList.toggle("expanded");
-      });
+      button.append(rarity, name);
+      if (detailText) {
+        detail.className = "collection-discovery-detail";
+        detail.textContent = detailText;
+        button.appendChild(detail);
+        button.addEventListener("pointerdown", (event) => {
+          if (event.button !== undefined && event.button !== 0) return;
+          button.setPointerCapture?.(event.pointerId);
+          beginDiscoveryHold(button);
+        });
+        button.addEventListener("pointerup", clearDiscoveryHold);
+        button.addEventListener("pointerleave", clearDiscoveryHold);
+        button.addEventListener("pointercancel", clearDiscoveryHold);
+      }
       gridEl.appendChild(button);
     });
   }
