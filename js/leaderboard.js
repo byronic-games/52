@@ -69,6 +69,9 @@ function normalizeBlackDeckEntry(entry = {}) {
 function compareBlackDeckEntries(a, b) {
   const scoreDelta = normalizeBlackDeckScore(b.score) - normalizeBlackDeckScore(a.score);
   if (scoreDelta) return scoreDelta;
+  if (normalizeBlackDeckScore(a.score) === 52 && normalizeBlackDeckScore(b.score) === 52) {
+    return String(b.createdAt || "").localeCompare(String(a.createdAt || ""));
+  }
   return String(a.createdAt || "").localeCompare(String(b.createdAt || ""));
 }
 
@@ -349,19 +352,22 @@ async function fetchBlackDeckLeader() {
 
   if (leaderboardRemoteEnabled()) {
     try {
-      const query = "select=player_name,score,seed,game_version,created_at&order=score.desc,created_at.asc&limit=1";
-      const url = `${LEADERBOARD_CONFIG.supabaseUrl}/rest/v1/${LEADERBOARD_CONFIG.blackTable}?${query}`;
-      const response = await fetch(url, {
-        headers: {
-          apikey: LEADERBOARD_CONFIG.supabaseAnonKey,
-          Authorization: `Bearer ${LEADERBOARD_CONFIG.supabaseAnonKey}`,
-        },
-      });
-
-      if (response.ok) {
-        const rows = await response.json();
-        if (Array.isArray(rows)) {
-          scores = scores.concat(rows.map(normalizeBlackDeckEntry));
+      const headers = {
+        apikey: LEADERBOARD_CONFIG.supabaseAnonKey,
+        Authorization: `Bearer ${LEADERBOARD_CONFIG.supabaseAnonKey}`,
+      };
+      const queries = [
+        "select=player_name,score,seed,game_version,created_at&score=eq.52&order=created_at.desc&limit=1",
+        "select=player_name,score,seed,game_version,created_at&order=score.desc,created_at.asc&limit=1",
+      ];
+      for (const query of queries) {
+        const url = `${LEADERBOARD_CONFIG.supabaseUrl}/rest/v1/${LEADERBOARD_CONFIG.blackTable}?${query}`;
+        const response = await fetch(url, { headers });
+        if (response.ok) {
+          const rows = await response.json();
+          if (Array.isArray(rows)) {
+            scores = scores.concat(rows.map(normalizeBlackDeckEntry));
+          }
         }
       }
     } catch {
