@@ -12,7 +12,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="images/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="intro.css?v=20260618e">
+  <link rel="stylesheet" href="intro.css?v=20260618f">
 </head>
 <body class="intro-page">
   <main class="intro-shell">
@@ -88,22 +88,27 @@
           <p class="deck-copy">Pick a deck; locked decks show their unlock requirement.</p>
           <div class="deck-choice-grid">
             <button class="deck-choice-card deck-choice-blue" id="deck-pick-blue" type="button">
+              <span class="deck-choice-visual deck-back-visual" aria-hidden="true"></span>
               <span class="deck-choice-label">Blue Deck</span>
               <span class="deck-choice-desc">Classic 52 with nudge rewards.</span>
             </button>
             <button class="deck-choice-card deck-choice-green locked" id="deck-pick-green" type="button">
+              <span class="deck-choice-visual deck-back-visual" aria-hidden="true"></span>
               <span class="deck-choice-label">Green Deck</span>
               <span class="deck-choice-desc" id="deck-green-desc">Unlock: clear Blue L1.</span>
             </button>
             <button class="deck-choice-card deck-choice-yellow locked" id="deck-pick-yellow" type="button">
+              <span class="deck-choice-visual deck-back-visual" aria-hidden="true"></span>
               <span class="deck-choice-label">Yellow Deck</span>
               <span class="deck-choice-desc" id="deck-yellow-desc">Unlock: clear Green L1.</span>
             </button>
             <button class="deck-choice-card deck-choice-orange locked" id="deck-pick-red" type="button">
+              <span class="deck-choice-visual deck-back-visual" aria-hidden="true"></span>
               <span class="deck-choice-label">Orange Deck</span>
               <span class="deck-choice-desc" id="deck-red-desc">Unlock: clear Yellow L1.</span>
             </button>
             <button class="deck-choice-card deck-choice-black locked" id="deck-pick-black" type="button">
+              <span class="deck-choice-visual deck-back-visual" aria-hidden="true"></span>
               <span class="deck-choice-label">Black Deck</span>
               <span class="deck-choice-desc" id="deck-black-desc">Unlock: clear every deck level.</span>
             </button>
@@ -119,18 +124,22 @@
           <p class="deck-copy" id="level-copy">Pick the difficulty level for this deck.</p>
           <div class="deck-choice-grid">
             <button class="deck-choice-card level-choice-card level-choice-1" id="level-pick-1" type="button">
+              <span class="deck-choice-visual level-card-visual" data-level="1" aria-hidden="true"></span>
               <span class="deck-choice-label">Level 1</span>
               <span class="deck-choice-desc" id="level-1-desc">Classic pacing. Cheats appear every 3 correct guesses, or every 2 with Quick Fingers.</span>
             </button>
             <button class="deck-choice-card level-choice-card level-choice-2 locked" id="level-pick-2" type="button">
+              <span class="deck-choice-visual level-card-visual" data-level="2" aria-hidden="true"></span>
               <span class="deck-choice-label">Level 2</span>
               <span class="deck-choice-desc" id="level-2-desc">Unlock by clearing Level 1.</span>
             </button>
             <button class="deck-choice-card level-choice-card level-choice-3 locked" id="level-pick-3" type="button" disabled>
+              <span class="deck-choice-visual level-card-visual" data-level="3" aria-hidden="true"></span>
               <span class="deck-choice-label">Level 3</span>
               <span class="deck-choice-desc" id="level-3-desc">Unlock by clearing Level 2.</span>
             </button>
             <button class="deck-choice-card level-choice-card level-choice-4 locked" id="level-pick-4" type="button" disabled>
+              <span class="deck-choice-visual level-card-visual" data-level="4" aria-hidden="true"></span>
               <span class="deck-choice-label">Level 4</span>
               <span class="deck-choice-desc" id="level-4-desc">Unlock by clearing Level 3.</span>
             </button>
