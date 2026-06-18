@@ -7,55 +7,92 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>52! Shop</title>
+  <title>52! Collection</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="images/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="shop.css?v=20260525c">
+  <link rel="stylesheet" href="shop.css?v=20260618b">
 </head>
-<body class="shop-page">
-  <main class="shop-shell">
-    <section class="shop-card" aria-labelledby="shop-title">
-      <header class="shop-header">
-        <p class="shop-kicker">Cosmetic Unlocks</p>
-        <h1 id="shop-title">Card Back Shop</h1>
+<body class="shop-page collection-page">
+  <main class="shop-shell collection-shell">
+    <section class="shop-card collection-card" aria-labelledby="collection-title">
+      <header class="shop-header collection-header">
+        <p class="shop-kicker">Player Collection</p>
+        <h1 id="collection-title">Collection</h1>
         <div class="shop-balance" aria-live="polite">
           <span>Experience</span>
           <strong id="shop-experience-value">0</strong>
         </div>
       </header>
 
-      <section class="shop-carousel" aria-label="Card back cosmetics">
-        <button class="shop-arrow" id="shop-prev-btn" type="button" aria-label="Previous card back">‹</button>
-        <article class="shop-cosmetic">
-          <div class="shop-card-preview-wrap">
-            <div id="shop-card-preview" class="shop-card-preview card-back card-back-blue"></div>
-          </div>
-          <div class="shop-cosmetic-copy">
-            <h2 id="shop-cosmetic-name">Classic</h2>
-            <p id="shop-cosmetic-desc">The standard 52! patterned back.</p>
-            <p id="shop-cosmetic-cost" class="shop-cost">Owned</p>
-          </div>
-        </article>
-        <button class="shop-arrow" id="shop-next-btn" type="button" aria-label="Next card back">›</button>
+      <section class="collection-section" aria-labelledby="card-backs-title">
+        <div class="collection-section-head">
+          <h2 id="card-backs-title">Card Backs</h2>
+          <p id="shop-note" aria-live="polite">Card backs keep the run colour outline.</p>
+        </div>
+        <section class="shop-carousel" aria-label="Card back cosmetics">
+          <button class="shop-arrow" id="shop-prev-btn" type="button" aria-label="Previous card back">‹</button>
+          <article class="shop-cosmetic">
+            <div class="shop-card-preview-wrap">
+              <div id="shop-card-preview" class="shop-card-preview card-back card-back-blue"></div>
+            </div>
+            <div class="shop-cosmetic-copy">
+              <h2 id="shop-cosmetic-name">Classic</h2>
+              <p id="shop-cosmetic-desc">The standard 52! patterned back.</p>
+              <p id="shop-cosmetic-cost" class="shop-cost">Owned</p>
+            </div>
+          </article>
+          <button class="shop-arrow" id="shop-next-btn" type="button" aria-label="Next card back">›</button>
+        </section>
+        <div class="shop-dots" id="shop-dots" aria-hidden="true"></div>
+        <div class="shop-actions collection-shop-actions">
+          <button class="shop-primary-btn" id="shop-action-btn" type="button">Select</button>
+        </div>
       </section>
 
-      <div class="shop-dots" id="shop-dots" aria-hidden="true"></div>
+      <section class="collection-section" aria-labelledby="deck-state-title">
+        <div class="collection-section-head">
+          <h2 id="deck-state-title">Deck State</h2>
+          <p id="collection-card-state-summary">No torn cards.</p>
+        </div>
+        <div class="profile-card-state-grid collection-card-state-grid" id="collection-card-state-grid" aria-label="Full deck card state"></div>
+        <div class="collection-deck-actions">
+          <button id="collection-reset-deck-btn" class="shop-secondary-btn" type="button">Reset Deck</button>
+          <p id="collection-reset-deck-status">Hold a torn card to repair one tear, or reset all card state.</p>
+        </div>
+      </section>
 
-      <div class="shop-actions">
-        <button class="shop-primary-btn" id="shop-action-btn" type="button">Select</button>
+      <section class="collection-section" aria-labelledby="discovered-cheats-title">
+        <div class="collection-section-head">
+          <h2 id="discovered-cheats-title">Cheats</h2>
+          <p id="collection-cheats-summary">Discovered Cheats reveal their details here.</p>
+        </div>
+        <div id="collection-cheats-grid" class="collection-discovery-grid"></div>
+      </section>
+
+      <section class="collection-section" aria-labelledby="discovered-powers-title">
+        <div class="collection-section-head">
+          <h2 id="discovered-powers-title">Powers</h2>
+          <p id="collection-powers-summary">Discovered Powers reveal their details here.</p>
+        </div>
+        <div id="collection-powers-grid" class="collection-discovery-grid"></div>
+      </section>
+
+      <div class="shop-actions collection-close-actions">
         <a class="shop-secondary-btn" href="index.html">Close</a>
       </div>
-
-      <p class="shop-note" id="shop-note" aria-live="polite">Card backs keep the run colour outline. Faces stay unchanged.</p>
     </section>
   </main>
 
   <script src="js/fullscreen.js?v=20260506b"></script>
-  <script src="js/constants.js?v=20260521c"></script>
-  <script src="js/storage.js?v=20260612a"></script>
+  <script src="js/constants.js?v=20260618d"></script>
+  <script src="js/storage.js?v=20260618d"></script>
   <script src="js/cosmetics.js?v=20260521c"></script>
-  <script src="js/shop.js?v=20260525c"></script>
+  <script src="js/powers.js?v=20260618d"></script>
+  <script src="js/cheats.js?v=20260618d"></script>
+  <script src="js/cheat-balance-overrides.js?v=20260618d"></script>
+  <script src="js/apply-cheat-balance-overrides.js?v=20260522o"></script>
+  <script src="js/collection.js?v=20260618b"></script>
   <script src="js/pwa-update.js?v=20260522p"></script>
 </body>
 </html>

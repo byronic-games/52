@@ -713,6 +713,9 @@ function offerRewardPowerChoice(reason = "bonus") {
   state.message = "";
   state.temporaryMessageText = "";
   state.temporaryMessageUntil = 0;
+  if (typeof recordDiscoveredPowers === "function") {
+    recordDiscoveredPowers(state.pendingPowerOptions.map((option) => option.id));
+  }
 
   appendRunDebugLog("power_offer_presented", {
     awardReason: state.activePowerAwardReason,

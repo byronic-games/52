@@ -2218,6 +2218,9 @@ function offerCheatChoice(reason = "") {
   state.cheatChoiceIntroToken = (state.cheatChoiceIntroToken || 0) + 1;
   state.cheatChoicePreviewIndex = -1;
   state.cheatChoiceAnimating = null;
+  if (typeof recordDiscoveredCheats === "function") {
+    recordDiscoveredCheats(state.pendingCheatOptions.map((option) => option.id));
+  }
 
   if ((state.sixSevenRewardChoicesRemaining || 0) > 0) {
     state.message = "";

@@ -258,27 +258,46 @@ h1 {
   margin-top: clamp(5px, 0.9vh, 8px);
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 7px;
+  gap: clamp(8px, 2.4vw, 12px);
+  perspective: 800px;
 }
 
 .action-card {
+  position: relative;
   display: flex;
   width: 100%;
-  min-height: 74px;
-  border-radius: 12px;
+  min-height: clamp(82px, 18vw, 104px);
+  aspect-ratio: 1.48 / 1;
+  border-radius: 13px;
   flex-direction: column;
   justify-content: space-between;
   padding: 8px 9px 7px;
   text-decoration: none;
   text-align: left;
-  color: inherit;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: linear-gradient(180deg, rgba(96, 68, 119, 0.98), rgba(56, 39, 73, 0.98));
+  color: #141018;
+  border: 0;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(238, 241, 248, 0.98)),
+    #f7f7fb;
   box-shadow:
-    inset 0 0 0 2px rgba(247, 125, 246, 0.45),
-    0 18px 28px rgba(0, 0, 0, 0.28);
+    inset 0 0 0 2px var(--action-suit-color, #3b82f6),
+    inset 0 0 0 5px rgba(255, 255, 255, 0.9),
+    0 18px 28px rgba(0, 0, 0, 0.3);
   cursor: pointer;
   transition: transform 140ms ease, filter 140ms ease;
+}
+
+.action-card::after {
+  content: "";
+  position: absolute;
+  right: 8px;
+  bottom: 7px;
+  width: 34%;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--action-suit-color, #3b82f6) 26%, transparent), transparent 68%);
+  opacity: 0.72;
+  pointer-events: none;
 }
 
 .action-card:hover,
@@ -357,6 +376,7 @@ h1 {
 }
 
 .action-card-rank,
+.action-card-suit,
 .action-card-title,
 .action-card-sub {
   position: relative;
@@ -364,16 +384,27 @@ h1 {
 }
 
 .action-card-rank {
-  font-size: 0.94rem;
-  font-weight: 800;
+  color: var(--action-suit-color, #111018);
+  font-size: clamp(0.98rem, 4vw, 1.35rem);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.action-card-suit {
+  position: absolute;
+  top: 26px;
+  left: 9px;
+  color: var(--action-suit-color, #111018);
+  font-size: clamp(0.7rem, 3vw, 1rem);
   line-height: 1;
 }
 
 .action-card-title {
-  font-size: 0.92rem;
-  font-weight: 800;
+  margin-top: auto;
+  font-size: clamp(1rem, 4.2vw, 1.26rem);
+  font-weight: 900;
   line-height: 1;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
 }
 
 .action-card-sub {
@@ -385,28 +416,25 @@ h1 {
 }
 
 .action-card-play {
-  color: #213100;
-  background: linear-gradient(180deg, #d8ff75 0%, #b7f13d 100%);
+  --action-suit-color: #2278e7;
+  transform: rotate(-3.5deg) translateY(2px);
 }
 
 .action-card-daily {
-  color: #332006;
-  background: linear-gradient(180deg, #ffda8e 0%, #ffb34e 100%);
+  --action-suit-color: #e73762;
+  transform: rotate(2.5deg) translateY(-1px);
 }
 
 .action-card-howto {
-  color: #fff4f7;
-  background: linear-gradient(180deg, #f14e7a 0%, #ca2552 100%);
+  --action-suit-color: #d92d5b;
 }
 
 .action-card-heroes {
-  color: #081a24;
-  background: linear-gradient(180deg, #8fefff 0%, #53d7f6 100%);
+  --action-suit-color: #1c1d25;
 }
 
 .action-card-shop {
-  color: #081a24;
-  background: linear-gradient(180deg, #8fefff 0%, #53d7f6 100%);
+  --action-suit-color: #1c1d25;
 }
 
 .intro-footer-row {

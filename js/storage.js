@@ -574,6 +574,53 @@ function saveSelectedCardBackCosmetic(id) {
   return normalized;
 }
 
+function loadDiscoveredSet(storageKey) {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(storageKey) || "[]");
+    return new Set(Array.isArray(parsed) ? parsed.filter(Boolean).map(String) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveDiscoveredSet(storageKey, ids) {
+  const normalized = Array.from(new Set(Array.isArray(ids) ? ids.filter(Boolean).map(String) : []));
+  localStorage.setItem(storageKey, JSON.stringify(normalized));
+  return new Set(normalized);
+}
+
+function loadDiscoveredCheats() {
+  return loadDiscoveredSet(DISCOVERED_CHEATS_KEY);
+}
+
+function saveDiscoveredCheats(ids) {
+  return saveDiscoveredSet(DISCOVERED_CHEATS_KEY, ids);
+}
+
+function recordDiscoveredCheats(ids) {
+  const discovered = loadDiscoveredCheats();
+  (Array.isArray(ids) ? ids : [ids]).forEach((id) => {
+    if (id) discovered.add(String(id));
+  });
+  return saveDiscoveredCheats(Array.from(discovered));
+}
+
+function loadDiscoveredPowers() {
+  return loadDiscoveredSet(DISCOVERED_POWERS_KEY);
+}
+
+function saveDiscoveredPowers(ids) {
+  return saveDiscoveredSet(DISCOVERED_POWERS_KEY, ids);
+}
+
+function recordDiscoveredPowers(ids) {
+  const discovered = loadDiscoveredPowers();
+  (Array.isArray(ids) ? ids : [ids]).forEach((id) => {
+    if (id) discovered.add(String(id));
+  });
+  return saveDiscoveredPowers(Array.from(discovered));
+}
+
 function recordRunStarted(deckKey, runMode = "standard") {
   const stats = loadProfileStats();
   stats.runsStarted += 1;
