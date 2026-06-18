@@ -528,7 +528,7 @@ a {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
   min-height: var(--message-height, 36px);
   height: var(--message-height, 36px);
 }
@@ -545,10 +545,10 @@ a {
   box-shadow: none;
   color: #dff5ff;
   font-family: "Space Grotesk", sans-serif;
-  font-size: clamp(1rem, 3.8cqw, 1.24rem);
+  font-size: clamp(0.82rem, 2.85cqw, 1rem);
   line-height: 1;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0;
   text-align: center;
   text-transform: uppercase;
   text-shadow:
@@ -556,8 +556,8 @@ a {
     0 0 16px rgba(95, 228, 255, 0.25);
   align-items: center;
   justify-content: center;
-  overflow: visible;
-  white-space: normal;
+  overflow: hidden;
+  white-space: nowrap;
   word-break: break-word;
   overflow-wrap: anywhere;
   text-wrap: pretty;
@@ -4767,7 +4767,7 @@ body.choice-modal-open #controls,
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: center !important;
-  gap: 10px !important;
+  gap: 14px !important;
   min-height: var(--message-height, 36px) !important;
   max-height: var(--message-height, 36px) !important;
   height: var(--message-height, 36px) !important;
@@ -4792,6 +4792,8 @@ body.choice-modal-open #controls,
   overflow: hidden !important;
   white-space: nowrap !important;
   text-overflow: ellipsis !important;
+  font-size: clamp(0.78rem, 2.55cqw, 0.96rem) !important;
+  letter-spacing: 0 !important;
 }
 
 #cheats-panel {

@@ -1130,6 +1130,7 @@ function getShortPlayerMessage(message = "") {
   if (/^Split the Difference:/i.test(cleaned)) return "Difference shown";
   if (/^The River:/i.test(cleaned)) return "River shown";
   if (/^False Shuffle:/i.test(cleaned)) return "False Shuffle";
+  if (/^Power Parity:/i.test(cleaned)) return "Parity shown";
   if (/^New Suits/i.test(cleaned)) return cleaned.includes("complete") ? "New Suits paid" : "New Suits";
   if (/^All In/i.test(cleaned)) return cleaned.includes("paid out") ? "All In paid" : cleaned.includes("failed") ? "All In failed" : "All In";
   if (/^Suits You, Sir/i.test(cleaned)) return "Suits You";
@@ -1451,7 +1452,10 @@ function getActiveEffectsTooltipPayload() {
     waiting.push(`New Suits: ${seen}/4 suits found, ${state.newSuitsRemaining} reveal${state.newSuitsRemaining === 1 ? "" : "s"} left.`);
   }
   if (state.oddOneOutArmed) waiting.push("Odd One Out: next odd card loses, otherwise survives.");
-  if (state.cursedShieldArmed) waiting.push("Cursed Shield: next wrong guess survives.");
+  const cursedShieldCharges = Math.max(0, Number(state.cursedShieldCharges) || 0);
+  if (cursedShieldCharges > 0 || state.cursedShieldArmed) {
+    waiting.push(`Cursed Shield: ${Math.max(1, cursedShieldCharges)} wrong guess${Math.max(1, cursedShieldCharges) === 1 ? "" : "es"} survive.`);
+  }
   if ((state.oneLifeLeftLives || 0) > 0) waiting.push(`One Life Left: ${state.oneLifeLeftLives} ${state.oneLifeLeftLives === 1 ? "life" : "lives"} stored.`);
   if ((state.killerQueenLives || 0) > 0) waiting.push(`Killer Queen: ${state.killerQueenLives} save${state.killerQueenLives === 1 ? "" : "s"} for Lower on Queen into King.`);
   if (state.suitedAndBootedArmed) {
@@ -1986,7 +1990,7 @@ function renderCurrentCard() {
     isTemporarilyModified,
     backStatus.tornCorner,
     {
-      showShieldBadge: !!state.cursedShieldArmed,
+      showShieldBadge: (Number(state.cursedShieldCharges) || 0) > 0 || !!state.cursedShieldArmed,
       lifeBadgeCount: state.oneLifeLeftLives || 0,
       nudgeFromValue: nudgeAnimation?.fromValue,
     }
@@ -2983,7 +2987,7 @@ function renderCheats() {
             suitsYouSir: !!state.suitsYouSirArmed,
             suitsYouSirSuit: state.suitsYouSirSuit || "",
             oddOneOut: !!state.oddOneOutArmed,
-            cursedShield: !!state.cursedShieldArmed,
+            cursedShield: (Number(state.cursedShieldCharges) || 0) > 0 || !!state.cursedShieldArmed,
             oneLifeLeftLives: Number(state.oneLifeLeftLives) || 0,
             killerQueenLives: Number(state.killerQueenLives) || 0,
             suitedAndBooted: !!state.suitedAndBootedArmed,

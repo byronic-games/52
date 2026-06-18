@@ -111,6 +111,7 @@ function createEmptyState() {
     lockySevensActive: false,
     oddOneOutArmed: false,
     cursedShieldArmed: false,
+    cursedShieldCharges: 0,
     nudgeNudgeArmed: false,
     oneLifeLeftLives: 0,
     killerQueenLives: 0,

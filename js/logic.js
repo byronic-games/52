@@ -778,6 +778,8 @@ function previewPendingRunBehindPowerChoice(deck, runMode = "standard", deckKey 
   state.bingoLineAwardCount = 0;
   state.oneLifeLeftLives = 0;
   state.killerQueenLives = 0;
+  state.cursedShieldArmed = false;
+  state.cursedShieldCharges = 0;
   state.redDeadRedemptionArmed = false;
   state.lucky13Armed = false;
   state.newSuitsRemaining = 0;
@@ -1197,6 +1199,7 @@ function startRunWithPower(powerId) {
     lockySevensActive: false,
     oddOneOutArmed: false,
     cursedShieldArmed: false,
+    cursedShieldCharges: 0,
     nudgeNudgeArmed: false,
     oneLifeLeftLives: 0,
     killerQueenLives: 0,
@@ -2311,6 +2314,7 @@ function clearArmedPowerEffects() {
   state.lockySevensActive = false;
   state.oddOneOutArmed = false;
   state.cursedShieldArmed = false;
+  state.cursedShieldCharges = 0;
   state.nudgeNudgeArmed = false;
   state.oneLifeLeftLives = 0;
   state.killerQueenLives = 0;
@@ -2579,7 +2583,8 @@ function makeGuessLegacy(type) {
   const suitsYouSirSuit = state.suitsYouSirSuit || "";
   const oddOneOutWasArmed = !!state.oddOneOutArmed;
   const sixSevenWasArmed = !!state.sixSevenArmed;
-  const cursedShieldWasArmed = !!state.cursedShieldArmed;
+  const cursedShieldChargesBeforeGuess = Math.max(0, Number(state.cursedShieldCharges) || 0);
+  const cursedShieldWasArmed = cursedShieldChargesBeforeGuess > 0 || !!state.cursedShieldArmed;
   const refundWasArmed = !!state.refundArmed;
   const oneLifeLeftLivesBeforeGuess = Math.max(0, Number(state.oneLifeLeftLives) || 0);
   const killerQueenLivesBeforeGuess = Math.max(0, Number(state.killerQueenLives) || 0);
@@ -2766,7 +2771,8 @@ function makeGuessLegacy(type) {
       rescuedBySuitedAndBooted ||
       rescuedBySuitSave;
     if (rescuedByCursedShield) {
-      state.cursedShieldArmed = false;
+      state.cursedShieldCharges = Math.max(0, cursedShieldChargesBeforeGuess - 1);
+      state.cursedShieldArmed = state.cursedShieldCharges > 0;
     }
     if (rescuedByOneLifeLeft) {
       state.oneLifeLeftLives = Math.max(0, oneLifeLeftLivesBeforeGuess - 1);
@@ -3392,7 +3398,8 @@ function makeGuess(type) {
   const suitsYouSirSuit = state.suitsYouSirSuit || "";
   const oddOneOutWasArmed = !!state.oddOneOutArmed;
   const sixSevenWasArmed = !!state.sixSevenArmed;
-  const cursedShieldWasArmed = !!state.cursedShieldArmed;
+  const cursedShieldChargesBeforeGuess = Math.max(0, Number(state.cursedShieldCharges) || 0);
+  const cursedShieldWasArmed = cursedShieldChargesBeforeGuess > 0 || !!state.cursedShieldArmed;
   const refundWasArmed = !!state.refundArmed;
   const oneLifeLeftLivesBeforeGuess = Math.max(0, Number(state.oneLifeLeftLives) || 0);
   const killerQueenLivesBeforeGuess = Math.max(0, Number(state.killerQueenLives) || 0);
@@ -3597,7 +3604,8 @@ function makeGuess(type) {
       rescuedBySuitedAndBooted ||
       rescuedBySuitSave;
     if (rescuedByCursedShield) {
-      state.cursedShieldArmed = false;
+      state.cursedShieldCharges = Math.max(0, cursedShieldChargesBeforeGuess - 1);
+      state.cursedShieldArmed = state.cursedShieldCharges > 0;
     }
     if (rescuedByOneLifeLeft) {
       state.oneLifeLeftLives = Math.max(0, oneLifeLeftLivesBeforeGuess - 1);

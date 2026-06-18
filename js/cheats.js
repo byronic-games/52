@@ -306,7 +306,7 @@ const CHEAT_DESCRIPTIONS = {
   "New Suits": "Watch the next four reveals. After the fourth, choose one bonus Cheat for each different suit found.",
   "All In": "Stake all current Nudges. Get the next three guesses correct to win double the staked Nudges back.",
   "Lucky 13": "Arm this card. If the next revealed card is a King, gain 5 Nudge +1 and 5 Nudge -1 charges.",
-  "Cursed Shield": "Lose all currently stored nudges now. Your next wrong guess is survived.",
+  "Cursed Shield": "Lose all currently stored nudges now. Gain one shield. Each shield survives one wrong guess.",
   "One Life Left": "Adds one stored life. Each life survives one wrong guess, and multiple lives can be stacked.",
   "Killer Queen": "Adds one stored save. It continues the run when you guess Lower on a Queen and reveal a King.",
   "The Higher The Better": "Locks this card's value. You must choose Higher on your next guess and gain Nudge +1 charges equal to the card-value difference.",
@@ -643,7 +643,7 @@ const CHEATS = [
     weight: 1,
     included: true,
     unlockAt: 0,
-    stacking: "unique",
+    stacking: "stackable",
     consumeOnUse: true,
     use: () => {
       const next = getNextCardAt(1);
@@ -1653,13 +1653,14 @@ const CHEATS = [
     weight: 0.75,
     included: true,
     unlockAt: 0,
-    stacking: "unique",
+    stacking: "stackable",
     consumeOnUse: true,
     use: () => {
       state.nudgeUpCharges = 0;
       state.nudgeDownCharges = 0;
-      state.cursedShieldArmed = true;
-      return "Cursed Shield armed - nudges wiped now, and your next wrong guess is survived.";
+      state.cursedShieldCharges = Math.max(0, Number(state.cursedShieldCharges) || 0) + 1;
+      state.cursedShieldArmed = state.cursedShieldCharges > 0;
+      return `Cursed Shield added - ${state.cursedShieldCharges} shield${state.cursedShieldCharges === 1 ? "" : "s"} ready.`;
     },
   },
   {
