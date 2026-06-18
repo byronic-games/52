@@ -267,7 +267,6 @@ h1 {
   display: flex;
   width: 100%;
   min-height: clamp(82px, 18vw, 104px);
-  aspect-ratio: 1.48 / 1;
   border-radius: 13px;
   flex-direction: column;
   justify-content: space-between;
@@ -427,10 +426,6 @@ h1 {
 
 .action-card-howto {
   --action-suit-color: #d92d5b;
-}
-
-.action-card-heroes {
-  --action-suit-color: #1c1d25;
 }
 
 .action-card-shop {
