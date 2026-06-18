@@ -468,8 +468,8 @@ h1 {
 .intro-footer-row {
   margin-top: clamp(5px, 0.8vh, 8px);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 118px;
-  gap: 7px;
+  grid-template-columns: minmax(0, 1fr) clamp(132px, 23vw, 156px);
+  gap: clamp(10px, 2.4vw, 16px);
   align-items: end;
 }
 
@@ -721,8 +721,8 @@ h1 {
 
   .intro-footer-row {
     margin-top: clamp(5px, 0.7vh, 8px);
-    grid-template-columns: minmax(0, 1fr) 108px;
-    gap: 7px;
+    grid-template-columns: minmax(0, 1fr) 132px;
+    gap: 10px;
   }
 
   .intro-name-card {
@@ -803,8 +803,8 @@ h1 {
   }
 
   .intro-footer-row {
-    grid-template-columns: minmax(0, 1fr) 104px;
-    gap: 7px;
+    grid-template-columns: minmax(0, 1fr) 126px;
+    gap: 10px;
   }
 
   .profile-launch {
@@ -946,7 +946,7 @@ h1 {
   }
 
   .intro-footer-row {
-    grid-template-columns: minmax(0, 1fr) 98px;
+    grid-template-columns: minmax(0, 1fr) 118px;
     margin-top: 5px;
   }
 }
