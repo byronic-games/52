@@ -356,9 +356,6 @@ async function submitDailyResultToRemote(entry, config = getDailyLeaderboardConf
   });
 
   if (!response.ok && response.status !== 409) {
-    if (variant !== DAILY_VARIANT_NORMAL) {
-      return { ok: false, status: response.status };
-    }
     response = await fetchWithTimeout(`${config.supabaseUrl}/rest/v1/${config.table}`, {
       method: "POST",
       headers: getDailyRequestHeaders(config, true, "return=minimal"),
@@ -367,14 +364,15 @@ async function submitDailyResultToRemote(entry, config = getDailyLeaderboardConf
   }
 
   if (!response.ok && response.status !== 409) {
-    if (variant !== DAILY_VARIANT_NORMAL) {
-      return { ok: false, status: response.status };
-    }
     response = await fetchWithTimeout(`${config.supabaseUrl}/rest/v1/${config.table}`, {
       method: "POST",
       headers: getDailyRequestHeaders(config, true, "return=minimal"),
       body: JSON.stringify(buildDailyRemotePayload(entry, false, false)),
     });
+  }
+
+  if (response.status === 409 && variant !== DAILY_VARIANT_NORMAL) {
+    return { ok: false, status: response.status, conflict: true };
   }
 
   if (response.ok || response.status === 409) {

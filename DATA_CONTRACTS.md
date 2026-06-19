@@ -17,6 +17,8 @@ Variant notes:
 - `normal` is the default/classic Daily.
 - `hard` uses its own seed and leaderboard; torn cards are hidden and not scored.
 - Historical rows should be backfilled to `normal`.
+- Any uniqueness rule for Daily attempts must include `variant`, e.g. `(date_key, variant, player_id)`.
+- Remove legacy date/player-only unique indexes when enabling variants. Known old names include `daily_52_date_player_uidx`, `daily_52_date_player_id_uidx`, and `daily_52_date_key_player_id_idx`.
 
 Required permissions:
 - anon `SELECT`
