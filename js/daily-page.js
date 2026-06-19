@@ -33,27 +33,48 @@ function getDailyUnlockRunsStarted() {
   }
 }
 
-function buildDailyShareUrl(dateKey) {
+function buildDailyShareUrl(dateKey, variant = "normal") {
   const url = new URL(DAILY_SHARE_BASE_URL);
   url.searchParams.set("date", dateKey);
+  const normalizedVariant = getDailyPageVariant(variant);
+  if (normalizedVariant !== "normal") {
+    url.searchParams.set("variant", normalizedVariant);
+  }
   return url.toString();
 }
 
-function buildDailyShareText(entry, activeDateKey, todayKey) {
+function getDailyPageVariant(value) {
+  return typeof normalizeDailyVariant === "function"
+    ? normalizeDailyVariant(value)
+    : String(value || "normal").trim().toLowerCase() === "hard"
+      ? "hard"
+      : "normal";
+}
+
+function getDailyVariantLabel(variant) {
+  const normalized = getDailyPageVariant(variant);
+  if (typeof getDailyVariantConfig === "function") {
+    return getDailyVariantConfig(normalized).label || (normalized === "hard" ? "Hard" : "Normal");
+  }
+  return normalized === "hard" ? "Hard" : "Normal";
+}
+
+function buildDailyShareText(entry, activeDateKey, todayKey, variant = "normal") {
   const score = Math.max(0, Number(entry?.score ?? 0));
   const cards = Math.max(0, Number(entry?.cardsCleared ?? entry?.score ?? 0));
   const isToday = activeDateKey === todayKey;
+  const variantLabel = getDailyVariantLabel(variant);
   if (isToday) {
-    return `I cleared ${cards} cards and scored ${score} in today's 52! Daily Challenge. Can you do better?`;
+    return `I cleared ${cards} cards and scored ${score} in today's ${variantLabel} 52! Daily. Can you do better?`;
   }
-  return `I cleared ${cards} cards and scored ${score} in the 52! Daily Challenge for ${formatDailyDateLabel(activeDateKey)}. Can you do better?`;
+  return `I cleared ${cards} cards and scored ${score} in the ${variantLabel} 52! Daily for ${formatDailyDateLabel(activeDateKey)}. Can you do better?`;
 }
 
-async function shareDailyResult(entry, activeDateKey, todayKey, statusEl) {
+async function shareDailyResult(entry, activeDateKey, todayKey, statusEl, variant = "normal") {
   if (!entry) return;
 
-  const text = buildDailyShareText(entry, activeDateKey, todayKey);
-  const url = buildDailyShareUrl(activeDateKey);
+  const text = buildDailyShareText(entry, activeDateKey, todayKey, variant);
+  const url = buildDailyShareUrl(activeDateKey, variant);
   const title = "52! Daily";
 
   try {
@@ -338,21 +359,59 @@ function renderDailyRows(entries, currentPlayerId, showScores = false) {
   });
 }
 
-function navigateToDailyDate(dateKey) {
-  // Update URL without full page reload
-  window.history.replaceState({ date: dateKey }, "", `daily.html?date=${encodeURIComponent(dateKey)}`);
-  // Re-render with new date
-  refreshDailyPageForDate(dateKey);
+function getDailyPageUrl(dateKey, variant = "normal") {
+  const normalizedVariant = getDailyPageVariant(variant);
+  const params = new URLSearchParams({ date: dateKey });
+  if (normalizedVariant !== "normal") {
+    params.set("variant", normalizedVariant);
+  }
+  return `daily.html?${params.toString()}`;
 }
 
-async function refreshDailyPageForDate(activeDateKey) {
+function navigateToDailyDate(dateKey, variant = "normal") {
+  // Update URL without full page reload
+  const normalizedVariant = getDailyPageVariant(variant);
+  window.history.replaceState({ date: dateKey, variant: normalizedVariant }, "", getDailyPageUrl(dateKey, normalizedVariant));
+  // Re-render with new date
+  refreshDailyPageForDate(dateKey, normalizedVariant);
+}
+
+function setDailyVariantToggleState(activeVariant, hardUnlocked) {
+  document.querySelectorAll(".daily-variant-btn").forEach((button) => {
+    const buttonVariant = getDailyPageVariant(button.dataset.variant);
+    const active = buttonVariant === activeVariant;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-selected", active ? "true" : "false");
+    if (buttonVariant === "hard") {
+      button.classList.toggle("locked", !hardUnlocked);
+      button.setAttribute("aria-disabled", hardUnlocked ? "false" : "true");
+    } else {
+      button.classList.remove("locked");
+      button.setAttribute("aria-disabled", "false");
+    }
+  });
+}
+
+async function refreshDailyPageForDate(activeDateKey, activeVariant = "normal") {
+  activeVariant = getDailyPageVariant(activeVariant);
   const todayKey = getCurrentDailyDateKey();
   const currentPlayerId = getOrCreateDailyPlayerId();
   const dailyUnlocked = getDailyUnlockRunsStarted() >= 1;
-  const currentAttempt = getLocalDailyAttempt(activeDateKey);
+  const normalAttempt = getLocalDailyAttempt(activeDateKey, "normal");
+  const hardUnlocked =
+    !!normalAttempt &&
+    normalAttempt.dateKey === activeDateKey &&
+    normalAttempt.playerId === currentPlayerId &&
+    normalAttempt.completed === true;
+  if (activeVariant === "hard" && !hardUnlocked) {
+    activeVariant = "normal";
+    window.history.replaceState({ date: activeDateKey, variant: activeVariant }, "", getDailyPageUrl(activeDateKey, activeVariant));
+  }
+  const currentAttempt = getLocalDailyAttempt(activeDateKey, activeVariant);
   const hasCompletedAttempt =
     !!currentAttempt &&
     currentAttempt.dateKey === activeDateKey &&
+    currentAttempt.variant === activeVariant &&
     currentAttempt.playerId === currentPlayerId &&
     currentAttempt.completed === true;
   // Show scores for past dailies, or if player has completed today's
@@ -361,6 +420,16 @@ async function refreshDailyPageForDate(activeDateKey) {
   // Update date label
   const dateEl = document.getElementById("daily-date-label");
   if (dateEl) dateEl.innerText = formatDailyDateLabel(activeDateKey);
+  setDailyVariantToggleState(activeVariant, hardUnlocked);
+
+  const variantNoteEl = document.getElementById("daily-variant-note");
+  if (variantNoteEl) {
+    variantNoteEl.innerText = activeVariant === "hard"
+      ? "Hard uses a different seed. Torn cards are hidden and do not affect score."
+      : hardUnlocked
+        ? "Normal complete. Hard is unlocked for this date."
+        : "Finish Normal to unlock Hard for this date.";
+  }
   
   // Update navigation buttons
   const prevNavBtn = document.getElementById("daily-nav-prev");
@@ -373,7 +442,7 @@ async function refreshDailyPageForDate(activeDateKey) {
     prevNavBtn.disabled = !canGoPrev;
     prevNavBtn.onclick = (e) => {
       e.preventDefault();
-      if (canGoPrev) navigateToDailyDate(decrementDateKey(activeDateKey));
+      if (canGoPrev) navigateToDailyDate(decrementDateKey(activeDateKey), activeVariant);
     };
   }
   
@@ -381,7 +450,7 @@ async function refreshDailyPageForDate(activeDateKey) {
     nextNavBtn.disabled = !canGoNext;
     nextNavBtn.onclick = (e) => {
       e.preventDefault();
-      if (canGoNext) navigateToDailyDate(incrementDateKey(activeDateKey));
+      if (canGoNext) navigateToDailyDate(incrementDateKey(activeDateKey), activeVariant);
     };
   }
 
@@ -395,6 +464,11 @@ async function refreshDailyPageForDate(activeDateKey) {
   const startBtn = document.getElementById("daily-start-btn");
   const shareBtn = document.getElementById("daily-share-btn");
   const nameInput = document.getElementById("daily-name-input");
+  const boardTitleEl = document.querySelector(".daily-board .section-title");
+
+  if (boardTitleEl) {
+    boardTitleEl.innerText = `${getDailyVariantLabel(activeVariant)} Leaderboard`;
+  }
 
   if (!dailyUnlocked) {
     resultPanel?.classList.add("hidden");
@@ -418,8 +492,8 @@ async function refreshDailyPageForDate(activeDateKey) {
       }
       if (statusEl) {
         statusEl.innerText = activeDateKey === todayKey
-          ? "You have already played today's Daily."
-          : "You already played this Daily.";
+          ? `You have already played today's ${getDailyVariantLabel(activeVariant)} Daily.`
+          : `You already played this ${getDailyVariantLabel(activeVariant)} Daily.`;
       }
     } else {
       resultPanel?.classList.add("hidden");
@@ -434,19 +508,25 @@ async function refreshDailyPageForDate(activeDateKey) {
     }
     if (startBtn) {
       startBtn.disabled = hasCompletedAttempt ? true : (activeDateKey !== todayKey);
-      startBtn.innerText = hasCompletedAttempt ? "Daily Complete" : (activeDateKey === todayKey ? "Resume Daily" : "Archive");
+      startBtn.innerText = hasCompletedAttempt
+        ? `${getDailyVariantLabel(activeVariant)} Complete`
+        : (activeDateKey === todayKey ? `Resume ${getDailyVariantLabel(activeVariant)}` : "Archive");
     }
   } else {
       resultPanel?.classList.add("hidden");
       if (rankEl) rankEl.hidden = true;
       if (statusEl) {
         statusEl.innerText = activeDateKey === todayKey
-          ? "One attempt. Scores reveal after your run."
+          ? activeVariant === "hard" && !hardUnlocked
+            ? "Finish Normal first to unlock Hard."
+            : "One attempt. Scores reveal after your run."
           : "Archived Daily.";
       }
     if (startBtn) {
-      startBtn.disabled = activeDateKey !== todayKey;
-      startBtn.innerText = activeDateKey === todayKey ? "Play Daily" : "Archive";
+      startBtn.disabled = activeDateKey !== todayKey || (activeVariant === "hard" && !hardUnlocked);
+      startBtn.innerText = activeDateKey === todayKey
+        ? `Play ${getDailyVariantLabel(activeVariant)}`
+        : "Archive";
     }
     if (shareBtn) {
       shareBtn.disabled = true;
@@ -463,12 +543,17 @@ async function refreshDailyPageForDate(activeDateKey) {
         return;
       }
 
-      if (hasPlayedDaily(activeDateKey)) {
+      if (activeVariant === "hard" && !hardUnlocked) {
+        if (statusEl) statusEl.innerText = "Finish Normal first to unlock Hard.";
+        return;
+      }
+
+      if (hasPlayedDaily(activeDateKey, activeVariant)) {
         // Already played, just stay here (don't allow replay)
         return;
       }
 
-      window.location.href = buildDailyGameUrl(activeDateKey);
+      window.location.href = buildDailyGameUrl(activeDateKey, activeVariant);
     };
   }
 
@@ -480,12 +565,12 @@ async function refreshDailyPageForDate(activeDateKey) {
         if (statusEl) statusEl.innerText = "Coming soon.";
         return;
       }
-      shareDailyResult(entry, activeDateKey, todayKey, statusEl);
+      shareDailyResult(entry, activeDateKey, todayKey, statusEl, activeVariant);
     };
   }
 
   // Fetch and render leaderboard
-  const leaderboardResponse = await fetchDailyLeaderboard(activeDateKey, 5000);
+  const leaderboardResponse = await fetchDailyLeaderboard(activeDateKey, 5000, activeVariant);
   const leaderboard = Array.isArray(leaderboardResponse)
     ? leaderboardResponse
     : (leaderboardResponse?.entries || []);
@@ -522,6 +607,7 @@ async function renderDailyPage() {
   const activeDateKey = String(params.get("date") || todayKey).trim() || todayKey;
   const nameInput = document.getElementById("daily-name-input");
   const closeBtn = document.getElementById("daily-close-btn");
+  const variantButtons = Array.from(document.querySelectorAll(".daily-variant-btn"));
 
   if (nameInput) {
     nameInput.value = loadPreferredPlayerName();
@@ -536,7 +622,28 @@ async function renderDailyPage() {
     });
   }
 
-  await refreshDailyPageForDate(activeDateKey);
+  variantButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const nextVariant = getDailyPageVariant(button.dataset.variant);
+      const currentParams = new URLSearchParams(window.location.search);
+      const currentDateKey = String(currentParams.get("date") || getCurrentDailyDateKey()).trim() || getCurrentDailyDateKey();
+      const normalAttempt = getLocalDailyAttempt(currentDateKey, "normal");
+      const currentPlayerId = getOrCreateDailyPlayerId();
+      const hardUnlocked =
+        !!normalAttempt &&
+        normalAttempt.dateKey === currentDateKey &&
+        normalAttempt.playerId === currentPlayerId &&
+        normalAttempt.completed === true;
+      if (nextVariant === "hard" && !hardUnlocked) {
+        const statusEl = document.getElementById("daily-status");
+        if (statusEl) statusEl.innerText = "Finish Normal first to unlock Hard.";
+        return;
+      }
+      navigateToDailyDate(currentDateKey, nextVariant);
+    });
+  });
+
+  await refreshDailyPageForDate(activeDateKey, getDailyPageVariant(params.get("variant")));
 }
 
 renderDailyPage();

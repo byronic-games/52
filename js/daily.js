@@ -3,6 +3,28 @@ const DAILY_LOCAL_KEY = "hl_prototype_daily_attempts_local";
 const DAILY_NAME_KEY = "hl_prototype_hero_name";
 const DAILY_TABLE = "daily_52";
 const DAILY_RULESET_VERSION = "daily-v1";
+const DAILY_VARIANT_NORMAL = "normal";
+const DAILY_VARIANT_HARD = "hard";
+const DAILY_VARIANTS = {
+  normal: {
+    id: DAILY_VARIANT_NORMAL,
+    label: "Normal",
+    seedSuffix: "",
+    deckKey: "blue",
+    levelNumber: 1,
+    hideTornCards: false,
+    scoreTornCards: true,
+  },
+  hard: {
+    id: DAILY_VARIANT_HARD,
+    label: "Hard",
+    seedSuffix: "hard-v1",
+    deckKey: "blue",
+    levelNumber: 1,
+    hideTornCards: true,
+    scoreTornCards: false,
+  },
+};
 const DAILY_REQUEST_TIMEOUT_MS = 8000;
 const DAILY_CARD_SCORE_VALUE = 100;
 const DAILY_UNUSED_CHEAT_BONUS = 10;
@@ -56,8 +78,29 @@ function getCurrentDailyDateKey(now = new Date()) {
   return `${year}-${month}-${day}`;
 }
 
-function getDailySeedForDate(dateKey) {
-  return `DAILY|${GAME_VERSION}|${DAILY_RULESET_VERSION}|${String(dateKey || "").trim()}`;
+function normalizeDailyVariant(variant) {
+  const normalized = String(variant || "").trim().toLowerCase();
+  return DAILY_VARIANTS[normalized] ? normalized : DAILY_VARIANT_NORMAL;
+}
+
+function getDailyVariantConfig(variant) {
+  return DAILY_VARIANTS[normalizeDailyVariant(variant)] || DAILY_VARIANTS.normal;
+}
+
+function getDailyAttemptStorageKey(dateKey, variant = DAILY_VARIANT_NORMAL) {
+  const normalizedDateKey = String(dateKey || "").trim();
+  const normalizedVariant = normalizeDailyVariant(variant);
+  return normalizedVariant === DAILY_VARIANT_NORMAL
+    ? normalizedDateKey
+    : `${normalizedVariant}|${normalizedDateKey}`;
+}
+
+function getDailySeedForDate(dateKey, variant = DAILY_VARIANT_NORMAL) {
+  const normalizedDateKey = String(dateKey || "").trim();
+  const config = getDailyVariantConfig(variant);
+  return config.seedSuffix
+    ? `DAILY|${GAME_VERSION}|${DAILY_RULESET_VERSION}|${config.seedSuffix}|${normalizedDateKey}`
+    : `DAILY|${GAME_VERSION}|${DAILY_RULESET_VERSION}|${normalizedDateKey}`;
 }
 
 function getOrCreateDailyPlayerId() {
@@ -173,6 +216,7 @@ function normalizeDailyEntry(entry) {
 
   return {
     dateKey: String(entry?.dateKey || ""),
+    variant: normalizeDailyVariant(entry?.variant),
     seed: String(entry?.seed || ""),
     playerName: String(entry?.playerName || "Unknown"),
     playerId: String(entry?.playerId || ""),
@@ -200,17 +244,26 @@ function normalizeDailyEntry(entry) {
   };
 }
 
-function getLocalDailyAttempt(dateKey) {
+function getLocalDailyAttempt(dateKey, variant = DAILY_VARIANT_NORMAL) {
   const attempts = getLocalDailyAttempts();
-  if (!attempts[dateKey]) return null;
-  return normalizeDailyEntry(attempts[dateKey]);
+  const storageKey = getDailyAttemptStorageKey(dateKey, variant);
+  const fallbackKey = normalizeDailyVariant(variant) === DAILY_VARIANT_NORMAL
+    ? String(dateKey || "").trim()
+    : "";
+  const attempt = attempts[storageKey] || (fallbackKey ? attempts[fallbackKey] : null);
+  if (!attempt) return null;
+  return normalizeDailyEntry({
+    ...attempt,
+    variant: attempt.variant || variant,
+  });
 }
 
 function saveLocalDailyAttempt(entry) {
   const attempts = getLocalDailyAttempts();
-  attempts[entry.dateKey] = normalizeDailyEntry(entry);
+  const normalized = normalizeDailyEntry(entry);
+  attempts[getDailyAttemptStorageKey(normalized.dateKey, normalized.variant)] = normalized;
   saveLocalDailyAttempts(attempts);
-  return attempts[entry.dateKey];
+  return normalized;
 }
 
 function getDailyRequestHeaders(config, includeJson = false, prefer = "") {
@@ -226,6 +279,7 @@ function getDailyRequestHeaders(config, includeJson = false, prefer = "") {
 function buildDailyRemotePayload(entry, includeCrownFields = true, includeScoreFields = includeCrownFields) {
   const payload = {
     date_key: entry.dateKey,
+    variant: normalizeDailyVariant(entry.variant),
     seed: entry.seed,
     player_name: entry.playerName,
     player_id: entry.playerId,
@@ -260,12 +314,15 @@ function buildDailyRemotePayload(entry, includeCrownFields = true, includeScoreF
 
 function buildDailyRemoteIdentityQuery(entry) {
   const dateKey = encodeURIComponent(entry.dateKey);
+  const variant = normalizeDailyVariant(entry.variant);
+  const variantQuery = `variant=eq.${encodeURIComponent(variant)}`;
   if (entry.playerId) {
-    return `date_key=eq.${dateKey}&player_id=eq.${encodeURIComponent(entry.playerId)}`;
+    return `date_key=eq.${dateKey}&${variantQuery}&player_id=eq.${encodeURIComponent(entry.playerId)}`;
   }
 
   return [
     `date_key=eq.${dateKey}`,
+    variantQuery,
     `seed=eq.${encodeURIComponent(entry.seed)}`,
     `player_name=eq.${encodeURIComponent(entry.playerName)}`,
     `score=eq.${encodeURIComponent(entry.score)}`,
@@ -291,6 +348,7 @@ async function remoteDailyEntryExists(entry, config = getDailyLeaderboardConfig(
 }
 
 async function submitDailyResultToRemote(entry, config = getDailyLeaderboardConfig()) {
+  const variant = normalizeDailyVariant(entry.variant);
   let response = await fetchWithTimeout(`${config.supabaseUrl}/rest/v1/${config.table}`, {
     method: "POST",
     headers: getDailyRequestHeaders(config, true, "return=minimal"),
@@ -298,6 +356,9 @@ async function submitDailyResultToRemote(entry, config = getDailyLeaderboardConf
   });
 
   if (!response.ok && response.status !== 409) {
+    if (variant !== DAILY_VARIANT_NORMAL) {
+      return { ok: false, status: response.status };
+    }
     response = await fetchWithTimeout(`${config.supabaseUrl}/rest/v1/${config.table}`, {
       method: "POST",
       headers: getDailyRequestHeaders(config, true, "return=minimal"),
@@ -306,6 +367,9 @@ async function submitDailyResultToRemote(entry, config = getDailyLeaderboardConf
   }
 
   if (!response.ok && response.status !== 409) {
+    if (variant !== DAILY_VARIANT_NORMAL) {
+      return { ok: false, status: response.status };
+    }
     response = await fetchWithTimeout(`${config.supabaseUrl}/rest/v1/${config.table}`, {
       method: "POST",
       headers: getDailyRequestHeaders(config, true, "return=minimal"),
@@ -320,8 +384,8 @@ async function submitDailyResultToRemote(entry, config = getDailyLeaderboardConf
   return { ok: false, status: response.status };
 }
 
-async function syncLocalDailyAttemptToRemote(dateKey) {
-  const localAttempt = getLocalDailyAttempt(dateKey);
+async function syncLocalDailyAttemptToRemote(dateKey, variant = DAILY_VARIANT_NORMAL) {
+  const localAttempt = getLocalDailyAttempt(dateKey, variant);
   if (!localAttempt?.completed || !dailyRemoteEnabled()) {
     return { ok: false, synced: false, reason: "not_ready" };
   }
@@ -399,13 +463,14 @@ async function fetchDailyClearedNameSet(config, limit = 5000) {
   return clearedNames;
 }
 
-function hasPlayedDaily(dateKey) {
-  const attempt = getLocalDailyAttempt(dateKey);
+function hasPlayedDaily(dateKey, variant = DAILY_VARIANT_NORMAL) {
+  const attempt = getLocalDailyAttempt(dateKey, variant);
   return !!attempt && attempt.completed === true;
 }
 
 function buildDailyEntry({
   dateKey,
+  variant = DAILY_VARIANT_NORMAL,
   seed,
   playerName,
   playerId,
@@ -455,6 +520,7 @@ function buildDailyEntry({
 
   return normalizeDailyEntry({
     dateKey,
+    variant,
     seed,
     playerName,
     playerId,
@@ -483,10 +549,11 @@ function buildDailyEntry({
   });
 }
 
-function lockDailyAttempt(dateKey, seed, playerName) {
+function lockDailyAttempt(dateKey, seed, playerName, variant = DAILY_VARIANT_NORMAL) {
   return saveLocalDailyAttempt(
     buildDailyEntry({
       dateKey,
+      variant,
       seed,
       playerName: playerName || "Unknown",
       playerId: getOrCreateDailyPlayerId(),
@@ -526,8 +593,9 @@ function compareDailyEntries(a, b) {
   return String(a.createdAt).localeCompare(String(b.createdAt));
 }
 
-async function fetchDailyLeaderboard(dateKey, limit = 100) {
-  let localAttempt = getLocalDailyAttempt(dateKey);
+async function fetchDailyLeaderboard(dateKey, limit = 100, variant = DAILY_VARIANT_NORMAL) {
+  const normalizedVariant = normalizeDailyVariant(variant);
+  let localAttempt = getLocalDailyAttempt(dateKey, normalizedVariant);
 
   if (!dailyRemoteEnabled()) {
     return buildDailyLeaderboardResult(localAttempt?.completed ? [localAttempt] : [], false, "offline_config");
@@ -537,17 +605,18 @@ async function fetchDailyLeaderboard(dateKey, limit = 100) {
 
   try {
     if (localAttempt?.completed) {
-      const syncResult = await syncLocalDailyAttemptToRemote(dateKey);
+      const syncResult = await syncLocalDailyAttemptToRemote(dateKey, normalizedVariant);
       if (syncResult.ok) {
-        localAttempt = getLocalDailyAttempt(dateKey);
+        localAttempt = getLocalDailyAttempt(dateKey, normalizedVariant);
       }
     }
 
     let activeSelect =
-      "date_key,seed,player_name,player_id,score,cards_cleared,bonus_score,remaining_cheats,remaining_nudges,power_count,tear_count,cheat_bonus,nudge_bonus,power_bonus,tear_penalty,total_score,blue_cleared,green_cleared,red_cleared,daily_clears,crown_summary,created_at";
+      "date_key,variant,seed,player_name,player_id,score,cards_cleared,bonus_score,remaining_cheats,remaining_nudges,power_count,tear_count,cheat_bonus,nudge_bonus,power_bonus,tear_penalty,total_score,blue_cleared,green_cleared,red_cleared,daily_clears,crown_summary,created_at";
     const queryPrimary =
       `select=${activeSelect}` +
       `&date_key=eq.${encodeURIComponent(dateKey)}` +
+      `&variant=eq.${encodeURIComponent(normalizedVariant)}` +
       `&order=score.desc,created_at.asc&limit=${Math.max(1, limit)}`;
     const primaryUrl = `${config.supabaseUrl}/rest/v1/${config.table}?${queryPrimary}`;
     let response = await fetchWithTimeout(primaryUrl, {
@@ -558,6 +627,9 @@ async function fetchDailyLeaderboard(dateKey, limit = 100) {
     });
 
     if (!response.ok) {
+      if (normalizedVariant !== DAILY_VARIANT_NORMAL) {
+        return buildDailyLeaderboardResult(localAttempt?.completed ? [localAttempt] : [], false, "offline_schema");
+      }
       activeSelect = "date_key,seed,player_name,player_id,score,blue_cleared,green_cleared,red_cleared,daily_clears,crown_summary,created_at";
       const queryCrownFallback =
         `select=${activeSelect}` +
@@ -573,6 +645,9 @@ async function fetchDailyLeaderboard(dateKey, limit = 100) {
     }
 
     if (!response.ok) {
+      if (normalizedVariant !== DAILY_VARIANT_NORMAL) {
+        return buildDailyLeaderboardResult(localAttempt?.completed ? [localAttempt] : [], false, "offline_schema");
+      }
       activeSelect = "date_key,seed,player_name,player_id,score,created_at";
       const queryFallback =
         `select=${activeSelect}` +
@@ -596,7 +671,7 @@ async function fetchDailyLeaderboard(dateKey, limit = 100) {
       return buildDailyLeaderboardResult(localAttempt?.completed ? [localAttempt] : [], false, "offline_payload");
     }
 
-    const dailySeed = getDailySeedForDate(dateKey);
+    const dailySeed = getDailySeedForDate(dateKey, normalizedVariant);
     if (dailySeed) {
       try {
         const seedQuery =
@@ -652,13 +727,14 @@ async function fetchDailyLeaderboard(dateKey, limit = 100) {
           ));
           createdAtRows.forEach((row) => {
             const rowDateKey = String(row.date_key || "").trim();
+            const rowVariant = normalizeDailyVariant(row.variant);
             const rowSeed = String(row.seed || "").trim();
             const rowCreatedAt = String(row.created_at || "");
             const belongsToDaily =
-              rowDateKey === dateKey ||
-              rowSeed === dailySeed ||
-              rowSeed.endsWith(`|${dateKey}`) ||
-              rowCreatedAt.startsWith(dateKey);
+              (rowVariant === normalizedVariant && rowDateKey === dateKey) ||
+              (rowVariant === normalizedVariant && rowSeed === dailySeed) ||
+              (normalizedVariant === DAILY_VARIANT_NORMAL && rowSeed.endsWith(`|${dateKey}`)) ||
+              (normalizedVariant === DAILY_VARIANT_NORMAL && rowCreatedAt.startsWith(dateKey));
             if (!belongsToDaily) return;
             const key = `${row.player_id || ""}::${row.player_name || ""}::${row.created_at || ""}::${row.score || ""}`;
             if (!rowKeys.has(key)) {
@@ -675,6 +751,7 @@ async function fetchDailyLeaderboard(dateKey, limit = 100) {
     const mapped = rows.map((row) =>
       buildDailyEntry({
         dateKey: row.date_key,
+        variant: row.variant || normalizedVariant,
         seed: row.seed,
         playerName: row.player_name,
         playerId: row.player_id,
@@ -705,7 +782,8 @@ async function fetchDailyLeaderboard(dateKey, limit = 100) {
         entry.playerId &&
         localAttempt.playerId &&
         entry.playerId === localAttempt.playerId &&
-        entry.dateKey === localAttempt.dateKey
+        entry.dateKey === localAttempt.dateKey &&
+        entry.variant === localAttempt.variant
       );
       if (matchingIndex >= 0) {
         mapped[matchingIndex] = normalizeDailyEntry({
@@ -790,11 +868,15 @@ function canNavigateNext(currentDateKey) {
   return canNavigateToDate(nextDate);
 }
 
-function buildDailyGameUrl(dateKey) {
+function buildDailyGameUrl(dateKey, variant = DAILY_VARIANT_NORMAL) {
   const params = new URLSearchParams({
     mode: "daily",
     date: dateKey,
   });
+  const normalizedVariant = normalizeDailyVariant(variant);
+  if (normalizedVariant !== DAILY_VARIANT_NORMAL) {
+    params.set("variant", normalizedVariant);
+  }
   return `game.html?${params.toString()}`;
 }
 
@@ -802,4 +884,9 @@ function getRequestedDailyDateKeyFromUrl() {
   const params = new URLSearchParams(window.location.search);
   if (!params.has("date")) return "";
   return String(params.get("date") || "").trim();
+}
+
+function getRequestedDailyVariantFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  return normalizeDailyVariant(params.get("variant"));
 }

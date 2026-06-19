@@ -1044,17 +1044,20 @@ function renderScores() {
   const jokerCountEl = document.getElementById("joker-count");
   const energyCardEl = document.getElementById("header-energy-metric");
   const energyValueEl = document.getElementById("energy-value");
-  const hudDeckKey = state.gameOver
+  const isDailyRun = state.runMode === "daily";
+  const hudDeckKey = state.gameOver && !isDailyRun
     ? normalizeDeckKey(state.selectedDeckKey || loadSelectedDeck())
     : normalizeDeckKey(state.currentDeckKey || state.selectedDeckKey || loadSelectedDeck());
-  const bestDeckKey = state.gameOver
+  const bestDeckKey = state.gameOver && !isDailyRun
     ? normalizeDeckKey(state.selectedDeckKey || loadSelectedDeck())
     : normalizeDeckKey(state.currentDeckKey || state.selectedDeckKey || loadSelectedDeck());
-  const bestLevelNumber = state.gameOver
+  const bestLevelNumber = state.gameOver && !isDailyRun
     ? normalizeLevelNumber(state.selectedLevelNumber || loadSelectedLevel())
     : normalizeLevelNumber(state.currentLevelNumber || state.selectedLevelNumber || loadSelectedLevel());
 
-  state.bestScore = loadBestScore(bestDeckKey, bestLevelNumber);
+  if (!isDailyRun) {
+    state.bestScore = loadBestScore(bestDeckKey, bestLevelNumber);
+  }
   if (scoreEl) setAnimatedText(scoreEl, getDisplayedRunScore());
   if (bestScoreEl) setAnimatedText(bestScoreEl, `BEST: ${state.bestScore}`);
   renderExperienceCounter(false);
@@ -1121,13 +1124,28 @@ function getShortPlayerMessage(message = "") {
   const cleaned = cleanPlayerLogMessage(message);
   if (!cleaned) return "";
   const playedMatch = cleaned.match(/^Played\s+([^:]+):/i);
-  if (playedMatch) return `Played ${playedMatch[1].trim()}`.slice(0, 24);
+  if (playedMatch) {
+    const resultText = cleaned.slice(playedMatch[0].length).trim();
+    const shortResult = getShortPlayerMessage(resultText);
+    return shortResult || `Played ${playedMatch[1].trim()}`.slice(0, 24);
+  }
   const matchingMatch = cleaned.match(/^(\d+)\s+matching\s+cards?\s+remain/i);
   if (matchingMatch) return `${matchingMatch[1]} matches left`;
   if (/^Royal Flush:\s*yes/i.test(cleaned)) return "RF: Yes";
   if (/^Royal Flush:\s*no/i.test(cleaned)) return "RF: No";
+  const splitMatch = cleaned.match(/^Split the Difference:\s*(?:the\s+)?gap\s+is\s+(\d+)/i);
+  if (splitMatch) return `Gap: ${splitMatch[1]}`;
+  if (/^Split the Difference:.*Joker/i.test(cleaned)) return "Gap: Joker";
+  if (/^Split the Difference/i.test(cleaned)) return "Gap shown";
+  const sixthMatch = cleaned.match(/^Sixth Sense:\s*(higher|lower)/i);
+  if (sixthMatch) return `6? ${sixthMatch[1].toUpperCase()}`;
+  if (/^Sixth Sense sees neither/i.test(cleaned)) return "6? NEITHER";
+  if (/^Sixth Sense can only/i.test(cleaned)) return "6? Needs a 6";
+  if (/^6\/7 must be/i.test(cleaned)) return "6/7 first only";
+  if (/^6\/7 can only be used on an un-nudged/i.test(cleaned)) return "6/7 needs raw 6/7";
+  if (/^6\/7 can only/i.test(cleaned)) return "6/7 needs 6 or 7";
+  if (/^6\/7 armed/i.test(cleaned)) return "6/7 armed";
   if (/^Lucky Dip:/i.test(cleaned)) return "Lucky Dip";
-  if (/^Split the Difference:/i.test(cleaned)) return "Difference shown";
   if (/^The River:/i.test(cleaned)) return "River shown";
   if (/^False Shuffle:/i.test(cleaned)) return "False Shuffle";
   if (/^Power Parity:/i.test(cleaned)) return "Parity shown";
@@ -1695,7 +1713,10 @@ function renderRestartButton() {
     typeof getRunScoreFromCorrectAnswers === "function" &&
     getRunScoreFromCorrectAnswers(state.correctAnswers) >= 52;
   if (state.runMode === "daily" && state.gameOver) {
-    btn.innerText = "Daily Complete";
+    const variantLabel = typeof getDailyVariantConfig === "function"
+      ? getDailyVariantConfig(state.dailyVariant).label || "Daily"
+      : "Daily";
+    btn.innerText = `${variantLabel} Complete`;
     btn.disabled = true;
     return;
   }
@@ -2964,7 +2985,7 @@ function renderCheats() {
         const cheatOutput = cleanPlayerLogMessage(state.message);
         addPlayerLogEntry(
           cheatOutput ? `Played ${cheatName}: ${cheatOutput}` : `Played ${cheatName}.`,
-          { summary: "Cheat played" },
+          { summary: getShortPlayerMessage(cheatOutput) || "Cheat played" },
         );
         state.lastPlayerLogMessage = cleanPlayerLogMessage(state.message);
         appendRunDebugLog("cheat_used", {

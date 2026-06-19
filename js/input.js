@@ -588,9 +588,12 @@ document.getElementById("restart-btn").onclick = () => {
     getRunScoreFromCorrectAnswers(state.correctAnswers) >= 52;
 
   if (state.runMode === "daily") {
+    const variantLabel = typeof getDailyVariantConfig === "function"
+      ? getDailyVariantConfig(state.dailyVariant).label || "Daily"
+      : "Daily";
     state.message = state.gameOver
-      ? "Daily is complete. View the daily board for your result."
-      : "Daily runs cannot be restarted.";
+      ? `${variantLabel} Daily is complete. View the daily board for your result.`
+      : `${variantLabel} Daily runs cannot be restarted.`;
     render();
     return;
   }

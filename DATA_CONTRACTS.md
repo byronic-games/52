@@ -8,9 +8,15 @@ Used by:
 - `js/daily-page.js`
 
 Expected fields in use:
-- `date_key`, `seed`, `player_name`, `player_id`, `score`, `game_version`
+- `date_key`, `variant`, `seed`, `player_name`, `player_id`, `score`, `game_version`
+- Daily score fields (`cards_cleared`, `bonus_score`, `remaining_cheats`, `remaining_nudges`, `power_count`, `tear_count`, `cheat_bonus`, `nudge_bonus`, `power_bonus`, `tear_penalty`, `total_score`)
 - crown/clear fields used by UI enrichment (`blue_cleared`, `green_cleared`, `red_cleared`, `daily_clears`, `crown_summary`)
 - `created_at`
+
+Variant notes:
+- `normal` is the default/classic Daily.
+- `hard` uses its own seed and leaderboard; torn cards are hidden and not scored.
+- Historical rows should be backfilled to `normal`.
 
 Required permissions:
 - anon `SELECT`

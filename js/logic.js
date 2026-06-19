@@ -117,11 +117,17 @@ function buildRunFromControls(forceRandom = false, deckKey = loadSelectedDeck(),
   return { chosenSeed, deck };
 }
 
-function buildDailyRun(dateKey) {
+function buildDailyRun(dateKey, variant = "normal") {
   const chosenDateKey = String(dateKey || "").trim() || getCurrentDailyDateKey();
-  const chosenSeed = getDailySeedForDate(chosenDateKey);
-  const deck = buildRunDeck(chosenSeed, "blue", DEFAULT_LEVEL_NUMBER);
-  return { chosenDateKey, chosenSeed, deck };
+  const dailyConfig = typeof getDailyVariantConfig === "function"
+    ? getDailyVariantConfig(variant)
+    : { id: "normal", deckKey: "blue", levelNumber: DEFAULT_LEVEL_NUMBER };
+  const chosenVariant = dailyConfig.id || "normal";
+  const chosenSeed = getDailySeedForDate(chosenDateKey, chosenVariant);
+  const dailyDeckKey = normalizeDeckKey(dailyConfig.deckKey || "blue");
+  const dailyLevelNumber = normalizeLevelNumber(dailyConfig.levelNumber || DEFAULT_LEVEL_NUMBER);
+  const deck = buildRunDeck(chosenSeed, dailyDeckKey, dailyLevelNumber);
+  return { chosenDateKey, chosenVariant, chosenSeed, dailyDeckKey, dailyLevelNumber, deck };
 }
 
 let currentCardFeedbackTimer = null;
@@ -653,6 +659,108 @@ function queuePowerAward(reason = "bonus") {
   state.pendingPowerAwardQueue.push(String(reason || "bonus"));
 }
 
+function getDailyScoredBonusCount(value) {
+  return Math.max(0, Math.floor(Number(value) || 0));
+}
+
+function getAvailableDailyPowerPickCredit(requestedCount) {
+  const requested = getDailyScoredBonusCount(requestedCount);
+  if (requested <= 0) return 0;
+  if (typeof getUnlockedPowerPool !== "function") return requested;
+
+  const currentPowerIds = new Set(getExcludedRunPowerIds());
+  const alreadyCredited = getDailyScoredBonusCount(state.dailyScoredBonusPowerPicks);
+  const availablePowerCount = getUnlockedPowerPool(true)
+    .filter((power) => power?.id && !currentPowerIds.has(power.id))
+    .length;
+
+  return Math.min(requested, Math.max(0, availablePowerCount - alreadyCredited));
+}
+
+function creditDailyEndgameBonusPicks({ cheatPicks = 0, powerPicks = 0, reason = "final_card" } = {}) {
+  if (state.runMode !== "daily") {
+    return { cheatPicks: 0, powerPicks: 0 };
+  }
+
+  const scoredCheatPicks = getDailyScoredBonusCount(cheatPicks);
+  const scoredPowerPicks = getAvailableDailyPowerPickCredit(powerPicks);
+
+  if (scoredCheatPicks > 0) {
+    state.dailyScoredBonusCheatPicks =
+      getDailyScoredBonusCount(state.dailyScoredBonusCheatPicks) + scoredCheatPicks;
+  }
+
+  if (scoredPowerPicks > 0) {
+    state.dailyScoredBonusPowerPicks =
+      getDailyScoredBonusCount(state.dailyScoredBonusPowerPicks) + scoredPowerPicks;
+  }
+
+  if (scoredCheatPicks > 0 || scoredPowerPicks > 0) {
+    appendRunDebugLog("daily_endgame_bonus_scored", {
+      reason,
+      cheatPicks: scoredCheatPicks,
+      powerPicks: scoredPowerPicks,
+      totalScoredCheatPicks: state.dailyScoredBonusCheatPicks || 0,
+      totalScoredPowerPicks: state.dailyScoredBonusPowerPicks || 0,
+    });
+  }
+
+  return { cheatPicks: scoredCheatPicks, powerPicks: scoredPowerPicks };
+}
+
+function creditDailyFinalCardBonusPicks({
+  blankSpacePowerTriggered = false,
+  brucieBonusTriggered = false,
+  catch22Hit = false,
+  cheatACheaterWillTrigger = false,
+  equals11Hit = false,
+  higherHigherHigherCompleted = false,
+  newSuitsResult = null,
+  psychoCompleted = false,
+  sixSevenWasArmed = false,
+  wlCompleted = false,
+} = {}) {
+  if (state.runMode !== "daily") {
+    return { cheatPicks: 0, powerPicks: 0 };
+  }
+
+  let cheatPicks = 0;
+  let powerPicks = 0;
+
+  if (sixSevenWasArmed) cheatPicks += 3;
+  if (wlCompleted) cheatPicks += 3;
+  if (equals11Hit) cheatPicks += 3;
+  if (cheatACheaterWillTrigger) cheatPicks += 2;
+  if (newSuitsResult?.completed) {
+    cheatPicks += getDailyScoredBonusCount(newSuitsResult.awardCount);
+  }
+
+  if (blankSpacePowerTriggered) powerPicks += 1;
+  if (brucieBonusTriggered) powerPicks += 1;
+  if (higherHigherHigherCompleted) powerPicks += 1;
+  if (catch22Hit) powerPicks += 1;
+  if (psychoCompleted) powerPicks += 1;
+
+  const wouldPauseBeforeStreak =
+    blankSpacePowerTriggered ||
+    sixSevenWasArmed ||
+    wlCompleted ||
+    higherHigherHigherCompleted ||
+    catch22Hit ||
+    psychoCompleted;
+  const streakWouldAward =
+    state.streak >= getCheatRewardThreshold() &&
+    (!wouldPauseBeforeStreak || equals11Hit);
+
+  if (streakWouldAward) cheatPicks += 1;
+
+  return creditDailyEndgameBonusPicks({
+    cheatPicks,
+    powerPicks,
+    reason: "final_card",
+  });
+}
+
 function getDailyPowerOfferSeed(offerIndex) {
   return `${state.runSeed}|daily-power-offer-v1|${offerIndex}`;
 }
@@ -752,10 +860,8 @@ function resolvePendingRewardQueues() {
 function previewPendingRunBehindPowerChoice(deck, runMode = "standard", deckKey = "blue", levelNumber = DEFAULT_LEVEL_NUMBER) {
   if (!Array.isArray(deck) || deck.length === 0) return;
 
-  const normalizedDeckKey = runMode === "daily" ? "blue" : normalizeDeckKey(deckKey);
-  const normalizedLevelNumber = runMode === "daily"
-    ? DEFAULT_LEVEL_NUMBER
-    : normalizeLevelNumber(levelNumber);
+  const normalizedDeckKey = normalizeDeckKey(deckKey);
+  const normalizedLevelNumber = normalizeLevelNumber(levelNumber);
 
   state.deck = [...deck];
   state.index = -1;
@@ -836,6 +942,7 @@ function previewOpeningRunFromControls() {
   state.pendingRunDeck = [...deck];
   state.pendingRunMode = "standard";
   state.pendingDailyDateKey = "";
+  state.pendingDailyVariant = "normal";
   state.pendingDeckKey = selectedDeckKey;
   state.pendingLevelNumber = selectedLevelNumber;
   state.pendingCheatOptions = [];
@@ -859,6 +966,7 @@ function openPowerChoice(forceRandom = false) {
     state.pendingRunDeck = deck;
     state.pendingRunMode = "standard";
     state.pendingDailyDateKey = "";
+    state.pendingDailyVariant = "normal";
     state.pendingDeckKey = "black";
     state.pendingLevelNumber = 1;
     state.pendingCheatOptions = [];
@@ -889,6 +997,7 @@ function openPowerChoice(forceRandom = false) {
     : getRandomPowerOptions(2, chosenSeed);
   state.pendingRunMode = "standard";
   state.pendingDailyDateKey = "";
+  state.pendingDailyVariant = "normal";
   state.pendingDeckKey = selectedDeckKey;
   state.pendingLevelNumber = selectedLevelNumber;
   state.pendingCheatOptions = [];
@@ -912,18 +1021,19 @@ function openPowerChoice(forceRandom = false) {
   render();
 }
 
-function openDailyPowerChoice(dateKey = "") {
+function openDailyPowerChoice(dateKey = "", variant = "normal") {
   clearGameOverEffects({ settleExperience: true });
   clearVictoryEffects({ fade: state.victoryMessageActive || state.gameOver });
-  const { chosenDateKey, chosenSeed, deck } = buildDailyRun(dateKey);
+  const { chosenDateKey, chosenVariant, chosenSeed, dailyDeckKey, dailyLevelNumber, deck } = buildDailyRun(dateKey, variant);
 
   state.pendingRunSeed = chosenSeed;
   state.pendingRunDeck = deck;
   state.pendingPowerOptions = getRandomPowerOptions(2, chosenSeed, true);
   state.pendingRunMode = "daily";
   state.pendingDailyDateKey = chosenDateKey;
-  state.pendingDeckKey = "blue";
-  state.pendingLevelNumber = DEFAULT_LEVEL_NUMBER;
+  state.pendingDailyVariant = chosenVariant;
+  state.pendingDeckKey = dailyDeckKey;
+  state.pendingLevelNumber = dailyLevelNumber;
   state.pendingCheatOptions = [];
   state.pendingPowerAwardQueue = [];
   state.cheatChoiceLockedUntil = 0;
@@ -937,7 +1047,7 @@ function openDailyPowerChoice(dateKey = "") {
   state.pauseForCheat = false;
   state.restartConfirmArmed = false;
   state.deckStatsTooltipOpen = false;
-  previewPendingRunBehindPowerChoice(deck, "daily", "blue", DEFAULT_LEVEL_NUMBER);
+  previewPendingRunBehindPowerChoice(deck, "daily", dailyDeckKey, dailyLevelNumber);
   queueOpeningDealAnimation(deck);
   state.message = "";
   state.temporaryMessageText = "";
@@ -1047,16 +1157,22 @@ function startRunWithPower(powerId) {
     : buildRunFromControls(false).deck;
   const runMode = state.pendingRunMode || "standard";
   const dailyDateKey = runMode === "daily" ? state.pendingDailyDateKey || getCurrentDailyDateKey() : "";
+  const dailyVariant = runMode === "daily" && typeof normalizeDailyVariant === "function"
+    ? normalizeDailyVariant(state.pendingDailyVariant)
+    : "normal";
+  const dailyConfig = runMode === "daily" && typeof getDailyVariantConfig === "function"
+    ? getDailyVariantConfig(dailyVariant)
+    : null;
   const selectedDeckKey = normalizeDeckKey(state.selectedDeckKey || loadSelectedDeck());
   const selectedLevelNumber = normalizeLevelNumber(state.selectedLevelNumber || loadSelectedLevel());
   const currentDeckKey = runMode === "daily"
-    ? "blue"
+    ? normalizeDeckKey(dailyConfig?.deckKey || state.pendingDeckKey || "blue")
     : normalizeDeckKey(state.pendingDeckKey || selectedDeckKey);
   const blackRun = runMode !== "daily" && currentDeckKey === "black";
   const selectedPower = blackRun ? null : getPowerById(powerId);
   const greenRun = runMode !== "daily" && isEnergyDeckKey(currentDeckKey);
   const currentLevelNumber = runMode === "daily"
-    ? DEFAULT_LEVEL_NUMBER
+    ? normalizeLevelNumber(dailyConfig?.levelNumber || state.pendingLevelNumber || DEFAULT_LEVEL_NUMBER)
     : normalizeLevelNumber(state.pendingLevelNumber || selectedLevelNumber);
   const selectedPowerId = blackRun ? null : (selectedPower?.id || POWERS[0]?.id || null);
   const activePowers = blackRun
@@ -1121,7 +1237,7 @@ function startRunWithPower(powerId) {
     currentNudgeLogFlushed: false,
     correctAnswers: 0,
     streak: 0,
-    bestScore: loadBestScore(currentDeckKey, currentLevelNumber),
+    bestScore: runMode === "daily" ? 0 : loadBestScore(currentDeckKey, currentLevelNumber),
     seenCardIds: new Set([deck[0].id]),
     gridCardIds: new Set([deck[0].id]),
     powers: activePowers,
@@ -1143,8 +1259,11 @@ function startRunWithPower(powerId) {
     runMode,
     devMode: !!window.devModeEnabled,
     dailyDateKey,
+    dailyVariant,
     dailyCheatOfferCount: 0,
     dailyPowerOfferCount: 0,
+    dailyScoredBonusCheatPicks: 0,
+    dailyScoredBonusPowerPicks: 0,
     justUnlockedCheatIds: [],
     cheatChoiceLockedUntil: 0,
     activeCheatAwardReason: "",
@@ -1158,6 +1277,7 @@ function startRunWithPower(powerId) {
     pendingRunDeck: [],
     pendingRunMode: "standard",
     pendingDailyDateKey: "",
+    pendingDailyVariant: "normal",
     pendingDeckKey: selectedDeckKey,
     pendingLevelNumber: selectedLevelNumber,
     runSeed: chosenSeed,
@@ -1234,10 +1354,11 @@ function startRunWithPower(powerId) {
     selectedPowerName: getPowerName(selectedPowerId),
     activePowers,
     dailyDateKey,
+    dailyVariant,
   });
 
   if (runMode === "daily" && !isDevModeRun()) {
-    lockDailyAttempt(dailyDateKey, chosenSeed, loadPreferredPlayerName());
+    lockDailyAttempt(dailyDateKey, chosenSeed, loadPreferredPlayerName(), dailyVariant);
   }
 
   if (!isDevModeRun()) {
@@ -1270,19 +1391,31 @@ function handleRunFinished(finalScore) {
   if (state.runMode !== "daily") return;
 
   const dateKey = state.dailyDateKey || getCurrentDailyDateKey();
+  const dailyVariant = typeof normalizeDailyVariant === "function"
+    ? normalizeDailyVariant(state.dailyVariant)
+    : "normal";
+  const dailyConfig = typeof getDailyVariantConfig === "function"
+    ? getDailyVariantConfig(dailyVariant)
+    : null;
   const playerName = loadPreferredPlayerName();
   const dailyCardsCleared = getRunScoreFromCorrectAnswers(finalScore);
-  const remainingCheats = Array.isArray(state.cheats)
+  const scoredBonusCheatPicks = getDailyScoredBonusCount(state.dailyScoredBonusCheatPicks);
+  const scoredBonusPowerPicks = getDailyScoredBonusCount(state.dailyScoredBonusPowerPicks);
+  const baseRemainingCheats = Array.isArray(state.cheats)
     ? state.cheats.filter((cheat) => cheat?.id && cheat.id !== "nudge_up" && cheat.id !== "nudge_down").length
     : 0;
+  const remainingCheats = baseRemainingCheats + scoredBonusCheatPicks;
   const remainingNudges = Math.max(0, Number(state.nudgeUpCharges) || 0) + Math.max(0, Number(state.nudgeDownCharges) || 0);
-  const powerCount = typeof getExcludedRunPowerIds === "function"
+  const basePowerCount = typeof getExcludedRunPowerIds === "function"
     ? getExcludedRunPowerIds().length
     : Array.isArray(state.powers)
       ? state.powers.filter((powerId) => powerId && powerId !== "nudge_engine").length
       : 0;
+  const powerCount = basePowerCount + scoredBonusPowerPicks;
   const seenCardIds = state.seenCardIds instanceof Set ? state.seenCardIds : new Set();
-  const tearCount = Array.isArray(state.deck)
+  const tearCount = dailyConfig?.scoreTornCards === false
+    ? 0
+    : Array.isArray(state.deck)
     ? state.deck.filter((card) =>
       card?.id &&
       !isJokerCard(card) &&
@@ -1314,6 +1447,7 @@ function handleRunFinished(finalScore) {
     };
   const entry = buildDailyEntry({
     dateKey,
+    variant: dailyVariant,
     seed: state.runSeed,
     playerName: playerName || "Unknown",
     playerId: getOrCreateDailyPlayerId(),
@@ -1334,7 +1468,11 @@ function handleRunFinished(finalScore) {
 
   submitDailyResult(entry).finally(() => {
     window.setTimeout(() => {
-      window.location.href = `daily.html?date=${encodeURIComponent(dateKey)}`;
+      const params = new URLSearchParams({ date: dateKey });
+      if (dailyVariant !== "normal") {
+        params.set("variant", dailyVariant);
+      }
+      window.location.href = `daily.html?${params.toString()}`;
     }, 900);
   });
 }
@@ -1384,6 +1522,7 @@ function updateBestScoreIfNeeded() {
   const runScore = getRunScoreFromCorrectAnswers(state.correctAnswers);
   if (runScore > state.bestScore) {
     state.bestScore = runScore;
+    if (state.runMode === "daily") return;
     saveBestScore(state.bestScore, state.currentDeckKey, state.currentLevelNumber);
   }
 }
@@ -2175,6 +2314,18 @@ function getCardBackStatus(cardId) {
     tornCorner: false,
     backColor: "blue",
   };
+  const activeDailyVariant = state.runMode === "daily"
+    ? state.dailyVariant
+    : state.pendingRunMode === "daily"
+      ? state.pendingDailyVariant
+      : "normal";
+  const shouldHideTornCards =
+    (state.runMode === "daily" || state.pendingRunMode === "daily") &&
+    typeof getDailyVariantConfig === "function" &&
+    getDailyVariantConfig(activeDailyVariant)?.hideTornCards === true;
+  if (shouldHideTornCards) {
+    return { ...status, tornCorner: false };
+  }
   return state.temporaryCardBackRepairs?.[cardId]
     ? { ...status, tornCorner: false }
     : status;
@@ -2863,6 +3014,14 @@ function makeGuessLegacy(type) {
     queueCheatAward("equals_11");
   }
   if (state.index >= state.deck.length - 1) {
+    const dailyFinalBonus = creditDailyFinalCardBonusPicks({
+      blankSpacePowerTriggered: blankSpaceWasActive,
+      brucieBonusTriggered: runHasPower("brucie_bonus") && match,
+      cheatACheaterWillTrigger: (state.cheatACheaterRemaining || 0) === 1,
+      equals11Hit,
+      newSuitsResult,
+      sixSevenWasArmed,
+    });
     appendRunDebugLog("guess_resolved", {
       guess: type,
       outcome: "deck_cleared",
@@ -2881,6 +3040,7 @@ function makeGuessLegacy(type) {
       redDeadRedemptionWasArmed,
       oddOneOutWasArmed,
       sixSevenWasArmed,
+      dailyFinalBonus,
     });
     if (!isDevModeRun()) {
       if (state.runMode !== "daily") {
@@ -3778,6 +3938,20 @@ function makeGuess(type) {
     queueCheatAward("equals_11");
   }
   if (state.index >= state.deck.length - 1) {
+    const dailyFinalBonus = creditDailyFinalCardBonusPicks({
+      blankSpacePowerTriggered: blankSpaceWasActive,
+      brucieBonusTriggered: runHasPower("brucie_bonus") && match,
+      catch22Hit,
+      cheatACheaterWillTrigger: (state.cheatACheaterRemaining || 0) === 1,
+      equals11Hit,
+      higherHigherHigherCompleted,
+      newSuitsResult,
+      psychoCompleted:
+        psychoCompleted ||
+        (psychoRemainingBeforeGuess > 0 && Math.max(0, psychoRemainingBeforeGuess - 1) === 0),
+      sixSevenWasArmed,
+      wlCompleted,
+    });
     appendRunDebugLog("guess_resolved", {
       guess: type,
       outcome: "deck_cleared",
@@ -3803,6 +3977,7 @@ function makeGuess(type) {
       rescuedByCursedShield,
       rescuedByKillerQueen,
       rescuedBySuitedAndBooted,
+      dailyFinalBonus,
       energyAfter: state.energy || 0,
     });
     if (!isDevModeRun()) {

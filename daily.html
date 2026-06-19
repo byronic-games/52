@@ -12,14 +12,18 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="images/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="daily.css?v=20260612c">
+  <link rel="stylesheet" href="daily.css?v=20260619a">
 </head>
 <body class="daily-page">
   <main class="daily-shell">
     <section class="daily-card">
-      <p class="eyebrow">Shared Daily Run</p>
-      <h1>52! Daily</h1>
-      <p class="lead">One seeded run each day: same deck, powers, and cheat offers for everyone.</p>
+      <header class="daily-hero">
+        <div>
+          <p class="eyebrow">Shared Daily Run</p>
+          <h1>52! Daily</h1>
+        </div>
+        <p class="lead">Same seed, powers, and cheat offers for everyone.</p>
+      </header>
 
       <section class="daily-summary">
         <div class="summary-block">
@@ -30,7 +34,21 @@
             <button id="daily-nav-next" class="daily-nav-btn daily-nav-next" type="button" aria-label="Next daily">»</button>
           </div>
         </div>
-</section>
+      </section>
+
+      <section class="daily-variant-panel" aria-label="Daily run type">
+        <div class="daily-variant-toggle" role="tablist" aria-label="Daily leaderboard type">
+          <button id="daily-variant-normal" class="daily-variant-btn active" type="button" data-variant="normal" role="tab" aria-selected="true">
+            <span>Normal</span>
+            <small>Classic Daily</small>
+          </button>
+          <button id="daily-variant-hard" class="daily-variant-btn" type="button" data-variant="hard" role="tab" aria-selected="false">
+            <span>Hard</span>
+            <small>No tear hints</small>
+          </button>
+        </div>
+        <p id="daily-variant-note" class="daily-status daily-variant-note"></p>
+      </section>
 
       <section class="daily-player">
         <label class="field-label" for="daily-name-input">Player Name</label>
@@ -85,8 +103,8 @@
   <script src="js/fullscreen.js?v=20260425b"></script>
   <script src="js/constants.js?v=20260512z"></script>
   <script src="js/leaderboard.js?v=20260612b"></script>
-  <script src="js/daily.js?v=20260605b"></script>
-  <script src="js/daily-page.js?v=20260612c"></script>
+  <script src="js/daily.js?v=20260619a"></script>
+  <script src="js/daily-page.js?v=20260619a"></script>
   <script src="js/pwa-update.js?v=20260522p"></script>
 </body>
 </html>

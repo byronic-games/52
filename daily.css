@@ -51,8 +51,8 @@ body::before {
 
 .daily-card {
   width: min(900px, 100%);
-  padding: clamp(12px, 2.4vw, 22px);
-  border-radius: 26px;
+  padding: clamp(10px, 2vw, 18px);
+  border-radius: 18px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 16%),
     var(--surface);
@@ -62,8 +62,15 @@ body::before {
     inset 0 0 0 1px rgba(255, 255, 255, 0.03);
   display: flex;
   flex-direction: column;
-  gap: clamp(8px, 1.5vw, 12px);
+  gap: clamp(7px, 1.3vw, 10px);
   position: relative;
+}
+
+.daily-hero {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(16ch, 1fr);
+  align-items: end;
+  gap: 12px;
 }
 
 .eyebrow,
@@ -84,10 +91,10 @@ th {
 
 h1 {
   margin: 0;
-  font-size: clamp(2.05rem, 5.4vw, 3.55rem);
+  font-size: clamp(1.8rem, 4.4vw, 3rem);
   line-height: 0.92;
   color: var(--pink);
-  letter-spacing: -0.05em;
+  letter-spacing: 0;
 }
 
 .lead {
@@ -96,6 +103,72 @@ h1 {
   font-size: clamp(0.86rem, 2.4vw, 1rem);
   line-height: 1.22;
   max-width: 46ch;
+}
+
+.daily-variant-panel {
+  display: grid;
+  gap: 6px;
+}
+
+.daily-variant-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 5px;
+  border-radius: 14px;
+  background: rgba(8, 5, 13, 0.66);
+  box-shadow: inset 0 0 0 1px var(--panel-line);
+}
+
+.daily-variant-btn {
+  min-width: 0;
+  min-height: 48px;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--muted);
+  font-family: "Space Grotesk", "Segoe UI", Tahoma, sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+
+.daily-variant-btn span,
+.daily-variant-btn small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.daily-variant-btn span {
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+.daily-variant-btn small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.daily-variant-btn.active {
+  border-color: rgba(51, 220, 255, 0.36);
+  background: linear-gradient(180deg, rgba(51, 220, 255, 0.18), rgba(51, 220, 255, 0.06));
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+}
+
+.daily-variant-btn.locked {
+  opacity: 0.48;
+}
+
+.daily-variant-note {
+  padding: 0 4px;
 }
 
 .daily-summary,
@@ -114,7 +187,7 @@ h1 {
 .daily-result,
 .daily-board {
   border-radius: 16px;
-  padding: clamp(10px, 2.2vw, 14px) clamp(12px, 2.5vw, 16px);
+  padding: clamp(8px, 1.8vw, 12px) clamp(10px, 2vw, 14px);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 18%),
     var(--surface-strong);
@@ -255,7 +328,7 @@ h1 {
 
 .daily-player {
   display: grid;
-  gap: 6px;
+  gap: 5px;
 }
 
 #daily-name-input {
@@ -277,7 +350,7 @@ h1 {
 }
 
 .daily-board-status {
-  margin: 0 0 8px;
+  margin: 0 0 6px;
 }
 
 .daily-result.hidden {
@@ -335,7 +408,7 @@ table {
 
 th,
 td {
-  padding: 12px 14px;
+  padding: 9px 12px;
   text-align: left;
 }
 
@@ -533,9 +606,15 @@ td.score {
   }
 
   .daily-card {
-    padding: 12px 12px;
-    border-radius: 20px;
-    gap: 8px;
+    padding: 10px;
+    border-radius: 16px;
+    gap: 7px;
+  }
+
+  .daily-hero {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 4px;
   }
 
   .daily-summary {
@@ -557,11 +636,11 @@ td.score {
   }
 
   h1 {
-    font-size: clamp(2rem, 11vw, 3.2rem);
+    font-size: clamp(1.9rem, 9vw, 2.8rem);
   }
 
   .lead {
-    font-size: 0.86rem;
+    font-size: 0.78rem;
     line-height: 1.16;
   }
 
@@ -570,7 +649,28 @@ td.score {
   .daily-result,
   .daily-board {
     border-radius: 14px;
-    padding: 10px;
+    padding: 9px;
+  }
+
+  .daily-variant-toggle {
+    gap: 5px;
+    padding: 4px;
+    border-radius: 12px;
+  }
+
+  .daily-variant-btn {
+    min-height: 42px;
+    padding: 6px 8px;
+    border-radius: 9px;
+  }
+
+  .daily-variant-btn span {
+    font-size: 0.82rem;
+  }
+
+  .daily-variant-btn small {
+    font-size: 0.54rem;
+    letter-spacing: 0.08em;
   }
 
   .daily-nav-wrapper .summary-value {
@@ -608,7 +708,7 @@ td.score {
   td {
     display: table-cell;
     border: 0;
-    padding: 10px 8px;
+    padding: 8px 7px;
     vertical-align: middle;
   }
 

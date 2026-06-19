@@ -1111,7 +1111,8 @@ const CHEATS = [
     included: true,
     unlockAt: 18,
     stacking: "unique",
-    consumeOnUse: true,
+    consumeOnUse: false,
+    shouldConsumeResult: (result) => typeof result === "string" && result.startsWith("6/7 armed"),
     use: () => {
       if (!state.current) return "No current card.";
       if ((state.cheatUsesOnCurrentCard || 0) > 0) {

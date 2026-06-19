@@ -82,13 +82,20 @@ function applyDebugActionsFromUrl() {
 function initializeDailyModeFromUrl() {
   const requestedDailyDate = getRequestedDailyDateKeyFromUrl();
   if (!requestedDailyDate) return;
+  const requestedDailyVariant = typeof getRequestedDailyVariantFromUrl === "function"
+    ? getRequestedDailyVariantFromUrl()
+    : "normal";
 
-  if (hasPlayedDaily(requestedDailyDate)) {
-    window.location.replace(`daily.html?date=${encodeURIComponent(requestedDailyDate)}`);
+  if (hasPlayedDaily(requestedDailyDate, requestedDailyVariant)) {
+    const params = new URLSearchParams({ date: requestedDailyDate });
+    if (requestedDailyVariant !== "normal") {
+      params.set("variant", requestedDailyVariant);
+    }
+    window.location.replace(`daily.html?${params.toString()}`);
     return;
   }
 
-  openDailyPowerChoice(requestedDailyDate);
+  openDailyPowerChoice(requestedDailyDate, requestedDailyVariant);
 }
 
 function applyDeckLevelSelectionFromUrl() {
