@@ -1120,15 +1120,163 @@ function cleanPlayerLogMessage(message = "") {
     .trim();
 }
 
+const SHORT_EFFECT_LABELS = Object.freeze({
+  "Two Truths and One Lie": "TTOL",
+  "Power Parity": "Parity",
+  "Emergency Services": "999",
+  "Higher of Next Two": "High 2",
+  "Lower of Next Two": "Low 2",
+  "Next Card Parity": "Parity",
+  "Lucky Dip": "Dip",
+  "Split the Difference": "Gap",
+  "False Shuffle": "False Shuffle",
+  "The River": "River",
+  "Ladies Night": "Queens",
+  "Blackjack": "Blackjack",
+  "Roll the Dice": "Dice",
+  "Club Sandwich": "Club",
+  "Diamond Geezer": "Diamond",
+  "Red Herring": "Herring",
+  "Grave Digger": "Grave",
+  "Royal Flush": "Royal",
+  "Sixth Sense": "6?",
+  "New Suits": "New Suits",
+  "All In": "All In",
+  "Lucky 13": "Lucky 13",
+  "Suits You, Sir": "Suits",
+  "Refund": "Refund",
+  "Equals 11": "=11",
+  "WL": "WL",
+  "Higher, Higher, Higher": "HHH",
+  "Catch-22": "Catch-22",
+  "Psycho": "Psycho",
+  "Brucie Bonus": "Brucie",
+  "You Can Cheat A Cheater": "Cheater",
+});
+
+function truncateMessage(text, maxLength = 36) {
+  const cleaned = cleanPlayerLogMessage(text);
+  if (cleaned.length <= maxLength) return cleaned;
+  return `${cleaned.slice(0, Math.max(0, maxLength - 3)).trim()}...`;
+}
+
+function escapeRegExp(text = "") {
+  return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function getShortEffectLabel(effectName = "") {
+  const name = cleanPlayerLogMessage(effectName);
+  if (!name) return "";
+  if (SHORT_EFFECT_LABELS[name]) return SHORT_EFFECT_LABELS[name];
+  const words = name.split(/\s+/).filter(Boolean);
+  if (words.length <= 2) return truncateMessage(name, 14);
+  return words
+    .filter((word) => !/^(the|and|of|a|an|to|in|for)$/i.test(word))
+    .slice(0, 3)
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase() || truncateMessage(name, 14);
+}
+
+function getKnownEffectNames() {
+  const names = new Set(Object.keys(SHORT_EFFECT_LABELS));
+  if (typeof CHEATS !== "undefined" && Array.isArray(CHEATS)) {
+    CHEATS.forEach((cheat) => {
+      if (cheat?.name) names.add(cleanPlayerLogMessage(cheat.name));
+    });
+  }
+  if (typeof POWERS !== "undefined" && Array.isArray(POWERS)) {
+    POWERS.forEach((power) => {
+      if (power?.name) names.add(cleanPlayerLogMessage(power.name));
+    });
+  }
+  return Array.from(names).filter(Boolean).sort((a, b) => b.length - a.length);
+}
+
+function stripRepeatedEffectName(effectName, payload) {
+  const name = cleanPlayerLogMessage(effectName);
+  let text = cleanPlayerLogMessage(payload).replace(/\.$/, "");
+  if (!name || !text) return text;
+  return text.replace(new RegExp(`^${escapeRegExp(name)}\\s*[:\\-]\\s*`, "i"), "");
+}
+
+function shortenEffectPayload(effectName, payload) {
+  const name = cleanPlayerLogMessage(effectName);
+  let text = stripRepeatedEffectName(name, payload)
+    .replace(/^the next face-down card is\s+/i, "next is ")
+    .replace(/^the next card is\s+/i, "next is ")
+    .replace(/^the next three face-down cards are now\s+/i, "next 3 ")
+    .replace(/\bface-down\b/gi, "deck")
+    .replace(/\bNudge \+1\b/g, "+")
+    .replace(/\bNudge -1\b/g, "-")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!text) return getShortEffectLabel(name);
+  if (/^yes\b/i.test(text)) return `${getShortEffectLabel(name)}: YES`;
+  if (/^no\b/i.test(text)) return `${getShortEffectLabel(name)}: NO`;
+
+  if (name === "Lucky Dip") return `Dip: ${truncateMessage(text, 30)}`;
+  if (name === "Power Parity") return `Parity: ${truncateMessage(text, 26)}`;
+  if (name === "The River") return `River: ${truncateMessage(text, 28)}`;
+  if (name === "Red Herring") return `Herring: ${truncateMessage(text, 27)}`;
+  if (name === "Club Sandwich") return `Club: ${truncateMessage(text.replace(/^next Club is\s+/i, ""), 10)}`;
+  if (name === "Split the Difference") {
+    const gapMatch = text.match(/gap\s+is\s+(\d+)/i);
+    if (gapMatch) return `Gap: ${gapMatch[1]}`;
+  }
+  if (name === "Roll the Dice") {
+    const rollMatch = text.match(/rolled\s+(\d+)/i);
+    if (rollMatch) return `Dice: +${rollMatch[1]}/-${rollMatch[1]}`;
+  }
+  if (name === "Ladies Night") {
+    const countMatch = text.match(/^(\d+)/);
+    if (countMatch) return `Queens: ${countMatch[1]} pulled`;
+  }
+  if (name === "Grave Digger") {
+    const cardMatch = text.match(/:\s*([^:]+)$/);
+    if (cardMatch) return `Grave: ${truncateMessage(cardMatch[1], 16)}`;
+  }
+  if (/hit/i.test(text) && /power/i.test(text)) return `${getShortEffectLabel(name)}: Power`;
+  if (/hit/i.test(text) && /2 .*cheats?/i.test(text)) return `${getShortEffectLabel(name)}: 2 Cheats`;
+  if (/complete/i.test(text) && /power/i.test(text)) return `${getShortEffectLabel(name)}: Power`;
+  if (/complete/i.test(text) && /cheats?/i.test(text)) {
+    const countMatch = text.match(/choose\s+(\d+)/i);
+    return countMatch ? `${getShortEffectLabel(name)}: ${countMatch[1]} Cheats` : `${getShortEffectLabel(name)}: Cheats`;
+  }
+  if (/paid out|paid/i.test(text)) return `${getShortEffectLabel(name)} paid`;
+  if (/failed/i.test(text)) return `${getShortEffectLabel(name)} failed`;
+  if (/armed/i.test(text)) return `${getShortEffectLabel(name)} armed`;
+  if (/can only|needs|not enough|no .*card|found no/i.test(text)) return truncateMessage(text, 34);
+
+  return truncateMessage(`${getShortEffectLabel(name)}: ${text}`, 36);
+}
+
+function getEffectMessageParts(cleaned = "") {
+  const text = cleanPlayerLogMessage(cleaned);
+  for (const name of getKnownEffectNames()) {
+    const colonMatch = text.match(new RegExp(`^${escapeRegExp(name)}\\s*:\\s*(.+)$`, "i"));
+    if (colonMatch) return { name, payload: colonMatch[1] };
+
+    const sentenceMatch = text.match(new RegExp(`^(${escapeRegExp(name)}\\b.+)$`, "i"));
+    if (sentenceMatch && /armed|can only|needs|found|swapped|rolled|pulled|complete|paid|failed|hit/i.test(sentenceMatch[1])) {
+      return { name, payload: sentenceMatch[1] };
+    }
+  }
+  return null;
+}
+
 function getShortPlayerMessage(message = "") {
   const cleaned = cleanPlayerLogMessage(message);
   if (!cleaned) return "";
   const playedMatch = cleaned.match(/^Played\s+([^:]+):/i);
   if (playedMatch) {
     const resultText = cleaned.slice(playedMatch[0].length).trim();
-    const shortResult = getShortPlayerMessage(resultText);
-    return shortResult || `Played ${playedMatch[1].trim()}`.slice(0, 24);
+    const shortResult = shortenEffectPayload(playedMatch[1].trim(), resultText) || getShortPlayerMessage(resultText);
+    return shortResult || truncateMessage(`Played ${playedMatch[1].trim()}`, 32);
   }
+  const effectParts = getEffectMessageParts(cleaned);
+  if (effectParts) return shortenEffectPayload(effectParts.name, effectParts.payload);
   const matchingMatch = cleaned.match(/^(\d+)\s+matching\s+cards?\s+remain/i);
   if (matchingMatch) return `${matchingMatch[1]} matches left`;
   if (/^Royal Flush:\s*yes/i.test(cleaned)) return "RF: Yes";
@@ -1180,7 +1328,7 @@ function getShortPlayerMessage(message = "") {
   if (/choose/i.test(cleaned) && /power/i.test(cleaned)) return "Choose a Power";
   if (/nudge/i.test(cleaned)) return cleaned.length > 38 ? "Nudge used" : cleaned;
   if (/Run started/i.test(cleaned)) return "Run started";
-  return cleaned.length > 24 ? `${cleaned.slice(0, 21).trim()}...` : cleaned;
+  return truncateMessage(cleaned, 34);
 }
 
 function addPlayerLogEntry(message = "", options = {}) {
