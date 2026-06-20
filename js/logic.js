@@ -1332,6 +1332,15 @@ function startRunWithPower(powerId) {
     suitsYouSirSuit: "",
     newSuitsRemaining: 0,
     newSuitsSeen: {},
+    nineDartRemaining: 0,
+    nineDartAutoCorrect: false,
+    konamiPatternRemaining: [],
+    konamiAutoCorrectRemaining: 0,
+    findLadyArmed: false,
+    saveScumArmed: false,
+    saveScumPendingContinue: false,
+    cryogenRemaining: 0,
+    cryogenFrozenEnergy: 0,
     lockySevensActive: false,
     oddOneOutArmed: false,
     cursedShieldArmed: false,
@@ -2008,6 +2017,83 @@ function resolveAllInOnReveal(guessWasCorrect) {
   return ` All In paid out: +${upReward} Nudge Up and +${downReward} Nudge Down.`;
 }
 
+function clearNineDartFinish() {
+  state.nineDartRemaining = 0;
+  state.nineDartAutoCorrect = false;
+}
+
+function resolveNineDartOnReveal(guessWasNaturallyCorrect) {
+  const remainingBefore = Math.max(0, Number(state.nineDartRemaining) || 0);
+  if (remainingBefore <= 0) return "";
+  if (!guessWasNaturallyCorrect) {
+    clearNineDartFinish();
+    return " 9 Dart Finish failed.";
+  }
+
+  state.nineDartRemaining = Math.max(0, remainingBefore - 1);
+  if (state.nineDartRemaining > 0) {
+    return ` 9 Dart Finish: ${state.nineDartRemaining} correct ${state.nineDartRemaining === 1 ? "guess" : "guesses"} left.`;
+  }
+
+  state.nineDartAutoCorrect = true;
+  return " 9 Dart Finish complete: the rest of the deck is safe.";
+}
+
+function resolveKonamiOnReveal(guessType) {
+  const pattern = Array.isArray(state.konamiPatternRemaining)
+    ? [...state.konamiPatternRemaining]
+    : [];
+  if (pattern.length <= 0) return "";
+  const expected = pattern[0];
+  if (guessType !== expected) {
+    state.konamiPatternRemaining = [];
+    return " Konami Code failed.";
+  }
+
+  pattern.shift();
+  state.konamiPatternRemaining = pattern;
+  if (pattern.length > 0) {
+    return ` Konami Code: ${pattern.length} input${pattern.length === 1 ? "" : "s"} left.`;
+  }
+
+  state.konamiAutoCorrectRemaining = 4;
+  return " Konami Code complete: next 4 guesses are safe.";
+}
+
+function resolveKonamiAutoCorrectOnReveal(wasActive) {
+  if (!wasActive) return "";
+  state.konamiAutoCorrectRemaining = Math.max(0, (Number(state.konamiAutoCorrectRemaining) || 0) - 1);
+  return ` Konami safety used: ${state.konamiAutoCorrectRemaining} left.`;
+}
+
+function resolveCryogenAfterReveal() {
+  const remainingBefore = Math.max(0, Number(state.cryogenRemaining) || 0);
+  if (remainingBefore <= 0) return "";
+  const frozenEnergy = Math.max(0, Number(state.cryogenFrozenEnergy) || 0);
+  state.energy = frozenEnergy;
+  state.cryogenRemaining = Math.max(0, remainingBefore - 1);
+  if (state.cryogenRemaining > 0) {
+    return ` Cryogen: Energy frozen at ${frozenEnergy} for ${state.cryogenRemaining} more turn${state.cryogenRemaining === 1 ? "" : "s"}.`;
+  }
+  state.cryogenFrozenEnergy = 0;
+  return ` Cryogen thawed: Energy held at ${frozenEnergy}.`;
+}
+
+function continueSaveScumRun() {
+  if (!state.saveScumPendingContinue) return false;
+  state.gameOver = false;
+  state.saveScumPendingContinue = false;
+  state.saveScumArmed = false;
+  state.pendingRevealAnimation = null;
+  state.gameOverDisplayCards = null;
+  state.gameOverMessageReady = false;
+  state.gameOverMessageJustReleased = false;
+  state.restartConfirmArmed = false;
+  state.message = "Save Scum continued the run.";
+  render();
+  return true;
+}
+
 function isEnergyDeckRun() {
   return isEnergyDeckKey(state.currentDeckKey || state.selectedDeckKey || "blue");
 }
@@ -2076,6 +2162,7 @@ function canUseNudge(direction) {
     state.pendingCheatOptions.length > 0 ||
     state.pendingPowerOptions.length > 0 ||
     (state.psychoRemaining || 0) > 0 ||
+    (state.nineDartRemaining || 0) > 0 ||
     !!state.sixSevenArmed ||
     !!state.fiveAliveNudgeLocked ||
     !!state.pauseForCheat;
@@ -2111,12 +2198,18 @@ function useNudgeCharge(direction) {
     render();
     return;
   }
+  if ((state.nineDartRemaining || 0) > 0) {
+    state.message = `9 Dart Finish is active - no Cheats or Nudges for ${state.nineDartRemaining} more card${state.nineDartRemaining === 1 ? "" : "s"}.`;
+    render();
+    return;
+  }
   if (
     state.gameOver ||
     !state.current ||
     state.pendingCheatOptions.length > 0 ||
     state.pendingPowerOptions.length > 0 ||
     (state.psychoRemaining || 0) > 0 ||
+    (state.nineDartRemaining || 0) > 0 ||
     (!blankSpaceActive && !!state.lockCurrentCardForForcedGuess) ||
     !!state.pauseForCheat
   ) {
@@ -2208,7 +2301,7 @@ function useNudgeCharge(direction) {
     recordCurrentCardNudge(state.current, direction);
     setCurrentCardNudgeAnimation(direction, currentValue, targetValue);
   }
-  if (!blankSpaceActive && isGreenDeckRun()) {
+  if (!blankSpaceActive && isGreenDeckRun() && (state.cryogenRemaining || 0) <= 0) {
     state.energy = Math.max(0, (state.energy || 0) - 1);
   }
   const effective = blankSpaceActive ? getUpcomingCheatValue(1) : getCurrentEffectiveValue();
@@ -2218,6 +2311,9 @@ function useNudgeCharge(direction) {
   state.message = blankSpaceActive
     ? `Blank Space adjusted. Next card is now treated as ${valueToRank(effective)}.`
     : isGreenDeckRun()
+      && (state.cryogenRemaining || 0) > 0
+        ? `${label} used. Current card treated as ${valueToRank(effective)}. Energy frozen at ${state.energy || 0}.`
+        : isGreenDeckRun()
       ? `${label} used. Current card treated as ${valueToRank(effective)}. Energy left: ${state.energy || 0}.`
       : `${label} used. Current card treated as ${valueToRank(effective)}.`;
   appendRunDebugLog("nudge_used", {
@@ -2480,6 +2576,15 @@ function clearArmedPowerEffects() {
   state.suitsYouSirSuit = "";
   state.newSuitsRemaining = 0;
   state.newSuitsSeen = {};
+  state.nineDartRemaining = 0;
+  state.nineDartAutoCorrect = false;
+  state.konamiPatternRemaining = [];
+  state.konamiAutoCorrectRemaining = 0;
+  state.findLadyArmed = false;
+  state.saveScumArmed = false;
+  state.saveScumPendingContinue = false;
+  state.cryogenRemaining = 0;
+  state.cryogenFrozenEnergy = 0;
   state.lockySevensActive = false;
   state.oddOneOutArmed = false;
   state.cursedShieldArmed = false;
@@ -2748,6 +2853,7 @@ function makeGuessLegacy(type) {
   const catch22WasArmed = !!state.catch22Armed;
   const blackjackWasArmed = !!state.blackjackArmed;
   const diamondGeezerWasArmed = !!state.diamondGeezerArmed;
+  const findLadyWasArmed = !!state.findLadyArmed;
   const godSaveKingWasArmed = !!state.godSaveKingArmed;
   const lucky13WasArmed = !!state.lucky13Armed;
   const alwaysBetBlackWasArmed = !!state.alwaysBetBlackArmed;
@@ -2780,6 +2886,7 @@ function makeGuessLegacy(type) {
   state.catch22Armed = false;
   state.blackjackArmed = false;
   state.diamondGeezerArmed = false;
+  state.findLadyArmed = false;
   state.godSaveKingArmed = false;
   state.lucky13Armed = false;
   state.alwaysBetBlackArmed = false;
@@ -3468,6 +3575,11 @@ function makeGuess(type) {
   let next = peekNext();
   if (!next) return;
   const currentIsJoker = isJokerCard(state.current);
+  const nineDartAutoCorrectWasActive = !!state.nineDartAutoCorrect;
+  const konamiAutoCorrectWasActive = (Number(state.konamiAutoCorrectRemaining) || 0) > 0;
+  const saveScumText = state.saveScumArmed
+    ? " Save Scum is ready: tap Continue to carry on."
+    : "";
 
   if (state.forcedNextGuess && type !== state.forcedNextGuess && !isJokerCard(next) && !currentIsJoker) {
     state.message = getForcedGuessMessage(state.forcedNextGuess);
@@ -3509,6 +3621,7 @@ function makeGuess(type) {
     state.equals11Armed = false;
     state.blackjackArmed = false;
     state.diamondGeezerArmed = false;
+    state.findLadyArmed = false;
     advanceToCard(next);
     state.currentValueModifier = 0;
     if (typeof recordDiscoveredJokers === "function") {
@@ -3516,6 +3629,10 @@ function makeGuess(type) {
     }
     const jokerMessage = applyYellowJokerEffect(next);
     const jokerTriggeredCheatAward = advanceCheatRewardStreak();
+    const nineDartText = resolveNineDartOnReveal(true);
+    const konamiText = resolveKonamiOnReveal(type);
+    const konamiAutoText = resolveKonamiAutoCorrectOnReveal(konamiAutoCorrectWasActive);
+    const cryogenText = resolveCryogenAfterReveal();
     state.lastJokerMessage = jokerMessage;
     queueCardRevealAnimation({
       outcome: "correct",
@@ -3557,7 +3674,7 @@ function makeGuess(type) {
           recordDailyClearProgress();
         }
       }
-      state.message = `Yellow Joker: ${jokerMessage} YOU CLEARED THE DECK!`;
+      state.message = `Yellow Joker: ${jokerMessage}${nineDartText}${konamiText}${konamiAutoText}${cryogenText} YOU CLEARED THE DECK!`;
       state.gameOver = true;
       render();
       triggerVictoryEffect();
@@ -3574,7 +3691,7 @@ function makeGuess(type) {
 
     if (jokerTriggeredCheatAward) {
       state.pauseForCheat = true;
-      state.message = `Yellow Joker: ${jokerMessage} Cheat ready.`;
+      state.message = `Yellow Joker: ${jokerMessage}${nineDartText}${konamiText}${konamiAutoText}${cryogenText} Cheat ready.`;
       updateBestScoreIfNeeded();
       render();
       setTimeout(() => {
@@ -3585,7 +3702,7 @@ function makeGuess(type) {
       return;
     }
 
-    state.message = `Yellow Joker: ${jokerMessage}`;
+    state.message = `Yellow Joker: ${jokerMessage}${nineDartText}${konamiText}${konamiAutoText}${cryogenText}`;
     updateBestScoreIfNeeded();
     render();
     return;
@@ -3601,6 +3718,7 @@ function makeGuess(type) {
   const catch22WasArmed = !!state.catch22Armed;
   const blackjackWasArmed = !!state.blackjackArmed;
   const diamondGeezerWasArmed = !!state.diamondGeezerArmed;
+  const findLadyWasArmed = !!state.findLadyArmed;
   const godSaveKingWasArmed = !!state.godSaveKingArmed;
   const lucky13WasArmed = !!state.lucky13Armed;
   const alwaysBetBlackWasArmed = !!state.alwaysBetBlackArmed;
@@ -3632,6 +3750,7 @@ function makeGuess(type) {
   state.catch22Armed = false;
   state.blackjackArmed = false;
   state.diamondGeezerArmed = false;
+  state.findLadyArmed = false;
   state.godSaveKingArmed = false;
   state.lucky13Armed = false;
   state.alwaysBetBlackArmed = false;
@@ -3734,9 +3853,16 @@ function makeGuess(type) {
         message: lossMessage,
       });
       if (state.pendingRevealAnimation) {
-        state.pendingRevealAnimation.gameOverDetail = lossMessage;
+        state.pendingRevealAnimation.gameOverDetail = state.saveScumArmed
+          ? `${lossMessage} Save Scum is ready: tap Continue to carry on.`
+          : lossMessage;
       }
       state.message = `💀 ${lossMessage}`;
+      if (state.saveScumArmed) {
+        state.message = `${state.message} Save Scum is ready: tap Continue to carry on.`;
+        state.saveScumArmed = false;
+        state.saveScumPendingContinue = true;
+      }
       state.gameOver = true;
       updateBestScoreIfNeeded();
       render();
@@ -3762,6 +3888,11 @@ function makeGuess(type) {
   }
 
   if (jokerAutoCorrect) {
+    cheatSpecial = true;
+    correct = true;
+  }
+
+  if (nineDartAutoCorrectWasActive || konamiAutoCorrectWasActive) {
     cheatSpecial = true;
     correct = true;
   }
@@ -3835,15 +3966,21 @@ function makeGuess(type) {
     }
   }
 
-  const allInGuessWasCorrect = comparisonCorrect || match || aceAutoWin || jokerAutoCorrect;
+  const naturallyCorrectGuess = comparisonCorrect || match || aceAutoWin || jokerAutoCorrect;
+  const allInGuessWasCorrect = naturallyCorrectGuess;
 
   const lucky13Text = resolveLucky13OnReveal(lucky13WasArmed, next);
   const refundResult = correct ? getRefundNudgeResult(refundWasArmed, type, nextComparisonValue) : null;
   const suitsYouSirText = resolveSuitsYouSirOnReveal(suitsYouSirWasArmed, suitsYouSirSuit, next);
   const newSuitsResult = resolveNewSuitsOnReveal(next);
+  const nineDartText = resolveNineDartOnReveal(naturallyCorrectGuess);
+  const konamiText = resolveKonamiOnReveal(type);
+  const konamiAutoText = resolveKonamiAutoCorrectOnReveal(konamiAutoCorrectWasActive);
+  const cryogenText = resolveCryogenAfterReveal();
   const refundNudgeText = applyRefundNudgeResult(refundResult);
   const revealBonusText = `${suitsYouSirText}${lucky13Text}${refundNudgeText}`;
   const refundText = `${revealBonusText}${newSuitsResult.text}`;
+  const timedEffectText = `${nineDartText}${konamiText}${konamiAutoText}${cryogenText}`;
   const allInText = resolveAllInOnReveal(allInGuessWasCorrect);
 
   if (!correct) {
@@ -3874,7 +4011,7 @@ function makeGuess(type) {
         cheatSpecial,
       })),
       triggerGameOver: true,
-      gameOverDetail: `${gameOverMessage}${allInText}`,
+      gameOverDetail: `${gameOverMessage}${allInText}${timedEffectText}${saveScumText}`,
       clearSuitedAndBootedOnFinalize: suitedAndBootedWasArmed,
     });
 
@@ -3915,11 +4052,17 @@ function makeGuess(type) {
       message: lossDetail,
     });
 
-    state.message = `${gameOverMessage}${allInText}`;
+    state.message = `${gameOverMessage}${allInText}${timedEffectText}${saveScumText}`;
+    if (state.saveScumArmed) {
+      state.saveScumArmed = false;
+      state.saveScumPendingContinue = true;
+    }
     state.gameOver = true;
     updateBestScoreIfNeeded();
     render();
-    handleRunFinished(state.correctAnswers);
+    if (!state.saveScumPendingContinue) {
+      handleRunFinished(state.correctAnswers);
+    }
     return;
   }
 
@@ -3969,6 +4112,9 @@ function makeGuess(type) {
     diamondGeezerHit = true;
     queueCheatAward("diamond_geezer");
     queueCheatAward("diamond_geezer");
+  }
+  if (findLadyWasArmed && next.rank === "Q") {
+    queuePowerAward("find_the_lady");
   }
   if (higherHigherHigherRemainingBeforeGuess > 0) {
     if (type === "higher") {
@@ -4054,7 +4200,7 @@ function makeGuess(type) {
         recordDailyClearProgress();
       }
     }
-    state.message = appendEnergyFeedback(` YOU CLEARED THE DECK!${refundText}${allInText}`, revealDistance);
+    state.message = appendEnergyFeedback(` YOU CLEARED THE DECK!${refundText}${allInText}${timedEffectText}`, revealDistance);
     state.gameOver = true;
     render();
     triggerVictoryEffect();
@@ -4373,7 +4519,7 @@ function makeGuess(type) {
   const killerQueenText = rescuedByKillerQueen
     ? ` Killer Queen saved this guess. ${state.killerQueenLives || 0} ${state.killerQueenLives === 1 ? "save" : "saves"} left.`
     : "";
-  const rescueBonusText = `${rescuedByCursedShield ? " Cursed Shield saved this guess." : ""}${rescuedByRedDeadRedemption ? " Red? Dead? Redemption saved this guess." : ""}${rescuedBySuitedAndBooted ? " Suited and Booted saved this guess." : ""}${rescuedByMarginForError ? " Margin For Error saved this guess." : ""}${rescuedByHotOrCold ? " Margin Of Error saved this guess." : ""}${rescuedByStitchInTime ? " A Stitch In Time saved this guess." : ""}${oneLifeLeftText}${killerQueenText}${forcedRewardText}${wlAdvanceText}${equals11MissText}${higherHigherHigherText}${refundText}${bingoAwardText}`;
+  const rescueBonusText = `${rescuedByCursedShield ? " Cursed Shield saved this guess." : ""}${rescuedByRedDeadRedemption ? " Red? Dead? Redemption saved this guess." : ""}${rescuedBySuitedAndBooted ? " Suited and Booted saved this guess." : ""}${rescuedByMarginForError ? " Margin For Error saved this guess." : ""}${rescuedByHotOrCold ? " Margin Of Error saved this guess." : ""}${rescuedByStitchInTime ? " A Stitch In Time saved this guess." : ""}${oneLifeLeftText}${killerQueenText}${forcedRewardText}${wlAdvanceText}${equals11MissText}${higherHigherHigherText}${refundText}${bingoAwardText}${timedEffectText}`;
 
   if (state.streak >= getCheatRewardThreshold()) {
     state.streak = 0;

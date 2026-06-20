@@ -697,6 +697,7 @@ function scheduleExperienceBankingAfterGameOver() {
   if (state.experienceBanking) return;
   clearExperienceBankingTimers();
   if (state.experienceAwardedForRun || !state.gameOver) return;
+  if (state.saveScumPendingContinue) return;
   if (typeof loadExperienceDisplayEnabled === "function" && !loadExperienceDisplayEnabled()) {
     awardExperienceForCurrentRun({ animate: false, pulse: false });
     return;
@@ -1617,6 +1618,22 @@ function getActiveEffectsTooltipPayload() {
       : 0;
     waiting.push(`New Suits: ${seen}/4 suits found, ${state.newSuitsRemaining} reveal${state.newSuitsRemaining === 1 ? "" : "s"} left.`);
   }
+  if ((state.nineDartRemaining || 0) > 0) {
+    waiting.push(`9 Dart Finish: ${state.nineDartRemaining} no-Cheat, no-Nudge card${state.nineDartRemaining === 1 ? "" : "s"} left.`);
+  }
+  if (state.nineDartAutoCorrect) waiting.push("9 Dart Finish: every remaining guess is safe.");
+  if (Array.isArray(state.konamiPatternRemaining) && state.konamiPatternRemaining.length > 0) {
+    const pattern = state.konamiPatternRemaining.map((guess) => guess === "higher" ? "Up" : "Down").join(", ");
+    waiting.push(`Konami Code: ${pattern} left.`);
+  }
+  if ((state.konamiAutoCorrectRemaining || 0) > 0) {
+    waiting.push(`Konami Code: ${state.konamiAutoCorrectRemaining} safe guess${state.konamiAutoCorrectRemaining === 1 ? "" : "es"} left.`);
+  }
+  if (state.findLadyArmed) waiting.push("Find The Lady: Queen reveal gives a Power pick.");
+  if (state.saveScumArmed) waiting.push("Save Scum: next Game Over becomes Continue.");
+  if ((state.cryogenRemaining || 0) > 0) {
+    waiting.push(`Cryogen: Energy frozen at ${state.cryogenFrozenEnergy || state.energy || 0} for ${state.cryogenRemaining} turn${state.cryogenRemaining === 1 ? "" : "s"}.`);
+  }
   if (state.oddOneOutArmed) waiting.push("Odd One Out: next odd card loses, otherwise survives.");
   const cursedShieldCharges = Math.max(0, Number(state.cursedShieldCharges) || 0);
   if (cursedShieldCharges > 0 || state.cursedShieldArmed) {
@@ -1862,6 +1879,11 @@ function renderRestartButton() {
     state.gameOver &&
     typeof getRunScoreFromCorrectAnswers === "function" &&
     getRunScoreFromCorrectAnswers(state.correctAnswers) >= 52;
+  if (state.gameOver && state.saveScumPendingContinue) {
+    btn.innerText = "Continue";
+    btn.disabled = false;
+    return;
+  }
   if (state.runMode === "daily" && state.gameOver) {
     const variantLabel = typeof getDailyVariantConfig === "function"
       ? getDailyVariantConfig(state.dailyVariant).label || "Daily"
@@ -2282,6 +2304,7 @@ function renderNudgeControls() {
     state.pendingCheatOptions.length > 0 ||
     state.pendingPowerOptions.length > 0 ||
     (state.psychoRemaining || 0) > 0 ||
+    (state.nineDartRemaining || 0) > 0 ||
     !!state.pauseForCheat;
 
   const revealLocked = !!state.pendingRevealAnimation;
@@ -3101,6 +3124,11 @@ function renderCheats() {
       }
       if ((state.psychoRemaining || 0) > 0) {
         state.message = `Psycho is active - no Cheats or Nudges for ${state.psychoRemaining} more turn${state.psychoRemaining === 1 ? "" : "s"}.`;
+        render();
+        return;
+      }
+      if ((state.nineDartRemaining || 0) > 0) {
+        state.message = `9 Dart Finish is active - no Cheats or Nudges for ${state.nineDartRemaining} more card${state.nineDartRemaining === 1 ? "" : "s"}.`;
         render();
         return;
       }

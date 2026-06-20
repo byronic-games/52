@@ -130,6 +130,21 @@ function formatCheatValue(value) {
   return valueToRank(value);
 }
 
+function formatPeekValue(value) {
+  if (value === 0) return "Joker";
+  return formatCheatValue(value);
+}
+
+function getNextNormalComparisonValues(count) {
+  return Array.from({ length: count }, (_, index) => {
+    const offset = index + 1;
+    const card = getNextCardAt(offset);
+    if (!card) return null;
+    if (isJokerCard(card)) return 0;
+    return getUpcomingCheatValue(offset);
+  }).filter((value) => Number.isFinite(value));
+}
+
 function isUpcomingCheatJoker(offset = 1) {
   return isJokerCard(getNextCardAt(offset));
 }
@@ -1679,6 +1694,164 @@ const CHEATS = [
     stacking: "unique",
     consumeOnUse: true,
     use: () => swapCurrentWithLowestFaceDownSuit("♠", "Spade"),
+  },
+  {
+    id: "both_lower",
+    name: "Both lower?",
+    rarity: "common",
+    weight: 1,
+    included: true,
+    unlockAt: 0,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => {
+      if (!state.current) return "No current card.";
+      const currentValue = getCurrentEffectiveValue();
+      const values = getNextNormalComparisonValues(2);
+      if (!Number.isFinite(currentValue) || values.length < 2) return "Both lower needs two face-down cards.";
+      const result = values.every((value) => value > 0 && value < currentValue);
+      return `Both lower? ${result ? "Yes" : "No"}.`;
+    },
+  },
+  {
+    id: "both_higher",
+    name: "Both higher",
+    rarity: "common",
+    weight: 1,
+    included: true,
+    unlockAt: 0,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => {
+      if (!state.current) return "No current card.";
+      const currentValue = getCurrentEffectiveValue();
+      const values = getNextNormalComparisonValues(2);
+      if (!Number.isFinite(currentValue) || values.length < 2) return "Both higher needs two face-down cards.";
+      const result = values.every((value) => value > currentValue);
+      return `Both higher? ${result ? "Yes" : "No"}.`;
+    },
+  },
+  {
+    id: "nine_dart_finish",
+    name: "9 Dart Finish",
+    rarity: "legendary",
+    weight: 0.65,
+    included: true,
+    unlockAt: 30,
+    stacking: "unique",
+    consumeOnUse: false,
+    shouldConsumeResult: (result) => typeof result === "string" && result.startsWith("9 Dart Finish armed"),
+    use: () => {
+      if (!state.current) return "No current card.";
+      if ((Number(state.nineDartRemaining) || 0) > 0 || state.nineDartAutoCorrect) return "9 Dart Finish is already active.";
+      if (!getNextCardAt(1)) return "9 Dart Finish needs cards left to reveal.";
+      state.nineDartRemaining = 9;
+      state.nineDartAutoCorrect = false;
+      return "9 Dart Finish armed - no Cheats or Nudges for 9 cards. Get them right and the rest are safe.";
+    },
+  },
+  {
+    id: "local_high",
+    name: "Local High",
+    rarity: "common",
+    weight: 1,
+    included: true,
+    unlockAt: 0,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => {
+      const values = getNextNormalComparisonValues(3);
+      if (!values.length) return "Local High needs face-down cards.";
+      return `Local High: ${formatPeekValue(Math.max(...values))}.`;
+    },
+  },
+  {
+    id: "local_low",
+    name: "Local low",
+    rarity: "common",
+    weight: 1,
+    included: true,
+    unlockAt: 0,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => {
+      const values = getNextNormalComparisonValues(3);
+      if (!values.length) return "Local Low needs face-down cards.";
+      return `Local Low: ${formatPeekValue(Math.min(...values))}.`;
+    },
+  },
+  {
+    id: "find_the_lady",
+    name: "Find The Lady",
+    rarity: "uncommon",
+    weight: 0.85,
+    included: true,
+    unlockAt: 0,
+    stacking: "unique",
+    consumeOnUse: false,
+    shouldConsumeResult: (result) => typeof result === "string" && result.startsWith("Find The Lady armed"),
+    use: () => {
+      if (!state.current) return "No current card.";
+      if (!getNextCardAt(1)) return "Find The Lady needs a next card.";
+      state.findLadyArmed = true;
+      return "Find The Lady armed - if the next revealed card is a Queen, choose a Power.";
+    },
+  },
+  {
+    id: "konami_code",
+    name: "Konami Code",
+    rarity: "rare",
+    weight: 0.75,
+    included: true,
+    unlockAt: 0,
+    stacking: "unique",
+    consumeOnUse: false,
+    shouldConsumeResult: (result) => typeof result === "string" && result.startsWith("Konami Code armed"),
+    use: () => {
+      if (!state.current) return "No current card.";
+      if (!getNextCardAt(1)) return "Konami Code needs cards left to reveal.";
+      if ((Number(state.konamiAutoCorrectRemaining) || 0) > 0 || (Array.isArray(state.konamiPatternRemaining) && state.konamiPatternRemaining.length > 0)) return "Konami Code is already active.";
+      state.konamiPatternRemaining = ["higher", "higher", "lower", "lower"];
+      state.konamiAutoCorrectRemaining = 0;
+      return "Konami Code armed - next guesses must be Up, Up, Down, Down to make the following 4 safe.";
+    },
+  },
+  {
+    id: "save_scum",
+    name: "Save Scum",
+    rarity: "legendary",
+    weight: 0.65,
+    included: true,
+    unlockAt: 30,
+    stacking: "unique",
+    consumeOnUse: false,
+    shouldConsumeResult: (result) => typeof result === "string" && result.startsWith("Save Scum armed"),
+    use: () => {
+      if (!state.current) return "No current card.";
+      if (state.saveScumArmed || state.saveScumPendingContinue) return "Save Scum is already active.";
+      state.saveScumArmed = true;
+      return "Save Scum armed - your next Game Over becomes a Continue.";
+    },
+  },
+  {
+    id: "cryogen",
+    name: "Cryogen",
+    rarity: "rare",
+    weight: 0.75,
+    included: true,
+    greenOnly: true,
+    unlockAt: 0,
+    stacking: "unique",
+    consumeOnUse: false,
+    shouldConsumeResult: (result) => typeof result === "string" && result.startsWith("Cryogen armed"),
+    use: () => {
+      if (!isGreenDeckRun()) return "Cryogen only works in Energy deck runs.";
+      if ((state.energy || 0) <= 0) return "Cryogen needs positive Energy to freeze.";
+      if ((Number(state.cryogenRemaining) || 0) > 0) return "Cryogen is already active.";
+      state.cryogenRemaining = 3;
+      state.cryogenFrozenEnergy = Math.max(0, Number(state.energy) || 0);
+      return `Cryogen armed - Energy frozen at ${state.cryogenFrozenEnergy} for 3 turns.`;
+    },
   },
   {
     id: "equals_11",
