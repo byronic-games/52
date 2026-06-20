@@ -12,7 +12,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="images/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="intro.css?v=20260618f">
+  <link rel="stylesheet" href="intro.css?v=20260620c">
 </head>
 <body class="intro-page">
   <main class="intro-shell">
@@ -43,62 +43,22 @@
 
         <div class="card-action-fan">
           <button class="action-card action-card-play" id="play-open-btn" type="button">
-            <span class="action-card-face" aria-hidden="true">
-              <span class="action-card-corner action-card-corner-top">
-                <span class="action-card-rank">A</span>
-                <span class="action-card-suit">&clubs;</span>
-              </span>
-              <span class="action-card-pip">&clubs;</span>
-              <span class="action-card-corner action-card-corner-bottom">
-                <span class="action-card-rank">A</span>
-                <span class="action-card-suit">&clubs;</span>
-              </span>
-            </span>
+            <span class="action-card-face card-face black" aria-hidden="true"></span>
             <span class="action-card-title">Play</span>
             <span class="action-card-sub">Start Run</span>
           </button>
           <a class="action-card action-card-daily" id="daily-launch-card" href="daily.html">
-            <span class="action-card-face" aria-hidden="true">
-              <span class="action-card-corner action-card-corner-top">
-                <span class="action-card-rank">7</span>
-                <span class="action-card-suit">&diams;</span>
-              </span>
-              <span class="action-card-pip">&diams;</span>
-              <span class="action-card-corner action-card-corner-bottom">
-                <span class="action-card-rank">7</span>
-                <span class="action-card-suit">&diams;</span>
-              </span>
-            </span>
+            <span class="action-card-face card-face red" aria-hidden="true"></span>
             <span class="action-card-title">Daily</span>
             <span class="action-card-sub" id="daily-launch-sub">Shared Run</span>
           </a>
           <button class="action-card action-card-howto" id="howto-open-btn" type="button">
-            <span class="action-card-face" aria-hidden="true">
-              <span class="action-card-corner action-card-corner-top">
-                <span class="action-card-rank">Q</span>
-                <span class="action-card-suit">&hearts;</span>
-              </span>
-              <span class="action-card-pip">&hearts;</span>
-              <span class="action-card-corner action-card-corner-bottom">
-                <span class="action-card-rank">Q</span>
-                <span class="action-card-suit">&hearts;</span>
-              </span>
-            </span>
+            <span class="action-card-face card-face red" aria-hidden="true"></span>
             <span class="action-card-title">How To</span>
             <span class="action-card-sub">Learn The Rules</span>
           </button>
           <a class="action-card action-card-shop" href="shop.html?v=20260618d">
-            <span class="action-card-face" aria-hidden="true">
-              <span class="action-card-corner action-card-corner-top">
-                <span class="action-card-rank">K</span>
-                <span class="action-card-suit">&spades;</span>
-              </span>
-              <span class="action-card-pip">&spades;</span>
-              <span class="action-card-corner action-card-corner-bottom">
-                <span class="action-card-rank">K</span>
-                <span class="action-card-suit">&spades;</span>
-              </span>
-            </span>
+            <span class="action-card-face card-face black" aria-hidden="true"></span>
             <span class="action-card-title">Collection</span>
             <span class="action-card-sub">Cards & Finds</span>
           </a>
@@ -368,6 +328,99 @@
         const date = new Date();
         date.setUTCDate(date.getUTCDate() - 1);
         return getUtcDateKey(date);
+      }
+
+      function introMulberry32(a) {
+        return function () {
+          let t = a += 0x6D2B79F5;
+          t = Math.imul(t ^ (t >>> 15), t | 1);
+          t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+
+      function introStringToSeedNumber(str) {
+        let h = 1779033703 ^ str.length;
+        for (let i = 0; i < str.length; i += 1) {
+          h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+          h = (h << 13) | (h >>> 19);
+        }
+        return h >>> 0;
+      }
+
+      function introSeededShuffle(array, seedString) {
+        const rng = introMulberry32(introStringToSeedNumber(seedString));
+        for (let i = array.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(rng() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+      }
+
+      function buildIntroDailyDeck(seedString) {
+        const suits = [
+          { symbol: "\u2660", red: false },
+          { symbol: "\u2665", red: true },
+          { symbol: "\u2666", red: true },
+          { symbol: "\u2663", red: false },
+        ];
+        const ranks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+        const deck = [];
+        suits.forEach((suit) => {
+          ranks.forEach((rank, index) => deck.push({
+            rank,
+            value: index + 1,
+            suit: suit.symbol,
+            red: suit.red,
+          }));
+        });
+        introSeededShuffle(deck, seedString);
+        return deck;
+      }
+
+      function isIntroFaceRank(rank) {
+        return rank === "J" || rank === "Q" || rank === "K";
+      }
+
+      function buildIntroCardFaceMarkup(card) {
+        const centerSuit = isIntroFaceRank(card.rank)
+          ? ""
+          : `<div class="card-center-suit" aria-hidden="true">${card.suit}</div>`;
+        const cornerSuit = isIntroFaceRank(card.rank)
+          ? ""
+          : `<span class="card-suit" aria-hidden="true">${card.suit}</span>`;
+        return `
+          <div class="card-corner card-corner-tl">
+            <span class="card-rank">${card.rank}</span>${cornerSuit}
+          </div>
+          ${centerSuit}
+          <div class="card-corner card-corner-br" aria-hidden="true">
+            <span class="card-rank">${card.rank}</span>${cornerSuit}
+          </div>
+        `;
+      }
+
+      function renderIntroActionFace(faceEl, card) {
+        if (!faceEl || !card) return;
+        faceEl.classList.toggle("red", card.red);
+        faceEl.classList.toggle("black", !card.red);
+        faceEl.innerHTML = buildIntroCardFaceMarkup(card);
+      }
+
+      function refreshIntroActionCards() {
+        const gameVersion = "v0.1";
+        const rulesetVersion = "daily-v1";
+        const dateKey = getUtcDateKey();
+        const normalDeck = buildIntroDailyDeck(`DAILY|${gameVersion}|${rulesetVersion}|${dateKey}`);
+        const hardDeck = buildIntroDailyDeck(`DAILY|${gameVersion}|${rulesetVersion}|hard-v1|${dateKey}`);
+        const dailyCards = [
+          normalDeck[0],
+          normalDeck[normalDeck.length - 1],
+          hardDeck[0],
+          hardDeck[hardDeck.length - 1],
+        ];
+        document.querySelectorAll(".card-action-fan .action-card-face").forEach((faceEl, index) => {
+          renderIntroActionFace(faceEl, dailyCards[index]);
+        });
       }
 
       function setLeaderStrip(label, value, animate = true) {
@@ -1050,6 +1103,7 @@
         localStorage.setItem(nameKey, String(nameInput.value || "").trim().replace(/\s+/g, " ").slice(0, 24));
       });
 
+      refreshIntroActionCards();
       refreshDailyLaunchState();
       startLeaderStripRotation();
 

@@ -289,25 +289,22 @@ h1 {
   grid-column: 1;
   grid-row: 1 / 4;
   position: relative;
+  align-self: center;
+  justify-self: center;
   width: 100%;
   aspect-ratio: 5 / 7;
-  border-radius: 9px;
-  background: linear-gradient(145deg, #ffffff 0%, #f4f5fa 100%);
+  border-radius: 8px;
+  background: #ffffff;
   box-shadow:
-    inset 0 0 0 2px var(--action-suit-color, #3b82f6),
-    inset 0 0 0 4px rgba(255, 255, 255, 0.95),
-    0 8px 16px rgba(0, 0, 0, 0.3);
-  color: var(--action-suit-color, #111018);
+    inset 0 0 0 3px #3b82f6,
+    0 2px 8px rgba(0, 0, 0, 0.16);
+  color: #1a1a1a;
+  display: block;
+  font-family: Inter, system-ui, sans-serif;
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: none;
   overflow: hidden;
-}
-
-.action-card-face::after {
-  content: "";
-  position: absolute;
-  inset: 16%;
-  border-radius: 999px;
-  background: radial-gradient(circle, color-mix(in srgb, var(--action-suit-color, #3b82f6) 15%, transparent), transparent 70%);
-  opacity: 0.5;
 }
 
 .action-card:hover,
@@ -337,11 +334,6 @@ h1 {
 .action-card[aria-disabled="true"]:hover,
 .action-card[aria-disabled="true"]:focus-visible {
   filter: grayscale(0.5) saturate(0.55);
-}
-
-.action-card.locked .action-card-rank,
-.action-card[aria-disabled="true"] .action-card-rank {
-  color: rgba(232, 223, 243, 0.72);
 }
 
 .action-card.locked .action-card-title,
@@ -387,49 +379,54 @@ h1 {
   z-index: 1;
 }
 
-.action-card-corner {
-  position: absolute;
-  z-index: 2;
-  display: grid;
-  justify-items: center;
-  gap: 1px;
-  font-weight: 900;
-  line-height: 0.9;
+.action-card-face.red {
+  color: #dc2626;
 }
 
-.action-card-corner-top {
+.action-card-face.black {
+  color: #1a1a1a;
+}
+
+.action-card-face .card-corner {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  font-size: clamp(0.78rem, 2.7vw, 1rem);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.action-card-face .card-corner-tl {
   top: 6px;
   left: 6px;
 }
 
-.action-card-corner-bottom {
+.action-card-face .card-corner-br {
   right: 6px;
   bottom: 6px;
   transform: rotate(180deg);
 }
 
-.action-card-rank {
-  color: var(--action-suit-color, #111018);
-  font-size: clamp(0.95rem, 3.5vw, 1.22rem);
+.action-card-face .card-suit,
+.action-card-face .card-center-suit {
+  display: block;
+  font-family: Georgia, "Times New Roman", serif;
   font-weight: 900;
   line-height: 1;
 }
 
-.action-card-suit {
-  color: var(--action-suit-color, #111018);
-  font-size: clamp(0.68rem, 2.7vw, 0.92rem);
-  line-height: 1;
+.action-card-face .card-suit {
+  font-size: 0.82em;
 }
 
-.action-card-pip {
+.action-card-face .card-center-suit {
   position: absolute;
-  z-index: 1;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  color: var(--action-suit-color, #111018);
-  font-size: clamp(1.25rem, 5.4vw, 1.85rem);
-  line-height: 1;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(1.2rem, 5.8vw, 1.8rem);
 }
 
 .action-card-title {
@@ -796,10 +793,6 @@ h1 {
   .action-card {
     min-height: 76px;
     padding: 8px 8px 7px;
-  }
-
-  .action-card-rank {
-    font-size: 0.9rem;
   }
 
   .action-card-title {
