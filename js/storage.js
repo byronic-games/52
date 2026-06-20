@@ -590,7 +590,12 @@ function saveDiscoveredSet(storageKey, ids) {
 }
 
 function loadDiscoveredCheats() {
-  return loadDiscoveredSet(DISCOVERED_CHEATS_KEY);
+  const discovered = loadDiscoveredSet(DISCOVERED_CHEATS_KEY);
+  const unlocks = loadCheatUnlocks();
+  Object.entries(unlocks || {}).forEach(([cheatId, unlock]) => {
+    if (unlock?.discovered && cheatId) discovered.add(String(cheatId));
+  });
+  return discovered;
 }
 
 function saveDiscoveredCheats(ids) {
