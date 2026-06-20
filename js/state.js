@@ -136,6 +136,8 @@ function createEmptyState() {
     sixSevenRewardChoicesRemaining: 0,
     equals11Armed: false,
     catch22Armed: false,
+    blackjackArmed: false,
+    diamondGeezerArmed: false,
     runSeed: loadLastRunSeed() || randomSeedString(),
     restartConfirmArmed: false,
     deckStatsTooltipOpen: false,

@@ -1,15 +1,16 @@
 # Next Tasks (Priority Order)
 
-## P0 - Fix Reveal Animation On Android
-- Make face reliably appear during reveal flip on Android Chrome.
-- Keep existing sequence intent:
-  - flip reveal
-  - short pause
-  - promote to current card
-  - then correct/incorrect flash
-- Re-test with nudged/temporary next-card values.
+## P0 - Current Regression Pass
+- Verify Daily Normal and Hard stay separated on two devices:
+  - Normal shows only `variant=normal` rows.
+  - Hard shows only `variant=hard` rows.
+  - completed local attempts retry-upload to the matching variant only.
+- Verify Hard Daily unlocks after Normal is attempted for that date, uses the Hard seed, hides torn-card hints, and does not score tears.
+- Verify Joker reveals count toward Cheat cadence. If a Joker is the third/fourth/etc. counted reveal, show the Joker result first and then the Cheat picker.
+- Verify final-card Daily bonus scoring still counts unpicked Cheat/Power awards, including a final Joker that completes the Cheat cadence.
+- Verify Collection card backs, deck reset/tear repair, and discovered Cheats/Powers/Jokers still work on mobile.
 
-## P0 - Regression Pass After Animation Fix
+## P0 - Core Gameplay Regression Pass
 - Verify deck unlock path: Blue L1 -> Green L1 -> Yellow L1 -> Orange L1, and Black only after all Blue/Green/Yellow/Orange levels are cleared.
 - Verify Orange combines nudge awards, Energy spend, and Joker insertion without cross-deck state leaks.
 - Verify Black starts directly without a power choice and hides Powers, Cheats, and Nudges.
@@ -18,6 +19,7 @@
 - Verify `Higher / Lower` stays hidden whenever power or cheat choice modals are open.
 - Verify game-over and deck-clear flows still animate correctly.
 - Verify Cursed Shield overlay badge behavior unaffected.
+- On Android Chrome, re-check reveal animation after any reveal/render/card-face edit. It has previously rotated without showing the face.
 
 ## P1 - Identity Hardening
 - Move crown enrichment to ID-first joins where possible.
@@ -25,6 +27,11 @@
 
 ## P1 - SQL Scripts In Repo
 - Add repeatable preview/apply scripts for crown/daily backfills in `tools/sql/`.
+- Include Daily variant setup/repair SQL:
+  - add/backfill `daily_52.variant`
+  - drop date/player-only unique indexes
+  - create unique `(date_key, variant, player_id)` index
+  - reload PostgREST schema if needed
 
 ## P2 - Optional Visual Polish
 - Add reveal effect hooks per outcome/card type (already partially scaffolded).

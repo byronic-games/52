@@ -1484,6 +1484,8 @@ function getActiveEffectsTooltipPayload() {
   if (state.legendaryCheatOfferArmed) waiting.push("Legends Ahead: next Cheat pick is Legendary only.");
   if (state.sixSevenArmed) waiting.push("6/7: correct guess gives 3 Cheat picks; wrong guess loses.");
   if (state.catch22Armed) waiting.push("Catch-22: next 2 gives a Power pick.");
+  if (state.blackjackArmed) waiting.push("Blackjack: current + next totaling 21 gives a Power pick.");
+  if (state.diamondGeezerArmed) waiting.push("Diamond Geezer: Diamond reveal gives 2 Cheat picks.");
   if (state.forcedNextGuess) {
     waiting.push(`${state.forcedNextGuess === "higher" ? "The Higher The Better" : "The Lower The Better"}: next guess must be ${state.forcedNextGuess}.`);
   }
@@ -3020,6 +3022,8 @@ function renderCheats() {
             legendaryCheatOfferArmed: !!state.legendaryCheatOfferArmed,
             sixSeven: !!state.sixSevenArmed,
             catch22: !!state.catch22Armed,
+            blackjack: !!state.blackjackArmed,
+            diamondGeezer: !!state.diamondGeezerArmed,
             cheatACheaterRemaining: Number(state.cheatACheaterRemaining) || 0,
             wlStage: state.wlStage || "",
           },

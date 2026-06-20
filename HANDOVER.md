@@ -10,16 +10,24 @@
 
 ## Product Snapshot
 - Mobile-first static web app.
-- Main surfaces: `index.html`, `game.html`, `daily.html`, `heroes.html`, `profile.html`, `settings.html`.
+- Main surfaces: `index.html`, `game.html`, `daily.html`, `shop.html` (Collection), `heroes.html`, `profile.html`, `settings.html`.
 - Deck progression order: Blue -> Green -> Yellow -> Orange -> Black.
 - Levels 1-4 are wired for Blue, Green, Yellow, and Orange. Black is a single final pure-score deck.
 - Green Level 1 unlocks after Blue Level 1, Yellow Level 1 after Green Level 1, Orange Level 1 after Yellow Level 1, and Black after every level of Blue/Green/Yellow/Orange is cleared.
 - Red remains legacy/internal in a few storage and stats paths, but the visible deck slot now routes to Orange.
 - Yellow and Orange levels add 1-4 Joker hazards from the expanded Yellow pool: Tearless, RONG, Gridless, Nudgeless, Timeless, Cheatless, and Powerless.
+- Jokers are safe/correct reveals for guess resolution and count toward the "every N correct reveals" Cheat cadence. If the cadence lands on a Joker, the Joker result appears first, then the Cheat picker opens.
 - Settings include an Unlock Decks toggle for testing Level 1 of locked decks without changing clear history, plus guess-button and nudge-button order preferences.
 - Daily and Heroes use Supabase when online; local fallback exists.
-- Daily leaderboard loads now retry-upload a completed local Daily attempt if the matching `date_key` + `player_id` row is missing online.
+- Daily now has two variants:
+  - Normal: classic/shared Daily, Blue Level 1 seed, player's card state applies.
+  - Hard: unlocked after Normal is attempted for that date, different Blue Level 1 seed, torn cards are hidden and tears do not affect score.
+- Daily variants use separate local attempt keys, seeds, and leaderboards. Supabase rows use `variant`; all leaderboard date/seed/fallback queries must filter by the active variant.
+- Daily leaderboard loads retry-upload a completed local Daily attempt if the matching `date_key` + `variant` + `player_id` row is missing online.
 - Daily now has a share button on the result panel, but it is intentionally code-gated off for now with `DAILY_SHARE_ENABLED = false` in `js/daily-page.js`.
+- Main menu uses playing-card action buttons. The old Shop entry is now Collection; Heroes is hidden from the main menu for now.
+- Collection owns card backs, deck reset/tear repair tools, and discovered Cheats/Powers/Jokers. Discovery cards are compact and use hold popovers for details.
+- Latest Cheat batch added: Ladies Night, Blackjack, Roll the Dice, Club Sandwich, Diamond Geezer, Red Herring, and Grave Digger. Blackjack and Diamond Geezer are reveal-triggered and should score their final-card Daily rewards without forcing post-game picks.
 - Android standalone/home-screen sizing was tightened using `visualViewport.height` plus short-screen CSS compression.
 - The gameplay screen has a structured fixed-height vertical layout: `game.html` supplies spacer/gap rows, while `styles.css` uses container-query grid rows to fit the header, cards, message bar, cheat coins, controls, and memory grid into `--app-height`.
 - The default `NEW` visual mode renders white card faces with image suit icons, circular rarity cheat coins, and shield-shaped power cards/header chip.
@@ -38,11 +46,9 @@
 - Avoid broad refactors unless requested.
 
 ## Current Known Live Bug
-- Card reveal flip animation can rotate without showing face on some Android browsers.
-- Most recent work attempted both:
-  - 3D two-sided 180 flip
-  - midpoint swap (flip-out / flip-in)
-- Status: still reported as broken on-device; see `KNOWN_ISSUES.md`.
+- No single P0 bug is currently confirmed in this handover.
+- Regression-sensitive areas: Daily Normal/Hard separation, Joker Cheat cadence, Collection discovery UI, and short mobile layouts.
+- Card reveal flip animation has previously rotated without showing the face on some Android browsers. Treat reveal/render changes as requiring on-device Android re-check; see `KNOWN_ISSUES.md`.
 
 ## Recently Touched Areas
 - Gameplay visual layout in `game.html` and `styles.css`:
@@ -64,8 +70,13 @@
 - Choice modal visibility in `js/render.js` and `styles.css`:
   - `body.choice-modal-open` hides the gameplay guess row
 - Daily local-to-remote repair in `js/daily.js`:
-  - completed local attempts are checked against Supabase when fetching that date's board
+  - completed local attempts are checked against Supabase when fetching that date's variant board
   - missing online rows are posted before the board renders
+  - fallback queries must keep `variant=eq.normal|hard`; otherwise Normal can show Hard rows
+- Daily Supabase schema:
+  - `daily_52.variant` is required
+  - uniqueness must include variant, e.g. `(date_key, variant, player_id)`
+  - remove legacy date/player-only indexes such as `daily_52_date_player_uidx`
 - Cache behavior:
   - `.htaccess` now sends `no-cache` headers for HTML-like files
   - `game.html` / `daily.html` asset query strings were bumped alongside JS/CSS fixes
@@ -77,8 +88,9 @@
 
 ## Quick "Do First" For New AI
 1. Run `RUNBOOK.md` smoke checks.
-2. Reproduce current flip bug on Android profile.
+2. Check Normal and Hard Daily boards on two devices after any Daily/Supabase change.
 3. Re-test layout on a short mobile viewport before changing adjacent UI; confirm card pair, message bar, cheat coins, controls, and memory grid all remain visible without page scroll. Also check Black Deck, where the same layout hides power/cheat/nudge controls.
 4. Re-test tutorial overlays and choice-modal behavior on mobile before changing adjacent UI; confirm current-card and next-card highlights are visible and throbbing.
-5. Patch minimally and verify Daily/Heroes/Profile did not regress.
-6. If Daily sharing is being revisited, start in `js/daily-page.js` and keep the toggle code-only unless explicitly asked to expose it in the UI.
+5. Re-check Android reveal animation after any reveal/render/card-face work.
+6. Patch minimally and verify Daily/Heroes/Profile/Collection did not regress.
+7. If Daily sharing is being revisited, start in `js/daily-page.js` and keep the toggle code-only unless explicitly asked to expose it in the UI.

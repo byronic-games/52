@@ -23,12 +23,17 @@ You are taking over project `52!` in folder `USETHIS`.
 - `js/render.js` emits NEW-theme card markup and toggles choice modal body classes.
 - Current deck model: Blue is base, Green adds Energy costs, Yellow adds Joker hazards, Orange combines Blue/Green/Yellow rules, and Black is a pure run with no Powers, Cheats, or Nudges.
 - Red remains in some legacy/internal paths, but visible progression uses Orange in that slot.
+- Main menu is card-button based. `Collection` replaces the old Shop entry and owns card backs, deck repair/reset tools, and discovered Cheats/Powers/Jokers.
+- Daily has two variants: `normal` and `hard`. Hard unlocks after Normal is attempted for that date, uses a different seed, hides torn-card hints, does not score tears, and has its own leaderboard.
+- Jokers are safe/correct reveals and now count toward the Cheat-reveal cadence. If the threshold lands on a Joker, show the Joker result briefly, then offer the Cheat.
 
 ## Current Priority
-- Fix Android reveal animation where card rotates but face does not appear.
+- Keep Daily Normal/Hard leaderboards, Supabase variant filtering, and mobile layout stable while iterating on gameplay.
+- Android reveal animation has been a recurring risk; re-check on device after touching reveal/render code.
 
 ## First Actions
 1. Run smoke checks from `RUNBOOK.md`.
-2. Reproduce reveal issue on Android profile.
+2. Re-check Android reveal behavior if touching reveal/render/card-face code.
 3. Check the gameplay layout on a short mobile viewport before and after UI/CSS changes.
-4. Patch and re-test Daily/Heroes/Profile regressions.
+4. Re-test Daily Normal/Hard filtering and local-to-remote sync after Daily changes.
+5. Patch and re-test Daily/Heroes/Profile regressions.

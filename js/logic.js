@@ -659,6 +659,13 @@ function queuePowerAward(reason = "bonus") {
   state.pendingPowerAwardQueue.push(String(reason || "bonus"));
 }
 
+function advanceCheatRewardStreak() {
+  state.streak = (state.streak || 0) + 1;
+  if (state.streak < getCheatRewardThreshold()) return false;
+  state.streak = 0;
+  return true;
+}
+
 function getDailyScoredBonusCount(value) {
   return Math.max(0, Math.floor(Number(value) || 0));
 }
@@ -712,6 +719,8 @@ function creditDailyFinalCardBonusPicks({
   blankSpacePowerTriggered = false,
   brucieBonusTriggered = false,
   catch22Hit = false,
+  blackjackHit = false,
+  diamondGeezerHit = false,
   cheatACheaterWillTrigger = false,
   equals11Hit = false,
   higherHigherHigherCompleted = false,
@@ -739,7 +748,9 @@ function creditDailyFinalCardBonusPicks({
   if (brucieBonusTriggered) powerPicks += 1;
   if (higherHigherHigherCompleted) powerPicks += 1;
   if (catch22Hit) powerPicks += 1;
+  if (blackjackHit) powerPicks += 1;
   if (psychoCompleted) powerPicks += 1;
+  if (diamondGeezerHit) cheatPicks += 2;
 
   const wouldPauseBeforeStreak =
     blankSpacePowerTriggered ||
@@ -891,6 +902,8 @@ function previewPendingRunBehindPowerChoice(deck, runMode = "standard", deckKey 
   state.cursedShieldCharges = 0;
   state.redDeadRedemptionArmed = false;
   state.lucky13Armed = false;
+  state.blackjackArmed = false;
+  state.diamondGeezerArmed = false;
   state.newSuitsRemaining = 0;
   state.newSuitsSeen = {};
   state.allInRemaining = 0;
@@ -1340,6 +1353,8 @@ function startRunWithPower(powerId) {
     allInNudgeDownStake: 0,
     equals11Armed: false,
     catch22Armed: false,
+    blackjackArmed: false,
+    diamondGeezerArmed: false,
     wlStage: "",
   };
 
@@ -2484,6 +2499,8 @@ function clearArmedPowerEffects() {
   state.catch22Armed = false;
   state.sixSevenRewardChoicesRemaining = 0;
   state.equals11Armed = false;
+  state.blackjackArmed = false;
+  state.diamondGeezerArmed = false;
 }
 
 function applyYellowJokerEffect(jokerCard) {
@@ -2729,6 +2746,8 @@ function makeGuessLegacy(type) {
   const higherHigherHigherRemainingBeforeGuess = Number(state.higherHigherHigherRemaining || 0);
   const psychoRemainingBeforeGuess = Number(state.psychoRemaining || 0);
   const catch22WasArmed = !!state.catch22Armed;
+  const blackjackWasArmed = !!state.blackjackArmed;
+  const diamondGeezerWasArmed = !!state.diamondGeezerArmed;
   const godSaveKingWasArmed = !!state.godSaveKingArmed;
   const lucky13WasArmed = !!state.lucky13Armed;
   const alwaysBetBlackWasArmed = !!state.alwaysBetBlackArmed;
@@ -2759,6 +2778,8 @@ function makeGuessLegacy(type) {
   state.hotOrColdArmed = false;
   state.stitchInTimeArmed = false;
   state.catch22Armed = false;
+  state.blackjackArmed = false;
+  state.diamondGeezerArmed = false;
   state.godSaveKingArmed = false;
   state.lucky13Armed = false;
   state.alwaysBetBlackArmed = false;
@@ -3486,13 +3507,15 @@ function makeGuess(type) {
   if (isJokerCard(next)) {
     const prevCard = state.current;
     state.equals11Armed = false;
+    state.blackjackArmed = false;
+    state.diamondGeezerArmed = false;
     advanceToCard(next);
     state.currentValueModifier = 0;
     if (typeof recordDiscoveredJokers === "function") {
       recordDiscoveredJokers(next.jokerId || next.id);
     }
     const jokerMessage = applyYellowJokerEffect(next);
-    state.streak = 0;
+    const jokerTriggeredCheatAward = advanceCheatRewardStreak();
     state.lastJokerMessage = jokerMessage;
     queueCardRevealAnimation({
       outcome: "correct",
@@ -3515,9 +3538,16 @@ function makeGuess(type) {
       nudgeDownCharges: state.nudgeDownCharges || 0,
       cheatsHeld: Array.isArray(state.cheats) ? state.cheats.length : 0,
       powers: Array.isArray(state.powers) ? [...state.powers] : [],
+      streakTriggeredCheatAward: jokerTriggeredCheatAward,
     });
 
     if (state.index >= state.deck.length - 1) {
+      if (jokerTriggeredCheatAward) {
+        creditDailyEndgameBonusPicks({
+          cheatPicks: 1,
+          reason: "final_joker_streak",
+        });
+      }
       if (!isDevModeRun()) {
         if (state.runMode !== "daily") {
           state.deckWins = recordDeckWin(state.currentDeckKey);
@@ -3542,6 +3572,19 @@ function makeGuess(type) {
       return;
     }
 
+    if (jokerTriggeredCheatAward) {
+      state.pauseForCheat = true;
+      state.message = `Yellow Joker: ${jokerMessage} Cheat ready.`;
+      updateBestScoreIfNeeded();
+      render();
+      setTimeout(() => {
+        state.pauseForCheat = false;
+        offerCheatChoice("streak");
+        render();
+      }, 1000);
+      return;
+    }
+
     state.message = `Yellow Joker: ${jokerMessage}`;
     updateBestScoreIfNeeded();
     render();
@@ -3556,6 +3599,8 @@ function makeGuess(type) {
   const higherHigherHigherRemainingBeforeGuess = Number(state.higherHigherHigherRemaining || 0);
   const psychoRemainingBeforeGuess = Number(state.psychoRemaining || 0);
   const catch22WasArmed = !!state.catch22Armed;
+  const blackjackWasArmed = !!state.blackjackArmed;
+  const diamondGeezerWasArmed = !!state.diamondGeezerArmed;
   const godSaveKingWasArmed = !!state.godSaveKingArmed;
   const lucky13WasArmed = !!state.lucky13Armed;
   const alwaysBetBlackWasArmed = !!state.alwaysBetBlackArmed;
@@ -3585,6 +3630,8 @@ function makeGuess(type) {
   state.hotOrColdArmed = false;
   state.stitchInTimeArmed = false;
   state.catch22Armed = false;
+  state.blackjackArmed = false;
+  state.diamondGeezerArmed = false;
   state.godSaveKingArmed = false;
   state.lucky13Armed = false;
   state.alwaysBetBlackArmed = false;
@@ -3623,6 +3670,8 @@ function makeGuess(type) {
   let higherHigherHigherCompleted = false;
   let higherHigherHigherBroken = false;
   let catch22Hit = false;
+  let blackjackHit = false;
+  let diamondGeezerHit = false;
   let psychoCompleted = false;
 
   const forcedNudgeDirection =
@@ -3907,6 +3956,20 @@ function makeGuess(type) {
     catch22Hit = true;
     queuePowerAward("catch_22");
   }
+  if (
+    blackjackWasArmed &&
+    Number.isFinite(currentComparisonValue) &&
+    Number.isFinite(nextComparisonValue) &&
+    currentComparisonValue + nextComparisonValue === 21
+  ) {
+    blackjackHit = true;
+    queuePowerAward("blackjack");
+  }
+  if (diamondGeezerWasArmed && nextSuitForResolution === "♦") {
+    diamondGeezerHit = true;
+    queueCheatAward("diamond_geezer");
+    queueCheatAward("diamond_geezer");
+  }
   if (higherHigherHigherRemainingBeforeGuess > 0) {
     if (type === "higher") {
       state.higherHigherHigherRemaining = Math.max(0, higherHigherHigherRemainingBeforeGuess - 1);
@@ -3942,6 +4005,8 @@ function makeGuess(type) {
       blankSpacePowerTriggered: blankSpaceWasActive,
       brucieBonusTriggered: runHasPower("brucie_bonus") && match,
       catch22Hit,
+      blackjackHit,
+      diamondGeezerHit,
       cheatACheaterWillTrigger: (state.cheatACheaterRemaining || 0) === 1,
       equals11Hit,
       higherHigherHigherCompleted,
@@ -4216,6 +4281,23 @@ function makeGuess(type) {
     return;
   }
 
+  if (blackjackHit) {
+    if (state.streak >= getCheatRewardThreshold()) {
+      state.streak = 0;
+      queueCheatAward("streak");
+    }
+    state.pauseForCheat = true;
+    state.message = appendEnergyFeedback(`Blackjack hit! Current + next = 21 - choose a new Power.${refundText}${bingoAwardText}`, revealDistance);
+    render();
+    setTimeout(() => {
+      state.pauseForCheat = false;
+      const nextReason = state.pendingPowerAwardQueue.shift() || "blackjack";
+      offerRewardPowerChoice(nextReason);
+      render();
+    }, 1000);
+    return;
+  }
+
   if (psychoCompleted) {
     state.pauseForCheat = true;
     state.message = appendEnergyFeedback(`Psycho complete! Choose a new Power.${refundText}${bingoAwardText}`, revealDistance);
@@ -4224,6 +4306,23 @@ function makeGuess(type) {
       state.pauseForCheat = false;
       const nextReason = state.pendingPowerAwardQueue.shift() || "psycho";
       offerRewardPowerChoice(nextReason);
+      render();
+    }, 1000);
+    return;
+  }
+
+  if (diamondGeezerHit) {
+    if (state.streak >= getCheatRewardThreshold()) {
+      state.streak = 0;
+      queueCheatAward("streak");
+    }
+    state.pauseForCheat = true;
+    state.message = appendEnergyFeedback(`Diamond Geezer hit! Diamond revealed - choose 2 bonus Cheats.${refundText}${bingoAwardText}`, revealDistance);
+    render();
+    setTimeout(() => {
+      state.pauseForCheat = false;
+      const nextReason = state.pendingCheatAwardQueue.shift() || "diamond_geezer";
+      offerCheatChoice(nextReason);
       render();
     }, 1000);
     return;

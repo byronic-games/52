@@ -628,10 +628,11 @@ async function fetchDailyLeaderboard(dateKey, limit = 100, variant = DAILY_VARIA
       if (normalizedVariant !== DAILY_VARIANT_NORMAL) {
         return buildDailyLeaderboardResult(localAttempt?.completed ? [localAttempt] : [], false, "offline_schema");
       }
-      activeSelect = "date_key,seed,player_name,player_id,score,blue_cleared,green_cleared,red_cleared,daily_clears,crown_summary,created_at";
+      activeSelect = "date_key,variant,seed,player_name,player_id,score,blue_cleared,green_cleared,red_cleared,daily_clears,crown_summary,created_at";
       const queryCrownFallback =
         `select=${activeSelect}` +
         `&date_key=eq.${encodeURIComponent(dateKey)}` +
+        `&variant=eq.${encodeURIComponent(normalizedVariant)}` +
         `&order=score.desc,created_at.asc&limit=${Math.max(1, limit)}`;
       const crownFallbackUrl = `${config.supabaseUrl}/rest/v1/${config.table}?${queryCrownFallback}`;
       response = await fetchWithTimeout(crownFallbackUrl, {
@@ -646,10 +647,11 @@ async function fetchDailyLeaderboard(dateKey, limit = 100, variant = DAILY_VARIA
       if (normalizedVariant !== DAILY_VARIANT_NORMAL) {
         return buildDailyLeaderboardResult(localAttempt?.completed ? [localAttempt] : [], false, "offline_schema");
       }
-      activeSelect = "date_key,seed,player_name,player_id,score,created_at";
+      activeSelect = "date_key,variant,seed,player_name,player_id,score,created_at";
       const queryFallback =
         `select=${activeSelect}` +
         `&date_key=eq.${encodeURIComponent(dateKey)}` +
+        `&variant=eq.${encodeURIComponent(normalizedVariant)}` +
         `&order=score.desc,created_at.asc&limit=${Math.max(1, limit)}`;
       const fallbackUrl = `${config.supabaseUrl}/rest/v1/${config.table}?${queryFallback}`;
       response = await fetchWithTimeout(fallbackUrl, {
@@ -675,6 +677,7 @@ async function fetchDailyLeaderboard(dateKey, limit = 100, variant = DAILY_VARIA
         const seedQuery =
           `select=${activeSelect}` +
           `&seed=eq.${encodeURIComponent(dailySeed)}` +
+          `&variant=eq.${encodeURIComponent(normalizedVariant)}` +
           `&order=score.desc,created_at.asc&limit=${Math.max(1, limit)}`;
         const seedUrl = `${config.supabaseUrl}/rest/v1/${config.table}?${seedQuery}`;
         const seedResponse = await fetchWithTimeout(seedUrl, {
@@ -709,6 +712,7 @@ async function fetchDailyLeaderboard(dateKey, limit = 100, variant = DAILY_VARIA
         `select=${activeSelect}` +
         `&created_at=gte.${encodeURIComponent(`${dateKey}T00:00:00.000Z`)}` +
         `&created_at=lt.${encodeURIComponent(`${nextDateKey}T00:00:00.000Z`)}` +
+        `&variant=eq.${encodeURIComponent(normalizedVariant)}` +
         `&order=score.desc,created_at.asc&limit=${Math.max(1, limit)}`;
       const createdAtUrl = `${config.supabaseUrl}/rest/v1/${config.table}?${createdAtQuery}`;
       const createdAtResponse = await fetchWithTimeout(createdAtUrl, {
@@ -731,8 +735,16 @@ async function fetchDailyLeaderboard(dateKey, limit = 100, variant = DAILY_VARIA
             const belongsToDaily =
               (rowVariant === normalizedVariant && rowDateKey === dateKey) ||
               (rowVariant === normalizedVariant && rowSeed === dailySeed) ||
-              (normalizedVariant === DAILY_VARIANT_NORMAL && rowSeed.endsWith(`|${dateKey}`)) ||
-              (normalizedVariant === DAILY_VARIANT_NORMAL && rowCreatedAt.startsWith(dateKey));
+              (
+                normalizedVariant === DAILY_VARIANT_NORMAL &&
+                rowVariant === DAILY_VARIANT_NORMAL &&
+                rowSeed.endsWith(`|${dateKey}`)
+              ) ||
+              (
+                normalizedVariant === DAILY_VARIANT_NORMAL &&
+                rowVariant === DAILY_VARIANT_NORMAL &&
+                rowCreatedAt.startsWith(dateKey)
+              );
             if (!belongsToDaily) return;
             const key = `${row.player_id || ""}::${row.player_name || ""}::${row.created_at || ""}::${row.score || ""}`;
             if (!rowKeys.has(key)) {

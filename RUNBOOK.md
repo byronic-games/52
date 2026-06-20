@@ -16,9 +16,10 @@
 1. Enable Settings -> Unlock Decks and confirm Yellow Level 1 can be selected without clearing Green L1.
 2. Start Yellow Level 1 and confirm `Jokers left: 1` appears in the compact next-card info area.
 3. Make enough guesses for the Joker to appear; either Higher or Lower should resolve the Joker and show a Yellow Joker message.
-4. Repeat Level 4 and confirm `Jokers left: 4` at run start.
-5. Trigger each effect if possible: Tearless temporarily hides one unseen torn corner, RONG reverses Higher/Lower meanings, Gridless clears the visible found-card grid, Timeless shuffles recently revealed cards back into the deck, Nudgeless clears banked Nudges, Cheatless clears held Cheats, and Powerless clears persistent power effects.
-6. Turn Unlock Decks off and confirm normal progression gates return.
+4. Confirm a Joker reveal counts toward the Cheat cadence. Example: if Cheats appear every 3 correct reveals and the third reveal is a Joker, the Cheat picker should appear after the Joker result.
+5. Repeat Level 4 and confirm `Jokers left: 4` at run start.
+6. Trigger each effect if possible: Tearless temporarily hides one unseen torn corner, RONG reverses Higher/Lower meanings, Gridless clears the visible found-card grid, Timeless shuffles recently revealed cards back into the deck, Nudgeless clears banked Nudges, Cheatless clears held Cheats, and Powerless clears persistent power effects.
+7. Turn Unlock Decks off and confirm normal progression gates return.
 
 ## Orange / Black Deck Check
 1. Enable Settings -> Unlock Decks and confirm Orange Level 1 and Black Deck can be selected for testing.
@@ -57,10 +58,21 @@
 
 ## Daily Board Check
 1. Open same date on two devices.
-2. Entry count/order should match.
-3. Tied scores share rank.
-4. Crowns should be per-player, not per-viewer.
-5. For a completed local Daily attempt that failed to save online, opening that Daily board while connected should upload the missing row.
+2. Normal leaderboard should show only Normal entries.
+3. Hard unlocks after Normal is attempted for that date.
+4. Hard leaderboard should show only Hard entries.
+5. Entry count/order should match across devices for each variant.
+6. Tied scores share rank.
+7. Crowns should be per-player, not per-viewer.
+8. For a completed local Daily attempt that failed to save online, opening that Daily board while connected should upload the missing row for the matching variant only.
+9. Hard should hide torn-card hints and should not score tears.
+
+## Collection Check
+1. Open Collection from the main menu.
+2. Confirm card-back preview keeps a stable playing-card aspect ratio and controls do not jump as different card backs are selected.
+3. Confirm deck reset and torn-card repair controls still work.
+4. Confirm discovered Cheats/Powers/Jokers show as compact items.
+5. Hold a discovered item and confirm the detail popover appears above the pressed item and text is not accidentally selected.
 
 ## Deploy Hygiene
 - After JS/CSS edits, bump query strings in:
@@ -74,6 +86,9 @@
 
 ## Supabase Quick Health
 - `daily_52`: anon `SELECT` + `INSERT`.
+- `daily_52.variant`: required. Normal/Hard leaderboards depend on it.
+- `daily_52` unique attempt index must include `variant`, e.g. `(date_key, variant, player_id)`.
+- Drop legacy date/player-only unique indexes such as `daily_52_date_player_uidx`.
 - `heroes_52`: anon `SELECT`.
 - If Daily hangs on "Loading Daily Board":
   1. check browser network response

@@ -1,6 +1,6 @@
 # 52! (USETHIS)
 
-Mobile-first browser card game (higher/lower) with deck progression, powers, cheats, Daily mode, Heroes board, Profile stats, and a final pure-score Black Deck.
+Mobile-first browser card game (higher/lower) with deck progression, powers, cheats, Normal/Hard Daily modes, Collection/discovery, Profile stats, and a final pure-score Black Deck.
 
 ## Start
 - Serve repo root with a static server.
@@ -13,6 +13,7 @@ Mobile-first browser card game (higher/lower) with deck progression, powers, che
 - `heroes.html` - heroes board
 - `profile.html` - profile/crowns
 - `settings.html` - settings/reset
+- `shop.html` - Collection: card backs, deck repairs, and discovered Cheats/Powers/Jokers
 
 ## Handover Docs
 - `HANDOVER.md` (entry summary)
@@ -39,13 +40,16 @@ Mobile-first browser card game (higher/lower) with deck progression, powers, che
 - Yellow and Orange runs show remaining Jokers in the compact `next-info` area and use the main message bar for Joker effects.
 
 ## Current Priority
-- Fix and re-check the Android reveal animation where the card rotates but the face does not appear during the flip.
+- Keep Daily Normal/Hard leaderboards separated and stable across devices.
+- Re-check the Android reveal animation after reveal/render changes; it has previously rotated without showing the face during the flip.
 - Regression-test deck progression across Blue, Green, Yellow, Orange, and Black after animation/layout changes.
 
 ## Recent Ops Notes
-- Yellow deck adds harmful Joker hazards from a level-gated pool: Tearless, RONG, Gridless, Nudgeless, Timeless, Cheatless, and Powerless. Orange combines Blue nudge rewards, Green Energy costs, and Yellow Jokers. Black is the final pure run: no Powers, Cheats, or Nudges.
+- Yellow deck adds harmful Joker hazards from a level-gated pool: Tearless, RONG, Gridless, Nudgeless, Timeless, Cheatless, and Powerless. Jokers are safe/correct reveals and count toward Cheat cadence. Orange combines Blue nudge rewards, Green Energy costs, and Yellow Jokers. Black is the final pure run: no Powers, Cheats, or Nudges.
 - Unlock Decks in settings opens Level 1 of every visible deck for testing.
 - Players can choose Lower / Higher or Higher / Lower guess button order and Down / Up or Up / Down nudge order in Settings; the controls keep their existing styles.
-- Daily leaderboard loads retry-upload a completed local Daily attempt when that player's online row is missing.
+- Daily has separate Normal and Hard variants. Hard unlocks after Normal is attempted for the date, uses a different seed, hides torn-card hints, and does not score tears.
+- Daily leaderboard loads retry-upload a completed local Daily attempt when that player's online row is missing for the matching `date_key` + `variant` + `player_id`.
+- Supabase `daily_52` rows require `variant`; uniqueness must include variant so Normal and Hard attempts do not block or leak into each other.
 - Tutorial highlighting now styles the actual target element instead of a separate floating highlight box. Rendered card elements preserve the focus class across redraws, and focused tutorial targets throb again.
 - Choice modals are intended to hide the gameplay `Higher / Lower` row while open.

@@ -16,6 +16,9 @@
 - `hl_prototype_hero_name`
 - `hl_prototype_heroes_local`
 - `hl_prototype_black_scores_local`
+- `hl_prototype_discovered_cheats`
+- `hl_prototype_discovered_powers`
+- `hl_prototype_discovered_jokers`
 
 ## Supporting `localStorage`
 - `hl_prototype_card_stats`
@@ -32,6 +35,9 @@
 - Green unlocks after a verified Blue Level 1 clear. Yellow unlocks after Green Level 1. Orange unlocks after Yellow Level 1. Black unlocks after every level of Blue/Green/Yellow/Orange is cleared.
 - `hl_prototype_unlock_decks` unlocks Level 1 of every deck only; higher levels still require same-deck clears unless `hl_prototype_unlock_all` is enabled.
 - Yellow/Orange Joker effects can mutate run state and persistent card-back status. Tearless hides one torn corner from a remaining card, RONG reverses guess meanings, Gridless clears the visible grid, Timeless rewinds revealed cards into the deck, Nudgeless clears nudge charges, Cheatless clears held Cheats, and Powerless clears persistent/armed effects.
+- Jokers count as safe/correct reveals for Cheat cadence, even though they are not normal playing cards.
+- Daily local attempts are variant-aware. Normal keeps the legacy date-only local key for compatibility; Hard uses a variant-prefixed key such as `hard|YYYY-MM-DD`.
+- Collection discovery grids read the discovered Cheat/Power/Joker keys and reveal details only after an item has been found in play.
 
 ## `sessionStorage`
 - `hl_prototype_game_state_snapshot`

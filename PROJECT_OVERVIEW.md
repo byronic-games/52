@@ -12,6 +12,7 @@
 - `heroes.html`: clear board
 - `profile.html`: local player stats/crowns
 - `settings.html`: config/reset tools
+- `shop.html`: Collection flow (card backs, deck state repair/reset, and discovered Cheats/Powers/Jokers)
 - Daily sharing exists in UI but is currently disabled by a code flag in `js/daily-page.js` until we turn it back on.
 
 ## Gameplay Layout Surface
@@ -25,6 +26,8 @@
 - `body[data-visuals="new"]` switches card faces to white playing-card markup with corner ranks and image-backed suit symbols. `js/render.js::renderCardFaceMarkup` emits this markup; `styles.css` maps the suit assets.
 - The cheat bar and cheat-choice cards are circular rarity coins with count badges and small layout animations.
 - Power choice cards and the header power chip are shield-shaped via `.power-shield-svg` / `.power-shield-fill`.
+- The main menu uses compact playing-card action buttons and no visible Heroes button for now.
+- Collection uses a compact discovery grid: undiscovered items stay vague, discovered Cheats/Powers/Jokers can be held to show their description popover.
 
 ## Deck/Progression Model
 - Start: Blue Level 1 unlocked.
@@ -44,11 +47,17 @@
 - Equal-value comparisons continue the run.
 - Cards-cleared model is now "start at 1" (starting face-up card counts).
 - Nudges use separate + / - charge pools.
-- Yellow and Orange runs insert 1-4 Joker hazard cards after the first four deck positions, so they can only appear after three correct guesses. A Joker consumes the next-card reveal without caring whether the player guessed Higher or Lower, applies its negative effect, resets streak, and leaves the current normal card in play.
+- Yellow and Orange runs insert 1-4 Joker hazard cards after the first four deck positions, so they can only appear after three correct guesses. A Joker consumes the next-card reveal without caring whether the player guessed Higher or Lower, applies its negative effect, counts as a safe/correct reveal for Cheat cadence, and leaves the current normal card in play.
 - Yellow Joker pool: Tearless hides one torn corner from an unseen card, RONG reverses Higher/Lower meanings for the rest of the run, Gridless clears the visible found-card grid, Nudgeless clears banked Nudges, Timeless shuffles recently revealed playing cards back into the deck, Cheatless clears held Cheats, and Powerless clears persistent/armed effects. Higher levels add more Jokers from this pool.
 - Orange combines Blue nudge rewards, Green Energy costs, and Yellow Joker hazards. Energy starts at 10/8/6/5 for Levels 1-4.
 - Black is the final pure run: no Powers, Cheats, or Nudges, with high-score submission handled separately from normal Heroes victory prompts.
-- Daily/Heroes support Supabase + local fallback behavior.
+- Daily has two variants with separate seeds and leaderboards:
+  - Normal: Blue Level 1 daily seed using the player's current deck/card state.
+  - Hard: unlocks after Normal is attempted for that date, uses a different Blue Level 1 seed, hides torn-card hints, and does not score tears.
+- Daily/Heroes support Supabase + local fallback behavior. Daily fallback and repair queries must preserve `variant` filtering so Normal and Hard do not leak into each other.
+- Recent Cheat additions:
+  - `Ladies Night`, `Roll the Dice`, `Club Sandwich`, `Red Herring`, and `Grave Digger` resolve immediately.
+  - `Blackjack` and `Diamond Geezer` arm and resolve on the next reveal; Daily final-card scoring credits their unpicked rewards.
 
 ## Main Code Ownership
 - `js/logic.js`: game rules and state transitions
@@ -62,7 +71,8 @@
 - `styles.css`: gameplay vertical layout grid, responsive card sizing, NEW visual theme, cheat coin styling, power shield styling, and Black Deck starfield/pure-run treatment
 
 ## Current Critical Risk
-- Reveal animation on some Android browsers still fails to show face mid-flip.
+- Daily variant filtering and local-to-remote repair are active production paths. Re-test Normal and Hard boards on two devices after Daily changes.
+- Reveal animation on some Android browsers has previously failed to show face mid-flip; re-check on device after reveal/render changes.
 
 ## Current Sensitive Area
 - Tutorial / choice-modal behavior on mobile was recently adjusted:

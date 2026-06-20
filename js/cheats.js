@@ -66,6 +66,54 @@ function pullRemainingRankToTop(rank, label) {
   return `${pulled.length} face-down ${label}${pulled.length === 1 ? "" : "s"} pulled to the top.`;
 }
 
+function findNextFaceDownSuitCard(suit) {
+  if (!Array.isArray(state.deck)) return null;
+  return state.deck
+    .slice(state.index + 1)
+    .find((card) => !isJokerCard(card) && card.suit === suit) || null;
+}
+
+function getWrongColourLabel(card) {
+  if (!card || isJokerCard(card)) return "red or black";
+  return getSuitColourLabel(card.suit) === "red" ? "black" : "red";
+}
+
+function getWrongParityLabel(card, offset) {
+  if (!card || isJokerCard(card)) return "odd or even";
+  const value = getUpcomingCheatValue(offset);
+  if (!Number.isFinite(value) || value === 0) return "odd or even";
+  return value % 2 === 0 ? "odd" : "even";
+}
+
+function swapCurrentWithLowestFaceDownSuit(suit, label) {
+  if (!Array.isArray(state.deck) || !state.current) return "No active deck.";
+  const currentIndex = state.index;
+  const targetIndex = state.deck
+    .map((card, index) => ({ card, index }))
+    .filter(({ card, index }) => index > currentIndex && !isJokerCard(card) && card.suit === suit)
+    .sort((a, b) => {
+      const valueDelta = (a.card.value || 0) - (b.card.value || 0);
+      return valueDelta || a.index - b.index;
+    })[0]?.index;
+
+  if (!Number.isFinite(targetIndex)) return `No face-down ${label} remains.`;
+
+  const oldCurrent = state.deck[currentIndex];
+  const newCurrent = state.deck[targetIndex];
+  state.deck[currentIndex] = newCurrent;
+  state.deck[targetIndex] = oldCurrent;
+  state.current = newCurrent;
+  state.currentValueModifier = 0;
+  state.nextCardValueModifier = 0;
+  if (typeof resetCurrentTurnNudgeTracking === "function") {
+    resetCurrentTurnNudgeTracking();
+  }
+  unmarkCardSeen(oldCurrent);
+  markCardSeen(newCurrent);
+
+  return `Grave Digger swapped current card with the lowest face-down ${label}: ${describeCard(newCurrent)}.`;
+}
+
 function isPrimeCardValue(value) {
   return value === 2 || value === 3 || value === 5 || value === 7 || value === 11 || value === 13;
 }
@@ -299,6 +347,13 @@ const CHEAT_DESCRIPTIONS = {
   "Split the Difference": "Reveals the value difference between the current card and the next face-down card.",
   "False Shuffle": "Rearranges the next three face-down cards into ascending value order.",
   "The River": "Reveals the values of the next five face-down cards in a random order.",
+  "Ladies Night": "Pull all remaining face-down Queens to the top of the face-down deck without changing any other face-down card order.",
+  "Blackjack": "Arm this card. If it and the next revealed card total 21, choose a Power.",
+  "Roll the Dice": "Seeded roll: gain 1-6 Nudge +1 and the same number of Nudge -1.",
+  "Club Sandwich": "Reveal the value of the next face-down Club in the deck.",
+  "Diamond Geezer": "Arm this card. If the next revealed card is a Diamond, choose two extra Cheats.",
+  "Red Herring": "Play on a Heart or Diamond. Shows false colour and parity facts for the next three cards.",
+  "Grave Digger": "Swap the current face-up card with the lowest face-down Spade.",
   "Equals 11": "Arm this card. If it and the next revealed card total 11, choose 3 extra cheats.",
   "WL": "Win your next guess, then lose the one after. If you do, the run survives and you choose 3 extra cheats.",
   "You Can Cheat A Cheater": "After your next three correct guesses, choose two extra Cheats in addition to any normal rewards.",
@@ -1512,6 +1567,118 @@ const CHEATS = [
       const values = upcoming.map((card, index) => isJokerCard(card) ? "Joker" : formatCheatValue(getUpcomingCheatValue(index + 1)));
       return `The River: ${shuffleCheatFacts(values, "the_river").join(", ")}`;
     },
+  },
+  {
+    id: "ladies_night",
+    name: "Ladies Night",
+    rarity: "rare",
+    weight: 0.75,
+    included: true,
+    unlockAt: 0,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => pullRemainingRankToTop("Q", "Queen"),
+  },
+  {
+    id: "blackjack",
+    name: "Blackjack",
+    rarity: "uncommon",
+    weight: 0.85,
+    included: true,
+    unlockAt: 0,
+    stacking: "unique",
+    consumeOnUse: false,
+    shouldConsumeResult: (result) => typeof result === "string" && result.startsWith("Blackjack armed"),
+    use: () => {
+      if (!state.current) return "Blackjack needs a current card.";
+      const currentValue = getCurrentEffectiveValue();
+      if (!Number.isFinite(currentValue)) return "Blackjack needs a normal current card.";
+      if (!getNextCardAt(1)) return "Blackjack needs a next card.";
+      state.blackjackArmed = true;
+      return "Blackjack armed - it will resolve when the next card is revealed.";
+    },
+  },
+  {
+    id: "roll_the_dice",
+    name: "Roll the Dice",
+    rarity: "common",
+    weight: 1,
+    included: true,
+    unlockAt: 0,
+    stacking: "repeatable",
+    consumeOnUse: true,
+    use: () => {
+      const rng = getCheatDeterministicRng("roll_the_dice");
+      const roll = 1 + Math.floor(rng() * 6);
+      state.nudgeUpCharges = (state.nudgeUpCharges || 0) + roll;
+      state.nudgeDownCharges = (state.nudgeDownCharges || 0) + roll;
+      return `Roll the Dice rolled ${roll}: gained ${roll} Nudge +1 and ${roll} Nudge -1.`;
+    },
+  },
+  {
+    id: "club_sandwich",
+    name: "Club Sandwich",
+    rarity: "common",
+    weight: 1,
+    included: true,
+    unlockAt: 0,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => {
+      const club = findNextFaceDownSuitCard("♣");
+      if (!club) return "Club Sandwich found no face-down Clubs.";
+      return `Club Sandwich: next Club is ${valueToRank(club.value)}.`;
+    },
+  },
+  {
+    id: "diamond_geezer",
+    name: "Diamond Geezer",
+    rarity: "uncommon",
+    weight: 0.85,
+    included: true,
+    unlockAt: 0,
+    stacking: "unique",
+    consumeOnUse: false,
+    shouldConsumeResult: (result) => typeof result === "string" && result.startsWith("Diamond Geezer armed"),
+    use: () => {
+      if (!getNextCardAt(1)) return "Diamond Geezer needs a next card.";
+      state.diamondGeezerArmed = true;
+      return "Diamond Geezer armed - it will resolve when the next card is revealed.";
+    },
+  },
+  {
+    id: "red_herring",
+    name: "Red Herring",
+    rarity: "rare",
+    weight: 0.75,
+    included: true,
+    unlockAt: 0,
+    stacking: "unique",
+    consumeOnUse: false,
+    shouldConsumeResult: (result) => typeof result === "string" && result.startsWith("Red Herring:"),
+    use: () => {
+      if (!state.current) return "Red Herring needs a current card.";
+      if (state.current.suit !== "♥" && state.current.suit !== "♦") {
+        return "Red Herring can only be played on a Heart or Diamond.";
+      }
+      const upcoming = [1, 2, 3].map((offset) => ({ card: getNextCardAt(offset), offset })).filter((entry) => entry.card);
+      if (!upcoming.length) return "No face-down cards left.";
+      const lies = upcoming.map(({ card, offset }) =>
+        `#${offset}: ${getWrongColourLabel(card)}, ${getWrongParityLabel(card, offset)}`
+      );
+      return `Red Herring: ${lies.join(" / ")}`;
+    },
+  },
+  {
+    id: "grave_digger",
+    name: "Grave Digger",
+    rarity: "rare",
+    weight: 0.75,
+    included: true,
+    unlockAt: 0,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => swapCurrentWithLowestFaceDownSuit("♠", "Spade"),
   },
   {
     id: "equals_11",
