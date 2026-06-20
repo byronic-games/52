@@ -545,7 +545,7 @@ a {
   box-shadow: none;
   color: #dff5ff;
   font-family: "Space Grotesk", sans-serif;
-  font-size: clamp(0.82rem, 2.85cqw, 1rem);
+  font-size: clamp(1rem, 3.35cqw, 1.28rem);
   line-height: 1;
   font-weight: 800;
   letter-spacing: 0;
@@ -625,13 +625,13 @@ a {
 
 #message-bar[data-message-density="compact"] {
   padding: 0 10px !important;
-  font-size: clamp(0.9rem, 3.1cqw, 1.06rem) !important;
+  font-size: clamp(0.94rem, 3.05cqw, 1.16rem) !important;
   line-height: 1 !important;
 }
 
 #message-bar[data-message-density="tight"] {
   padding: 0 9px !important;
-  font-size: clamp(0.78rem, 2.65cqw, 0.94rem) !important;
+  font-size: clamp(0.84rem, 2.75cqw, 1.02rem) !important;
   line-height: 1 !important;
 }
 
@@ -641,7 +641,7 @@ a {
   overflow: visible !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
-  font-size: clamp(0.72rem, 2.3cqw, 0.86rem) !important;
+  font-size: clamp(0.78rem, 2.45cqw, 0.94rem) !important;
   line-height: 1 !important;
   text-align: center !important;
 }
@@ -4611,7 +4611,7 @@ body.choice-modal-open #controls,
   --card-row-max-height: calc((100cqw - var(--card-pair-gap)) * 15 / 22);
   --header-height: clamp(48px, 13cqw, 64px);
   --info-height: clamp(38px, 10.5cqw, 58px);
-  --message-height: clamp(24px, 7cqw, 34px);
+  --message-height: clamp(32px, 8.4cqw, 42px);
   --cheats-height: clamp(84px, 23cqw, 132px);
   --buttons-height: clamp(54px, 16cqw, 86px);
   display: grid !important;
@@ -4777,9 +4777,9 @@ body.choice-modal-open #controls,
   display: flex !important;
   align-items: center;
   justify-content: center;
-  min-height: var(--message-height, 28px) !important;
-  max-height: var(--message-height, 28px) !important;
-  height: var(--message-height, 28px) !important;
+  min-height: var(--message-height, 36px) !important;
+  max-height: var(--message-height, 36px) !important;
+  height: var(--message-height, 36px) !important;
   min-width: 0 !important;
   padding: 0 10px !important;
   border: 0 !important;
@@ -4792,7 +4792,7 @@ body.choice-modal-open #controls,
   overflow: hidden !important;
   white-space: nowrap !important;
   text-overflow: ellipsis !important;
-  font-size: clamp(0.78rem, 2.55cqw, 0.96rem) !important;
+  font-size: clamp(1.05rem, 3.55cqw, 1.34rem) !important;
   letter-spacing: 0 !important;
 }
 
