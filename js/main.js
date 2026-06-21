@@ -128,6 +128,23 @@ function restoreGameStateFromUrlIfNeeded() {
 
   const snapshot = loadGameStateSnapshot();
   if (!snapshot) return false;
+  const requestedDailyDate = getRequestedDailyDateKeyFromUrl();
+  if (!params.has("resume") && requestedDailyDate) {
+    const requestedDailyVariant = typeof getRequestedDailyVariantFromUrl === "function"
+      ? getRequestedDailyVariantFromUrl()
+      : "normal";
+    const snapshotDailyVariant = typeof normalizeDailyVariant === "function"
+      ? normalizeDailyVariant(snapshot.dailyVariant || snapshot.pendingDailyVariant || "normal")
+      : snapshot.dailyVariant || snapshot.pendingDailyVariant || "normal";
+    const snapshotMatchesDailyLaunch = snapshot.runMode === "daily" &&
+      (snapshot.dailyDateKey || snapshot.pendingDailyDateKey) === requestedDailyDate &&
+      snapshotDailyVariant === requestedDailyVariant &&
+      !snapshot.gameOver;
+    if (!snapshotMatchesDailyLaunch) {
+      clearGameStateSnapshot();
+      return false;
+    }
+  }
 
   state = snapshot;
   if (!state.current && Array.isArray(state.deck) && state.deck.length) {

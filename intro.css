@@ -429,6 +429,16 @@ h1 {
   font-size: 1.55rem;
 }
 
+.action-card-face .card-court-art {
+  position: absolute;
+  inset: 19% 22%;
+  width: 56%;
+  height: 62%;
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 0;
+}
+
 .action-card-title {
   grid-column: 2;
   grid-row: 2;

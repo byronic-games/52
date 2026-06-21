@@ -1214,13 +1214,23 @@ function shortenEffectPayload(effectName, payload) {
     .trim();
 
   if (!text) return getShortEffectLabel(name);
-  if (/^yes\b/i.test(text)) return `${getShortEffectLabel(name)}: YES`;
-  if (/^no\b/i.test(text)) return `${getShortEffectLabel(name)}: NO`;
 
   if (name === "Lucky Dip") return `Dip: ${truncateMessage(text, 30)}`;
   if (name === "Power Parity") return `Parity: ${truncateMessage(text, 26)}`;
   if (name === "The River") return `River: ${truncateMessage(text, 28)}`;
   if (name === "Red Herring") return `Herring: ${truncateMessage(text, 27)}`;
+  if (name === "Ace ahead?") {
+    if (/no Ace/i.test(text)) return "No Ace in next 3";
+    if (/Ace/i.test(text)) return "Ace in next 3";
+  }
+  if (name === "King ahead?") {
+    if (/no King|not a King/i.test(text)) return "No King next";
+    if (/King/i.test(text)) return "King next";
+  }
+  if (name === "Face Card Ahead?") {
+    if (/no face card/i.test(text)) return "No face card in next 3";
+    if (/face card/i.test(text)) return "Face card in next 3";
+  }
   if (name === "Club Sandwich") return `Club: ${truncateMessage(text.replace(/^next Club is\s+/i, ""), 10)}`;
   if (name === "Split the Difference") {
     const gapMatch = text.match(/gap\s+is\s+(\d+)/i);
@@ -1240,6 +1250,8 @@ function shortenEffectPayload(effectName, payload) {
   }
   if (/hit/i.test(text) && /power/i.test(text)) return `${getShortEffectLabel(name)}: Power`;
   if (/hit/i.test(text) && /2 .*cheats?/i.test(text)) return `${getShortEffectLabel(name)}: 2 Cheats`;
+  if (/^yes\b/i.test(text)) return `${getShortEffectLabel(name)}: Yes`;
+  if (/^no\b/i.test(text)) return `${getShortEffectLabel(name)}: No`;
   if (/complete/i.test(text) && /power/i.test(text)) return `${getShortEffectLabel(name)}: Power`;
   if (/complete/i.test(text) && /cheats?/i.test(text)) {
     const countMatch = text.match(/choose\s+(\d+)/i);
@@ -1286,6 +1298,12 @@ function getShortPlayerMessage(message = "") {
   if (splitMatch) return `Gap: ${splitMatch[1]}`;
   if (/^Split the Difference:.*Joker/i.test(cleaned)) return "Gap: Joker";
   if (/^Split the Difference/i.test(cleaned)) return "Gap shown";
+  if (/^No\s*(?:[\u2014-]|\u00e2\u20ac\u201d)\s*no face card in the next three/i.test(cleaned)) return "No face card in next 3";
+  if (/^Yes\s*(?:[\u2014-]|\u00e2\u20ac\u201d)\s*a face card is in the next three/i.test(cleaned)) return "Face card in next 3";
+  if (/^No\s*(?:[\u2014-]|\u00e2\u20ac\u201d)\s*no Ace in the next three/i.test(cleaned)) return "No Ace in next 3";
+  if (/^Yes\s*(?:[\u2014-]|\u00e2\u20ac\u201d)\s*an Ace is in the next three/i.test(cleaned)) return "Ace in next 3";
+  if (/^No\s*(?:[\u2014-]|\u00e2\u20ac\u201d)\s*(?:no|not a) King/i.test(cleaned)) return "No King next";
+  if (/^Yes\s*(?:[\u2014-]|\u00e2\u20ac\u201d)\s*(?:a King is in the next three|it is a King)/i.test(cleaned)) return "King next";
   const sixthMatch = cleaned.match(/^Sixth Sense:\s*(higher|lower)/i);
   if (sixthMatch) return `6? ${sixthMatch[1].toUpperCase()}`;
   if (/^Sixth Sense sees neither/i.test(cleaned)) return "6? NEITHER";

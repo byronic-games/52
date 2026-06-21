@@ -12,7 +12,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="images/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="intro.css?v=20260620e">
+  <link rel="stylesheet" href="intro.css?v=20260621a">
 </head>
 <body class="intro-page">
   <main class="intro-shell">
@@ -381,20 +381,33 @@
         return rank === "J" || rank === "Q" || rank === "K";
       }
 
+      function getIntroFaceCardImagePath(card) {
+        const rankName = {
+          J: "jack",
+          Q: "queen",
+          K: "king",
+        }[String(card?.rank || "").toUpperCase()];
+        const suitName = {
+          "\u2663": "clubs",
+          "\u2666": "diamonds",
+          "\u2665": "hearts",
+          "\u2660": "spades",
+        }[card?.suit || ""];
+        return rankName && suitName ? `images/face_cards/${rankName}_${suitName}.png` : "";
+      }
+
       function buildIntroCardFaceMarkup(card) {
-        const centerSuit = isIntroFaceRank(card.rank)
-          ? ""
+        const faceArt = isIntroFaceRank(card.rank) ? getIntroFaceCardImagePath(card) : "";
+        const centerMarkup = faceArt
+          ? `<img class="card-court-art" src="${faceArt}" alt="" aria-hidden="true" draggable="false">`
           : `<div class="card-center-suit" aria-hidden="true">${card.suit}</div>`;
-        const cornerSuit = isIntroFaceRank(card.rank)
-          ? ""
-          : `<span class="card-suit" aria-hidden="true">${card.suit}</span>`;
         return `
           <div class="card-corner card-corner-tl">
-            <span class="card-rank">${card.rank}</span>${cornerSuit}
+            <span class="card-rank">${card.rank}</span><span class="card-suit" aria-hidden="true">${card.suit}</span>
           </div>
-          ${centerSuit}
+          ${centerMarkup}
           <div class="card-corner card-corner-br" aria-hidden="true">
-            <span class="card-rank">${card.rank}</span>${cornerSuit}
+            <span class="card-rank">${card.rank}</span><span class="card-suit" aria-hidden="true">${card.suit}</span>
           </div>
         `;
       }

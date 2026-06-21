@@ -1,6 +1,5 @@
 param(
-    [Parameter(Mandatory = $true)]
-    [string]$Message,
+    [string]$Message = "Game updates",
     [string]$Branch = "main",
     [string]$Remote = "origin"
 )
