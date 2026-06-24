@@ -1779,6 +1779,7 @@ function unmarkCardSeen(card) {
 function advanceToCard(card, options = {}) {
   state.current = card;
   state.index += 1;
+  clearTemporaryCardValue(card);
   state.cheatUsesOnCurrentCard = 0;
   resetCurrentTurnNudgeTracking();
   return markCardSeen(card, options);
@@ -1892,6 +1893,11 @@ function getTemporaryCardValue(card) {
   if (!card || isJokerCard(card)) return null;
   const value = state.temporaryCardValues?.[card.id];
   return Number.isFinite(value) ? value : null;
+}
+
+function clearTemporaryCardValue(card) {
+  if (!card?.id || !state.temporaryCardValues || typeof state.temporaryCardValues !== "object") return;
+  delete state.temporaryCardValues[card.id];
 }
 
 function setTemporaryCardValue(card, value) {

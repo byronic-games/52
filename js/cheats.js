@@ -322,7 +322,7 @@ const CHEAT_DESCRIPTIONS = {
   "Lower of Next Two": "Reveals the lowest value of the next two face down cards.",
   "Next Card Parity": "Reveals if the next card is odd, even, a face card, or a Joker.",
   "Power Parity": "Reveals the parity of the next three face-down cards in order: odd, even, face, or Joker.",
-  "Emergency Services": "Treat the next three non-Joker face-down cards as temporary 9s when revealed. Jokers are unaffected.",
+  "Emergency Services": "Treat the next three non-Joker face-down card reveals as temporary 9s. Each card returns to its normal value once face-up.",
   "Chance Higher": "Calculates the probability that one of the remaining cards is higher than the current card.",
   "Chance Lower": "Calculates the probability that one of the remaining cards is lower than the current card.",
   "Nudge +1": "Increases the value of the current face card by one for the next guess.",
@@ -388,6 +388,7 @@ const CHEAT_DESCRIPTIONS = {
   "Corporate Icebreaker": "Hear two true value-and-suit facts and one believable lie about the next three cards.",
   "Legends Ahead": "Your next Cheat pick offers Legendary Cheats only.",
   "Royal Flush": "Reveals whether the next face-down card is a royal card: 10, J, Q, K, or A.",
+  "Assemble": "Pull all remaining face-down cards matching the current value to the top of the face-down deck without changing any other face-down card order.",
   "The Number Of The Beast": "Pull all remaining face-down 6s to the top of the face-down deck without changing any other face-down card order.",
   "Jackpot": "Pull all remaining face-down 7s to the top of the face-down deck without changing any other face-down card order.",
   "Emergency Cord": "Gain 10 Nudge +1 and 10 Nudge -1, then shuffle two random Yellow Jokers into the face-down deck.",
@@ -868,7 +869,7 @@ const CHEATS = [
         return setTemporaryCardValue(card, 9) ? count + 1 : count;
       }, 0);
       if (!changed) return "Emergency Services found only Jokers - no card values changed.";
-      return `Emergency Services dispatched - ${changed} upcoming card${changed === 1 ? "" : "s"} will reveal as TEMP 9.`;
+      return `Emergency Services dispatched - ${changed} upcoming card${changed === 1 ? "" : "s"} will reveal as TEMP 9, then return to normal.`;
     },
   },
   {
@@ -2189,6 +2190,24 @@ const CHEATS = [
       return royalRanks.has(rank)
         ? "Royal Flush: yes, the next card is 10, J, Q, K, or A."
         : "Royal Flush: no, the next card is not 10, J, Q, K, or A.";
+    },
+  },
+  {
+    id: "assemble",
+    name: "Assemble",
+    rarity: "legendary",
+    weight: 0.75,
+    included: true,
+    unlockAt: 30,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => {
+      if (!state.current || isJokerCard(state.current)) return "Assemble needs a normal current card.";
+      const currentValue = getCurrentEffectiveValue();
+      if (!Number.isFinite(currentValue)) return "Assemble needs a normal current card value.";
+      const rank = valueToRank(currentValue);
+      const label = rank;
+      return pullRemainingRankToTop(rank, label);
     },
   },
   {
