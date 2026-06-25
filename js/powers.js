@@ -280,6 +280,10 @@ function isNudgeStartingPower(power) {
   return ["balanced_nudges", "updraft", "downforce"].includes(power?.id);
 }
 
+function isNudgeSupportPower(power) {
+  return power?.id === "double_bubble";
+}
+
 function pickPowerOptionFromPool(pool, seeded, rng) {
   if (!pool.length) return null;
   const idx = seeded
@@ -296,6 +300,10 @@ function getRandomPowerOptions(count = 2, seedString = "", includeAll = false, e
   const rng = seeded
     ? mulberry32(stringToSeedNumber(getStartPowerOfferSeed(seedString)))
     : null;
+
+  if (count < 2 || !pool.some(isNudgeStartingPower)) {
+    pool.splice(0, pool.length, ...pool.filter((power) => !isNudgeSupportPower(power)));
+  }
 
   if (count >= 2) {
     const nudgePool = pool.filter(isNudgeStartingPower);

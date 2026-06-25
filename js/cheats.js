@@ -235,7 +235,12 @@ function getCheatDeterministicRng(label) {
 }
 
 function getNudgeNudgeDelta(baseDelta) {
-  return baseDelta * (state.nudgeNudgeArmed ? 2 : 1);
+  if (typeof getActiveNudgeDelta === "function") {
+    return getActiveNudgeDelta(baseDelta);
+  }
+  const nudgeNudgeStacks = Math.max(0, Math.floor(Number(state.nudgeNudgeStacks) || 0));
+  const legacyCheatStacks = nudgeNudgeStacks > 0 ? nudgeNudgeStacks : (state.nudgeNudgeArmed ? 1 : 0);
+  return baseDelta * (2 ** legacyCheatStacks);
 }
 
 function getWeightedRandomIndex(items, getWeight, rng = Math.random) {
@@ -330,7 +335,7 @@ const CHEAT_DESCRIPTIONS = {
   "Nudge +2": "Increases the value of the current face card by two, stopping at King.",
   "Nudge -2": "Decreases the value of the current face card by two, stopping at Ace.",
   "Need The Nudge": "Swap your stored Nudge +1 and Nudge -1 charge totals.",
-  "Nudge, Nudge": "For this turn only, each Nudge moves the card twice as far while still costing one charge.",
+  "Nudge, Nudge": "For this turn only, each play doubles Nudge strength while still costing one charge.",
   "+5 Energy": "Energy decks only. Gain 5 Energy instantly.",
   "Next Card Nudge Up": "Temporarily nudges the next face-down card up by 3 for the next guess, stopping at King.",
   "Next Card Nudge Down": "Temporarily nudges the next face-down card down by 3 for the next guess, stopping at Ace.",
@@ -1078,12 +1083,14 @@ const CHEATS = [
     weight: 1,
     included: true,
     unlockAt: 0,
-    stacking: "unique",
+    stacking: "repeatable",
     consumeOnUse: true,
     use: () => {
       if (!state.current) return "No current card.";
+      state.nudgeNudgeStacks = Math.max(0, Math.floor(Number(state.nudgeNudgeStacks) || 0)) + 1;
       state.nudgeNudgeArmed = true;
-      return "Nudge, Nudge armed - nudges are doubled until the next card is revealed.";
+      const multiplier = 2 ** state.nudgeNudgeStacks;
+      return `Nudge, Nudge armed - Nudge strength is x${multiplier} until the next card is revealed.`;
     },
   },
   {

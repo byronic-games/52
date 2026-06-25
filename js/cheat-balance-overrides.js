@@ -538,8 +538,8 @@ window.CHEAT_BALANCE_OVERRIDES = {
                            "rarity":  "uncommon"
                        },
     "nudge_nudge":  {
-                        "stacking":  "unique",
-                        "description":  "For this turn only, each Nudge moves the card twice as far while still costing one charge.",
+                         "stacking":  "repeatable",
+                         "description":  "For this turn only, each play doubles Nudge strength while still costing one charge.",
                         "weight":  1,
                         "unlockAt":  100,
                         "name":  "Nudge, Nudge",

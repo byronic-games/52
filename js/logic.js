@@ -890,6 +890,7 @@ function previewPendingRunBehindPowerChoice(deck, runMode = "standard", deckKey 
   state.nudgeUpCharges = 0;
   state.nudgeDownCharges = 0;
   state.nudgeNudgeArmed = false;
+  state.nudgeNudgeStacks = 0;
   state.fiveAliveNudgeLocked = false;
   state.temporaryCardBackRepairs = {};
   state.temporaryCardBackMarks = {};
@@ -1308,6 +1309,7 @@ function startRunWithPower(powerId) {
     nudgeUpCharges: 0,
     nudgeDownCharges: 0,
     nudgeNudgeArmed: false,
+    nudgeNudgeStacks: 0,
     fiveAliveNudgeLocked: false,
     bingoCornersAwarded: false,
     bingoLineAwardCount: 0,
@@ -1346,6 +1348,7 @@ function startRunWithPower(powerId) {
     cursedShieldArmed: false,
     cursedShieldCharges: 0,
     nudgeNudgeArmed: false,
+    nudgeNudgeStacks: 0,
     oneLifeLeftLives: 0,
     killerQueenLives: 0,
     suitedAndBootedArmed: false,
@@ -2136,7 +2139,9 @@ function getAdjustedNextNudgeTarget(baseDelta) {
 
 function getActiveNudgeDelta(baseDelta) {
   const powerMultiplier = runHasPower("double_bubble") ? 2 : 1;
-  const cheatMultiplier = state.nudgeNudgeArmed ? 2 : 1;
+  const nudgeNudgeStacks = Math.max(0, Math.floor(Number(state.nudgeNudgeStacks) || 0));
+  const legacyCheatStacks = nudgeNudgeStacks > 0 ? nudgeNudgeStacks : (state.nudgeNudgeArmed ? 1 : 0);
+  const cheatMultiplier = 2 ** legacyCheatStacks;
   return baseDelta * powerMultiplier * cheatMultiplier;
 }
 
@@ -2596,6 +2601,7 @@ function clearArmedPowerEffects() {
   state.cursedShieldArmed = false;
   state.cursedShieldCharges = 0;
   state.nudgeNudgeArmed = false;
+  state.nudgeNudgeStacks = 0;
   state.oneLifeLeftLives = 0;
   state.killerQueenLives = 0;
   state.suitedAndBootedArmed = false;
@@ -2908,6 +2914,7 @@ function makeGuessLegacy(type) {
   state.forcedNextGuess = "";
   state.lockCurrentCardForForcedGuess = false;
   state.nudgeNudgeArmed = false;
+  state.nudgeNudgeStacks = 0;
 
   // --- Unified correct guess logic for streaks and extensibility ---
   let correct = false;
@@ -2925,6 +2932,10 @@ function makeGuessLegacy(type) {
   let rescuedByHotOrCold = false;
   let rescuedByStitchInTime = false;
   let allInGuessWasCorrect = false;
+  let catch22Hit = false;
+  let blackjackHit = false;
+  let diamondGeezerHit = false;
+  let findLadyHit = false;
 
   const forcedNudgeDirection =
     forcedNextGuessDirection === "higher"
@@ -3018,7 +3029,6 @@ function makeGuessLegacy(type) {
     const rescuedByGodSaveKing = !comparisonCorrect && godSaveKingWasArmed && getNextComparisonValueForGuess(next) === 13;
     rescuedByAlwaysBetBlack = !comparisonCorrect && alwaysBetBlackWasArmed && (next.suit === SUITS[0] || next.suit === SUITS[3]);
     rescuedByRedDeadRedemption = !comparisonCorrect && redDeadRedemptionWasArmed && (next.suit === SUITS[1] || next.suit === SUITS[2]);
-    rescuedByCursedShield = !comparisonCorrect && cursedShieldWasArmed;
     rescuedByKillerQueen =
       !comparisonCorrect &&
       type === "lower" &&
@@ -3028,20 +3038,23 @@ function makeGuessLegacy(type) {
       killerQueenLivesBeforeGuess > 0;
     rescuedBySuitedAndBooted = !comparisonCorrect && suitedAndBootedWasArmed && !!suitedAndBootedSuit && next.suit !== suitedAndBootedSuit;
     rescuedBySuitSave = !comparisonCorrect && !!passiveSuitSavePower;
+    const rescuedBySpecificSave =
+      rescuedByLucky7 ||
+      rescuedByFiveAlive ||
+      rescuedByMarginForError ||
+      rescuedByHotOrCold ||
+      rescuedByStitchInTime ||
+      rescuedByGodSaveKing ||
+      rescuedByAlwaysBetBlack ||
+      rescuedByRedDeadRedemption ||
+      rescuedByKillerQueen ||
+      rescuedBySuitedAndBooted ||
+      rescuedBySuitSave;
+    rescuedByCursedShield = !comparisonCorrect && !rescuedBySpecificSave && cursedShieldWasArmed;
     rescuedByOneLifeLeft =
       !comparisonCorrect &&
-      !rescuedByLucky7 &&
-      !rescuedByFiveAlive &&
-      !rescuedByMarginForError &&
-      !rescuedByHotOrCold &&
-      !rescuedByStitchInTime &&
-      !rescuedByGodSaveKing &&
-      !rescuedByAlwaysBetBlack &&
-      !rescuedByRedDeadRedemption &&
+      !rescuedBySpecificSave &&
       !rescuedByCursedShield &&
-      !rescuedByKillerQueen &&
-      !rescuedBySuitedAndBooted &&
-      !rescuedBySuitSave &&
       oneLifeLeftLivesBeforeGuess > 0;
     correct =
       comparisonCorrect ||
@@ -3136,6 +3149,28 @@ function makeGuessLegacy(type) {
     state.nudgeDownCharges = (state.nudgeDownCharges || 0) + forcedNudgeReward;
   }
   updateBestScoreIfNeeded();
+  if (catch22WasArmed && Number.isFinite(nextComparisonValue) && nextComparisonValue === 2) {
+    catch22Hit = true;
+    queuePowerAward("catch_22");
+  }
+  if (
+    blackjackWasArmed &&
+    Number.isFinite(currentComparisonValue) &&
+    Number.isFinite(nextComparisonValue) &&
+    currentComparisonValue + nextComparisonValue === 21
+  ) {
+    blackjackHit = true;
+    queuePowerAward("blackjack");
+  }
+  if (diamondGeezerWasArmed && nextSuitForResolution === "♦") {
+    diamondGeezerHit = true;
+    queueCheatAward("diamond_geezer");
+    queueCheatAward("diamond_geezer");
+  }
+  if (findLadyWasArmed && next.rank === "Q") {
+    findLadyHit = true;
+    queuePowerAward("find_the_lady");
+  }
   const equals11Resolved = equals11WasArmed && Number.isFinite(currentComparisonValue) && Number.isFinite(nextComparisonValue);
   const equals11Total = equals11Resolved ? currentComparisonValue + nextComparisonValue : null;
   const equals11Hit = equals11Resolved && equals11Total === 11;
@@ -3277,6 +3312,14 @@ function makeGuessLegacy(type) {
     redDeadRedemptionWasArmed,
     oddOneOutWasArmed,
     sixSevenWasArmed,
+    catch22WasArmed,
+    catch22Hit,
+    blackjackWasArmed,
+    blackjackHit,
+    diamondGeezerWasArmed,
+    diamondGeezerHit,
+    findLadyWasArmed,
+    findLadyHit,
     cursedShieldWasArmed,
     oneLifeLeftLivesBeforeGuess,
     oneLifeLeftLivesAfterGuess: state.oneLifeLeftLives || 0,
@@ -3369,6 +3412,93 @@ function makeGuessLegacy(type) {
     setTimeout(() => {
       state.pauseForCheat = false;
       offerCheatChoice();
+      render();
+    }, 1000);
+    return;
+  }
+
+  if (catch22Hit) {
+    state.pauseForCheat = true;
+    state.message = appendEnergyFeedback(`Catch-22 hit! The next card was a 2 - choose a new Power.${bingoAwardText}`, revealDistance);
+    render();
+    setTimeout(() => {
+      state.pauseForCheat = false;
+      const nextReason = state.pendingPowerAwardQueue.shift() || "catch_22";
+      offerRewardPowerChoice(nextReason);
+      render();
+    }, 1000);
+    return;
+  }
+
+  if (blackjackHit) {
+    if (state.streak >= getCheatRewardThreshold()) {
+      state.streak = 0;
+      queueCheatAward("streak");
+    }
+    state.pauseForCheat = true;
+    state.message = appendEnergyFeedback(`Blackjack hit! Current + next = 21 - choose a new Power.${bingoAwardText}`, revealDistance);
+    render();
+    setTimeout(() => {
+      state.pauseForCheat = false;
+      const nextReason = state.pendingPowerAwardQueue.shift() || "blackjack";
+      offerRewardPowerChoice(nextReason);
+      render();
+    }, 1000);
+    return;
+  }
+
+  if (findLadyHit) {
+    if (state.streak >= getCheatRewardThreshold()) {
+      state.streak = 0;
+      queueCheatAward("streak");
+    }
+    state.pauseForCheat = true;
+    state.message = appendEnergyFeedback(`Find The Lady hit! Queen revealed - choose a new Power.${bingoAwardText}`, revealDistance);
+    render();
+    setTimeout(() => {
+      state.pauseForCheat = false;
+      const nextReason = state.pendingPowerAwardQueue.shift() || "find_the_lady";
+      offerRewardPowerChoice(nextReason);
+      render();
+    }, 1000);
+    return;
+  }
+
+  if (diamondGeezerHit) {
+    if (state.streak >= getCheatRewardThreshold()) {
+      state.streak = 0;
+      queueCheatAward("streak");
+    }
+    state.pauseForCheat = true;
+    state.message = appendEnergyFeedback(`Diamond Geezer hit! Diamond revealed - choose 2 bonus Cheats.${bingoAwardText}`, revealDistance);
+    render();
+    setTimeout(() => {
+      state.pauseForCheat = false;
+      const nextReason = state.pendingCheatAwardQueue.shift() || "diamond_geezer";
+      offerCheatChoice(nextReason);
+      render();
+    }, 1000);
+    return;
+  }
+
+  if (equals11Hit) {
+    let equalsMessage = `Equals 11 hit! ${valueToRank(currentComparisonValue)} + ${valueToRank(nextComparisonValue)} = 11. Choose 3 bonus cheats.`;
+    if (state.streak >= getCheatRewardThreshold()) {
+      state.streak = 0;
+      queueCheatAward("streak");
+      equalsMessage += " Streak cheat queued next.";
+    }
+    if (powerAwards.length > 0) {
+      equalsMessage += ` Power gained: ${powerAwards.join(", ")}.`;
+    }
+    equalsMessage += bingoAwardText;
+    state.pauseForCheat = true;
+    state.message = appendEnergyFeedback(equalsMessage, revealDistance);
+    render();
+    setTimeout(() => {
+      state.pauseForCheat = false;
+      const nextReason = state.pendingCheatAwardQueue.shift() || "equals_11";
+      offerCheatChoice(nextReason);
       render();
     }, 1000);
     return;
@@ -3493,6 +3623,11 @@ function makeGuessLegacy(type) {
   }
   if (rescuedByKillerQueen) {
     state.message = `Killer Queen saved the run - Lower on Queen revealed ${describeCard(next)}. ${state.killerQueenLives || 0} ${state.killerQueenLives === 1 ? "save" : "saves"} left.`;
+    render();
+    return;
+  }
+  if (rescuedByCursedShield) {
+    state.message = `Cursed Shield saved the run - it was ${describeCard(next)}.`;
     render();
     return;
   }
@@ -3770,6 +3905,7 @@ function makeGuess(type) {
   state.blankSpaceActive = false;
   state.blankSpaceValue = null;
   state.nudgeNudgeArmed = false;
+  state.nudgeNudgeStacks = 0;
   state.forcedNextGuess = "";
   state.lockCurrentCardForForcedGuess = false;
   state.wlStage = "";
@@ -3797,6 +3933,7 @@ function makeGuess(type) {
   let catch22Hit = false;
   let blackjackHit = false;
   let diamondGeezerHit = false;
+  let findLadyHit = false;
   let psychoCompleted = false;
 
   const forcedNudgeDirection =
@@ -3915,7 +4052,6 @@ function makeGuess(type) {
     const rescuedByGodSaveKing = !comparisonCorrect && godSaveKingWasArmed && getNextComparisonValueForGuess(next) === 13;
     rescuedByAlwaysBetBlack = !comparisonCorrect && alwaysBetBlackWasArmed && (nextSuitForResolution === SUITS[0] || nextSuitForResolution === SUITS[3]);
     rescuedByRedDeadRedemption = !comparisonCorrect && redDeadRedemptionWasArmed && (nextSuitForResolution === SUITS[1] || nextSuitForResolution === SUITS[2]);
-    rescuedByCursedShield = !comparisonCorrect && cursedShieldWasArmed;
     rescuedByKillerQueen =
       !comparisonCorrect &&
       type === "lower" &&
@@ -3925,20 +4061,23 @@ function makeGuess(type) {
       killerQueenLivesBeforeGuess > 0;
     rescuedBySuitedAndBooted = !comparisonCorrect && suitedAndBootedWasArmed && !!suitedAndBootedSuit && nextSuitForResolution !== suitedAndBootedSuit;
     rescuedBySuitSave = !comparisonCorrect && !!passiveSuitSavePower;
+    const rescuedBySpecificSave =
+      rescuedByLucky7 ||
+      rescuedByFiveAlive ||
+      rescuedByMarginForError ||
+      rescuedByHotOrCold ||
+      rescuedByStitchInTime ||
+      rescuedByGodSaveKing ||
+      rescuedByAlwaysBetBlack ||
+      rescuedByRedDeadRedemption ||
+      rescuedByKillerQueen ||
+      rescuedBySuitedAndBooted ||
+      rescuedBySuitSave;
+    rescuedByCursedShield = !comparisonCorrect && !rescuedBySpecificSave && cursedShieldWasArmed;
     rescuedByOneLifeLeft =
       !comparisonCorrect &&
-      !rescuedByLucky7 &&
-      !rescuedByFiveAlive &&
-      !rescuedByMarginForError &&
-      !rescuedByHotOrCold &&
-      !rescuedByStitchInTime &&
-      !rescuedByGodSaveKing &&
-      !rescuedByAlwaysBetBlack &&
-      !rescuedByRedDeadRedemption &&
+      !rescuedBySpecificSave &&
       !rescuedByCursedShield &&
-      !rescuedByKillerQueen &&
-      !rescuedBySuitedAndBooted &&
-      !rescuedBySuitSave &&
       oneLifeLeftLivesBeforeGuess > 0;
     correct =
       comparisonCorrect ||
@@ -4120,6 +4259,7 @@ function makeGuess(type) {
     queueCheatAward("diamond_geezer");
   }
   if (findLadyWasArmed && next.rank === "Q") {
+    findLadyHit = true;
     queuePowerAward("find_the_lady");
   }
   if (higherHigherHigherRemainingBeforeGuess > 0) {
@@ -4312,6 +4452,12 @@ function makeGuess(type) {
     psychoRemainingAfterGuess: state.psychoRemaining || 0,
     catch22WasArmed,
     catch22Hit,
+    blackjackWasArmed,
+    blackjackHit,
+    diamondGeezerWasArmed,
+    diamondGeezerHit,
+    findLadyWasArmed,
+    findLadyHit,
     godSaveKingWasArmed,
     alwaysBetBlackWasArmed,
     redDeadRedemptionWasArmed,
@@ -4371,6 +4517,23 @@ function makeGuess(type) {
     setTimeout(() => {
       state.pauseForCheat = false;
       const nextReason = state.pendingPowerAwardQueue.shift() || "blank_space";
+      offerRewardPowerChoice(nextReason);
+      render();
+    }, 1000);
+    return;
+  }
+
+  if (findLadyHit) {
+    if (state.streak >= getCheatRewardThreshold()) {
+      state.streak = 0;
+      queueCheatAward("streak");
+    }
+    state.pauseForCheat = true;
+    state.message = appendEnergyFeedback(`Find The Lady hit! Queen revealed - choose a new Power.${refundText}${bingoAwardText}`, revealDistance);
+    render();
+    setTimeout(() => {
+      state.pauseForCheat = false;
+      const nextReason = state.pendingPowerAwardQueue.shift() || "find_the_lady";
       offerRewardPowerChoice(nextReason);
       render();
     }, 1000);
