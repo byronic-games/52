@@ -86,7 +86,7 @@ function createTutorialController() {
     {
       target: "#current-card",
       title: "Current Card",
-      copy: "This is your live card. The whole run is about comparing the next card with this value. Aces are low, Jacks are 11, Queens are 12, and Kings are 13.",
+      copy: "This is your live card. Hold it for active-effect details. Aces are low, Jacks are 11, Queens are 12, and Kings are 13.",
       placement: "lower",
     },
     {
@@ -123,9 +123,9 @@ function createTutorialController() {
       placement: "lower",
     },
     {
-      target: "#cheats-panel",
+      target: "#cheats-panel .cheat-scroll-window",
       title: "Held Cheats",
-      copy: "Cheats live in this row. They can reveal information, move cards, save a bad guess, change values, award Powers, or set up a later reveal. Hold one to read its details.",
+      copy: "Cheats live here. They can reveal information, move cards, save a bad guess, change values, award Powers, or set up a later reveal. Hold one for details.",
       placement: "lower",
     },
     {
@@ -150,14 +150,14 @@ function createTutorialController() {
       placement: "upper",
     },
     {
-      target: "#cheats-panel",
+      target: "#cheats-panel .cheat-scroll-window",
       title: "Using Cheats",
-      copy: "Tap a held Cheat when you want to use it. Some work immediately; some arm an effect and judge it when the next card is revealed.",
+      copy: "Tap a held Cheat when you want to use it, or hold for details. Some work immediately; some resolve when the next card is revealed.",
       clearView: true,
       placement: "lower",
     },
     {
-      target: "#memory-panel",
+      target: "#seen-grid-wrap",
       title: "The Grid",
       copy: "The grid records cards you have found. It helps you judge what values may still be face down, and some effects can hide or change what you know.",
       clearView: true,
@@ -166,7 +166,7 @@ function createTutorialController() {
     {
       target: "#header-power-chip",
       title: "Powers",
-      copy: "Your shield shows your starting Power. Powers can be passive, conditional, or award-based, and extra Power choices can appear during a run.",
+      copy: "Your shield shows your starting Power. Hold Powers for details. Extra Power choices can appear during a run.",
       clearView: true,
       placement: "lower",
     },
@@ -214,7 +214,7 @@ function createTutorialController() {
     {
       target: "#power-choice-list",
       title: "Power Options",
-      copy: "Read both options. Some give Nudges, some protect mistakes, some change card values, and some reward specific revealed cards. Offers try to stay useful together.",
+      copy: "Read both options, or hold either Power for details. Some give Nudges, protect mistakes, change values, or reward specific reveals.",
       clearView: true,
       placement: "upper",
     },

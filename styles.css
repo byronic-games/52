@@ -2870,6 +2870,21 @@ body.choice-modal-open #controls,
   will-change: box-shadow, outline-color;
 }
 
+#cheats-panel .cheat-scroll-window.tutorial-focus-target,
+#seen-grid-wrap.tutorial-focus-target {
+  border-radius: 12px;
+  outline-offset: 4px;
+}
+
+#cheats-panel .cheat-scroll-window.tutorial-focus-target {
+  min-height: 100%;
+}
+
+#seen-grid-wrap.tutorial-focus-target {
+  display: block;
+  width: 100%;
+}
+
 @keyframes tutorial-focus-throb {
   0%,
   100% {
