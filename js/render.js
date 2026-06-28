@@ -3611,6 +3611,9 @@ function renderPowerChoice() {
   if (choiceLocked) {
     window.setTimeout(render, Math.max(0, (state.powerChoiceLockedUntil || 0) - Date.now()));
   }
+  if (!state.activePowerAwardReason && state.pendingRunMode !== "daily" && typeof window.maybeStartPowerChoiceTutorial === "function") {
+    window.setTimeout(() => window.maybeStartPowerChoiceTutorial(), 0);
+  }
 }
 
 function renderSeenGrid() {

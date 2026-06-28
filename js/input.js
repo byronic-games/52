@@ -22,8 +22,15 @@ function ensureTutorialGuessWillResolveAsCorrect(type) {
     }
   }
 
-  if (candidateIndex < 0) return;
-  [state.deck[nextIndex], state.deck[candidateIndex]] = [state.deck[candidateIndex], state.deck[nextIndex]];
+  if (candidateIndex > 0) {
+    [state.deck[nextIndex], state.deck[candidateIndex]] = [state.deck[candidateIndex], state.deck[nextIndex]];
+    return;
+  }
+
+  const nextComparisonValue = getNextComparisonValueForGuess(state.deck[nextIndex]);
+  if (Number.isFinite(nextComparisonValue)) {
+    state.nextCardValueModifier = (state.nextCardValueModifier || 0) + (currentComparisonValue - nextComparisonValue);
+  }
 }
 
 function handleGuessButtonPress(type) {
@@ -79,90 +86,146 @@ function createTutorialController() {
     {
       target: "#current-card",
       title: "Current Card",
-      copy: "This is your live card. You compare the next face-down card against this value. Aces are low (1). Same value continues the run.",
+      copy: "This is your live card. The whole run is about comparing the next card with this value. Aces are low, Jacks are 11, Queens are 12, and Kings are 13.",
+      placement: "lower",
     },
     {
       target: "#face-down-deck",
       title: "Next Card",
-      copy: "This is the unknown card. Your Higher / Lower guess is about this card.",
+      copy: "This is the unknown card. Your Higher or Lower guess is about this card, not the rest of the deck.",
+      placement: "lower",
+    },
+    {
+      target: "#run-message-row",
+      title: "Run Messages",
+      copy: "Important effects appear here: correct guesses, saves, Joker effects, cheat results, and anything the game needs you to know right now.",
+      placement: "lower",
+    },
+    {
+      target: "#controls",
+      title: "Simple Rule",
+      copy: "Guess Higher if you think the next card is above the current value. Guess Lower if it is below. Equal values are safe and keep the run alive.",
+      placement: "lower",
     },
     {
       target: "#controls",
       title: "Make A Guess",
-      copy: "Tap Higher or Lower now to continue the tutorial.",
+      copy: "Tap Higher or Lower now. Tutorial guesses are protected so you can learn the reveal flow safely.",
       requireGuess: true,
       clearView: true,
+      compact: true,
+      placement: "lower",
     },
     {
       target: "#cheats-panel",
       title: "Nudges",
-      copy: "Nudge up or down to temporarily shift the value of the current card before your next guess.",
+      copy: "Nudges are small value changes for the current card. Blue runs award them from correct guesses, and some Powers or Cheats change how strong they are.",
+      placement: "lower",
+    },
+    {
+      target: "#cheats-panel",
+      title: "Held Cheats",
+      copy: "Cheats live in this row. They can reveal information, move cards, save a bad guess, change values, award Powers, or set up a later reveal. Hold one to read its details.",
+      placement: "lower",
     },
     {
       target: "#controls",
       title: "Build Your Streak",
-      copy: "Keep guessing until you have made three correct guesses. Then you will unlock a cheat choice and pick one yourself.",
+      copy: "Keep guessing safely. At the reward threshold, you choose a Cheat for your hand.",
       requireGuess: true,
       untilCorrectAnswers: 3,
       waitForCheatOffer: true,
       clearView: true,
+      compact: true,
+      placement: "lower",
     },
     {
       target: "#cheat-choice-container .choice-modal",
       title: "Choose Your Cheat",
-      copy: "Your streak unlocked a cheat choice. Pick one now to continue the tutorial.",
+      copy: "Pick one Cheat. The card text tells you what it does; rarity affects how often it appears, not whether it is useful.",
       requireCheatPick: true,
+      showHighlight: false,
       clearView: true,
-    },
-    {
-      target: "#cheats-panel",
-      title: "Play or Preview Cheats",
-      copy: "Play or Preview Cheats - hold a cheat to view more detail. Tap a cheat to play.",
-      clearView: true,
-    },
-    {
-      target: "#memory-panel",
-      title: "The Grid",
-      copy: "The grid records the cards you have already found, helping you judge what values may still be face down.",
-      clearView: true,
+      compact: true,
       placement: "upper",
     },
     {
       target: "#cheats-panel",
+      title: "Using Cheats",
+      copy: "Tap a held Cheat when you want to use it. Some work immediately; some arm an effect and judge it when the next card is revealed.",
+      clearView: true,
+      placement: "lower",
+    },
+    {
+      target: "#memory-panel",
+      title: "The Grid",
+      copy: "The grid records cards you have found. It helps you judge what values may still be face down, and some effects can hide or change what you know.",
+      clearView: true,
+      placement: "upper",
+    },
+    {
+      target: "#header-power-chip",
+      title: "Powers",
+      copy: "Your shield shows your starting Power. Powers can be passive, conditional, or award-based, and extra Power choices can appear during a run.",
+      clearView: true,
+      placement: "lower",
+    },
+    {
+      target: "#run-log-btn",
+      title: "Run Log",
+      copy: "Open the log whenever you want to check what happened. Settings also let you download or share a run log for debugging.",
+      clearView: true,
+      placement: "lower",
+    },
+    {
+      target: "#menu-btn",
+      title: "More Modes",
+      copy: "From the main menu you will unlock Green Energy runs, Yellow Joker runs, Orange hybrid runs, Daily challenges, the Collection, Profiles, Heroes, and the final Black Deck.",
+      clearView: true,
+      placement: "lower",
+    },
+    {
+      target: "#cheats-panel",
       title: "You're Ready",
-      copy: "See if you can clear the whole deck. Good luck!",
+      copy: "Clear all 52 cards to win the run. Start simple: read the message, use the grid, spend Nudges carefully, and hold Cheats before playing them.",
       nextLabel: "Let's go.",
       clearView: true,
+      placement: "lower",
     },
   ];
 
   const powerSteps = [
     {
       target: "#power-choice-container .choice-modal",
-      title: "Pick A Starting Power",
-      copy: "Every run starts by choosing one power. This sets your opening advantage for the run.",
+      title: "Starting Power",
+      copy: "Before each run, pick a starting Power. Powers offer Nudges or other benefits. Choose the one that helps most.",
+      showHighlight: false,
       clearView: true,
+      compact: true,
+      placement: "upper",
     },
     {
       target: "#power-choice-current-card",
       title: "Starting Card",
-      copy: "This is the card your run begins on, shown here before you pick your opening power.",
+      copy: "This is the card your run will begin on. Use it to choose a Power that fits the opening position.",
       clearView: true,
+      placement: "upper",
     },
     {
       target: "#power-choice-list",
-      title: "Two Power Options",
-      copy: "You will usually get two options. Assess both and choose the one that fits your plan.",
+      title: "Power Options",
+      copy: "Read both options. Some give Nudges, some protect mistakes, some change card values, and some reward specific revealed cards. Offers try to stay useful together.",
       clearView: true,
       placement: "upper",
     },
     {
       target: "#power-choice-list .choice-card",
       title: "Choose To Continue",
-      copy: "Pick either power now to begin the run.",
+      copy: "Pick a Power now to begin the run.",
       requirePowerPick: true,
       showHighlight: false,
       clearView: true,
+      compact: true,
       placement: "upper",
     },
   ];
@@ -195,6 +258,14 @@ function createTutorialController() {
 
   function getActiveSteps() {
     return phase === "power" ? powerSteps : runSteps;
+  }
+
+  function getTutorialProgress() {
+    const totalSteps = powerSteps.length + runSteps.length;
+    const currentStep = phase === "power"
+      ? stepIndex + 1
+      : powerSteps.length + stepIndex + 1;
+    return { currentStep, totalSteps };
   }
 
   function consumeForcedReplay() {
@@ -255,6 +326,7 @@ function createTutorialController() {
     overlay.setAttribute("aria-hidden", "true");
     overlay.classList.remove("tutorial-clear-view");
     overlay.classList.remove("tutorial-dialog-upper");
+    overlay.classList.remove("tutorial-dialog-compact");
     syncTutorialLockedControls();
     if (complete) {
       setTutorialCompleted();
@@ -269,7 +341,8 @@ function createTutorialController() {
       closeOverlay({ complete: phase === "run" });
       return;
     }
-    progress.innerText = `Step ${stepIndex + 1} / ${steps.length}`;
+    const { currentStep, totalSteps } = getTutorialProgress();
+    progress.innerText = `Step ${currentStep} / ${totalSteps}`;
     title.innerText = step.title;
     copy.innerText = step.copy;
     nextBtn.innerText = step.requireGuess || step.requirePowerPick || step.requireCheatPick || step.requireCheatUse
@@ -277,9 +350,17 @@ function createTutorialController() {
       : (step.nextLabel || (stepIndex === steps.length - 1 ? "Finish" : "Next"));
     nextBtn.disabled = !!step.requireGuess || !!step.requirePowerPick || !!step.requireCheatPick || !!step.requireCheatUse;
     overlay.classList.toggle("tutorial-clear-view", !!step.clearView);
-    overlay.classList.toggle("tutorial-dialog-upper", step.placement === "upper");
+    overlay.classList.toggle("tutorial-dialog-compact", !!step.compact);
+    overlay.classList.toggle("tutorial-dialog-upper", resolveDialogPlacement(step) === "upper");
     setFocusTarget(step);
     syncTutorialLockedControls();
+  }
+
+  function resolveDialogPlacement(step) {
+    if (step?.placement === "upper" || step?.placement === "lower") {
+      return step.placement;
+    }
+    return "lower";
   }
 
   function syncTutorialLockedControls() {
@@ -368,9 +449,7 @@ function createTutorialController() {
 
   function shouldForceCorrectGuess() {
     if (!active || phase !== "run") return false;
-    const steps = getActiveSteps();
-    const step = steps[stepIndex];
-    return !!step?.requireGuess;
+    return true;
   }
 
   function isBlockingNudge() {
@@ -381,7 +460,9 @@ function createTutorialController() {
   function isBlockingPowerPick() {
     if (!active) return false;
     if (phase !== "power") return false;
-    return false;
+    const steps = getActiveSteps();
+    const step = steps[stepIndex];
+    return !step?.requirePowerPick;
   }
 
   function isTutorialCheatOfferActive() {
@@ -395,7 +476,7 @@ function createTutorialController() {
     if (!active || phase !== "run") return false;
     const steps = getActiveSteps();
     const step = steps[stepIndex];
-    return !step?.requireCheatPick && !(Array.isArray(state.pendingCheatOptions) && state.pendingCheatOptions.length > 0);
+    return !step?.requireCheatPick;
   }
 
   function isBlockingCheatUse() {

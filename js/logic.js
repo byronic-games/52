@@ -968,12 +968,20 @@ function previewOpeningRunFromControls() {
   state.restartConfirmArmed = false;
 }
 
+const TUTORIAL_RUN_SEED = "TUTOR1AL";
+
 function openPowerChoice(forceRandom = false) {
   clearGameOverEffects({ settleExperience: true });
   clearVictoryEffects({ fade: state.victoryMessageActive || state.gameOver });
   const selectedDeckKey = normalizeDeckKey(state.selectedDeckKey || loadSelectedDeck());
   const selectedLevelNumber = normalizeLevelNumber(state.selectedLevelNumber || loadSelectedLevel());
-  const { chosenSeed, deck } = buildRunFromControls(forceRandom, selectedDeckKey, selectedLevelNumber);
+  const tutorialAssistActive = selectedDeckKey !== "black" && shouldApplyTutorialAssistForStandardRun("standard");
+  const { chosenSeed, deck } = tutorialAssistActive
+    ? {
+        chosenSeed: TUTORIAL_RUN_SEED,
+        deck: buildRunDeck(TUTORIAL_RUN_SEED, selectedDeckKey, selectedLevelNumber),
+      }
+    : buildRunFromControls(forceRandom, selectedDeckKey, selectedLevelNumber);
 
   if (selectedDeckKey === "black") {
     state.pendingRunSeed = chosenSeed;
@@ -1002,7 +1010,6 @@ function openPowerChoice(forceRandom = false) {
 
   state.pendingRunSeed = chosenSeed;
   state.pendingRunDeck = deck;
-  const tutorialAssistActive = shouldApplyTutorialAssistForStandardRun("standard");
   if (tutorialAssistActive) {
     makeTutorialFriendlyOpeningCard(deck);
   }
@@ -1148,6 +1155,12 @@ function shouldApplyTutorialAssistForStandardRun(runMode = "standard") {
 
 function makeTutorialFriendlyOpeningCard(deck) {
   if (!Array.isArray(deck) || deck.length < 2) return;
+  const threeIndex = deck.findIndex((card, idx) => idx >= 0 && card && card.value === 3);
+  if (threeIndex > 0) {
+    [deck[0], deck[threeIndex]] = [deck[threeIndex], deck[0]];
+    return;
+  }
+
   const first = deck[0];
   if (!first || (first.value !== 1 && first.value !== 13)) return;
 

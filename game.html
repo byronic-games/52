@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Space+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260620d">
+  <link rel="stylesheet" href="styles.css?v=20260628a">
 </head>
 <body class="game-page">
   <div id="orientation-overlay" aria-hidden="true">
@@ -144,20 +144,39 @@
           <div class="help-block">
             <h3>The Goal</h3>
             <p>
-              Every run starts from a 52-card deck. Decide whether the next face-down card is higher or lower than the current card, then keep surviving until the deck is cleared.
+              Clear the deck by deciding whether each next face-down card is higher or lower than the current card.
             </p>
           </div>
 
           <div class="help-block">
-            <h3>The Rules</h3>
+            <h3>Core Rules</h3>
             <ul>
-              <li>Pick <strong>Higher</strong> or <strong>Lower</strong> for the next face-down card.</li>
-              <li>Equal values are safe, so your run continues on a match. Aces are usually low unless a power changes that. Jacks count as 11, Queens as 12, and Kings as 13.</li>
+              <li>Pick <strong>Higher</strong> or <strong>Lower</strong> for the next card. Equal values are safe.</li>
+              <li>Aces are low unless a Power changes that. Jacks are 11, Queens are 12, and Kings are 13.</li>
               <li>A wrong guess ends the run immediately.</li>
-              <li>Nudges temporarily change the current card's judged value before your next guess. Cheats are earned through streaks and can reveal information, protect a guess, or trigger rewards.</li>
-              <li>Blue awards Nudges on correct guesses. Green makes Nudges cost Energy. Yellow adds harmful Jokers. Orange combines all three rules.</li>
-              <li>Daily scoring ranks by total score: cards cleared x 100, +5 per unused Nudge charge, +10 per unused Cheat, +25 per Power in play, and -10 per torn card seen during the run. The bonus can never go below 0.</li>
-              <li>Hold a Daily leaderboard name to see deck clears and a detailed Daily score breakdown.</li>
+              <li>The message bar explains saves, rewards, Joker effects, and anything unusual.</li>
+              <li>The grid records found cards so you can judge what may still be hidden.</li>
+            </ul>
+          </div>
+
+          <div class="help-block">
+            <h3>Powers, Nudges, Cheats</h3>
+            <ul>
+              <li>Choose a starting Power before most runs. Powers may be passive, conditional, or reward-based.</li>
+              <li>Nudges temporarily shift the current card value before the next guess. Some Powers and Cheats make Nudges stronger.</li>
+              <li>Cheats are earned from streaks. They can reveal information, move cards, change values, save guesses, or create future rewards.</li>
+              <li>Hold a held Cheat or Collection item to read details. Tap a held Cheat to play it.</li>
+            </ul>
+          </div>
+
+          <div class="help-block">
+            <h3>Decks And Modes</h3>
+            <ul>
+              <li><strong>Blue</strong> awards Nudges. <strong>Green</strong> uses Energy. <strong>Yellow</strong> adds harmful Jokers. <strong>Orange</strong> combines those rules.</li>
+              <li><strong>Black</strong> is the final pure-score deck: no Powers, Cheats, or Nudges.</li>
+              <li>Daily has shared seeded runs and a leaderboard. Hard Daily unlocks after you attempt Normal for the day.</li>
+              <li>The Collection tracks discovered Cheats, Powers, Jokers, card backs, and deck repair tools.</li>
+              <li>Use Log or Settings to review, download, or share run logs when something needs checking.</li>
             </ul>
           </div>
 
@@ -337,9 +356,9 @@
   <script src="js/apply-cheat-balance-overrides.js?v=20260522o"></script>
   <script src="js/leaderboard.js?v=20260613a"></script>
 <script src="js/daily.js?v=20260620a"></script>
-  <script src="js/logic.js?v=20260620c"></script>
-  <script src="js/render.js?v=20260621a"></script>
-  <script src="js/input.js?v=20260620a"></script>
+  <script src="js/logic.js?v=20260628a"></script>
+  <script src="js/render.js?v=20260628a"></script>
+  <script src="js/input.js?v=20260628a"></script>
   <script src="js/main.js?v=20260621a"></script>
   <script src="js/pwa-update.js?v=20260613a"></script>
 </body>
