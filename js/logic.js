@@ -2824,6 +2824,12 @@ function maybeBiasUpcomingCardForNewPlayers() {
   state.deck[chosenIndex] = temp;
 }
 
+function isTutorialGuessProtectionActive() {
+  return typeof window !== "undefined" &&
+    typeof window.shouldForceTutorialCorrectGuess === "function" &&
+    window.shouldForceTutorialCorrectGuess() === true;
+}
+
 function makeGuessLegacy(type) {
   state.restartConfirmArmed = false;
   state.deckStatsTooltipOpen = false;
@@ -3033,6 +3039,7 @@ function makeGuessLegacy(type) {
     const comparisonCorrect =
       (type === "higher" && nextComparisonValue > currentComparisonValue) ||
       (type === "lower" && nextComparisonValue < currentComparisonValue);
+    const tutorialAutoCorrect = !comparisonCorrect && isTutorialGuessProtectionActive();
     allInGuessWasCorrect = comparisonCorrect;
     const rescuedByLucky7 = !comparisonCorrect && lucky7WasArmed;
     const rescuedByFiveAlive = !comparisonCorrect && fiveAliveWasArmed;
@@ -3071,6 +3078,7 @@ function makeGuessLegacy(type) {
       oneLifeLeftLivesBeforeGuess > 0;
     correct =
       comparisonCorrect ||
+      tutorialAutoCorrect ||
       rescuedByLucky7 ||
       rescuedByFiveAlive ||
       rescuedByMarginForError ||
@@ -4057,6 +4065,7 @@ function makeGuess(type) {
     comparisonCorrect =
       (type === "higher" && nextComparisonValue > currentComparisonValue) ||
       (type === "lower" && nextComparisonValue < currentComparisonValue);
+    const tutorialAutoCorrect = !comparisonCorrect && isTutorialGuessProtectionActive();
     const rescuedByLucky7 = !comparisonCorrect && lucky7WasArmed;
     const rescuedByFiveAlive = !comparisonCorrect && fiveAliveWasArmed;
     rescuedByMarginForError = !comparisonCorrect && marginForErrorWasArmed && revealDistance <= 2;
@@ -4094,6 +4103,7 @@ function makeGuess(type) {
       oneLifeLeftLivesBeforeGuess > 0;
     correct =
       comparisonCorrect ||
+      tutorialAutoCorrect ||
       rescuedByLucky7 ||
       rescuedByFiveAlive ||
       rescuedByMarginForError ||

@@ -2870,6 +2870,23 @@ body.choice-modal-open #controls,
   will-change: box-shadow, outline-color;
 }
 
+.tutorial-focus-box {
+  position: fixed;
+  z-index: 1303;
+  pointer-events: none;
+  border: 3px solid rgba(255, 226, 79, 0.98);
+  border-radius: 12px;
+  box-shadow:
+    0 0 0 4px rgba(255, 226, 79, 0.72),
+    0 0 24px rgba(255, 215, 64, 0.62),
+    0 0 58px rgba(255, 196, 0, 0.34);
+  animation: tutorial-box-focus-throb 900ms ease-in-out infinite;
+}
+
+.tutorial-focus-box.hidden {
+  display: none;
+}
+
 #cheats-panel .cheat-scroll-window.tutorial-focus-target,
 #seen-grid-wrap.tutorial-focus-target {
   border-radius: 12px;
@@ -2883,6 +2900,57 @@ body.choice-modal-open #controls,
 #seen-grid-wrap.tutorial-focus-target {
   display: block;
   width: 100%;
+}
+
+#memory-panel.tutorial-focus-target {
+  border-radius: 12px;
+  outline-offset: -2px;
+  animation: tutorial-memory-focus-throb 900ms ease-in-out infinite;
+  box-shadow:
+    inset 0 0 0 3px rgba(255, 226, 79, 0.95),
+    inset 0 0 22px rgba(255, 215, 64, 0.2),
+    0 0 24px rgba(255, 215, 64, 0.48),
+    0 0 58px rgba(255, 196, 0, 0.24);
+}
+
+@keyframes tutorial-memory-focus-throb {
+  0%,
+  100% {
+    outline-color: rgba(255, 226, 79, 0.88);
+    box-shadow:
+      inset 0 0 0 3px rgba(255, 226, 79, 0.9),
+      inset 0 0 18px rgba(255, 215, 64, 0.18),
+      0 0 18px rgba(255, 215, 64, 0.5),
+      0 0 46px rgba(255, 196, 0, 0.22);
+  }
+
+  50% {
+    outline-color: rgba(255, 246, 143, 1);
+    box-shadow:
+      inset 0 0 0 5px rgba(255, 236, 96, 1),
+      inset 0 0 26px rgba(255, 215, 64, 0.24),
+      0 0 34px rgba(255, 215, 64, 0.74),
+      0 0 82px rgba(255, 196, 0, 0.38);
+  }
+}
+
+@keyframes tutorial-box-focus-throb {
+  0%,
+  100% {
+    border-color: rgba(255, 226, 79, 0.9);
+    box-shadow:
+      0 0 0 4px rgba(255, 226, 79, 0.66),
+      0 0 18px rgba(255, 215, 64, 0.52),
+      0 0 46px rgba(255, 196, 0, 0.24);
+  }
+
+  50% {
+    border-color: rgba(255, 246, 143, 1);
+    box-shadow:
+      0 0 0 6px rgba(255, 236, 96, 0.9),
+      0 0 34px rgba(255, 215, 64, 0.76),
+      0 0 82px rgba(255, 196, 0, 0.4);
+  }
 }
 
 @keyframes tutorial-focus-throb {

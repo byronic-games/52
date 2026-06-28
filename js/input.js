@@ -98,7 +98,7 @@ function createTutorialController() {
     {
       target: "#run-message-row",
       title: "Run Messages",
-      copy: "Important effects appear here: correct guesses, saves, Joker effects, cheat results, and anything the game needs you to know right now.",
+      copy: "Important effects appear here: correct guesses, saves, Joker effects, and anything the game needs you to know right now.",
       placement: "lower",
     },
     {
@@ -119,19 +119,13 @@ function createTutorialController() {
     {
       target: "#cheats-panel",
       title: "Nudges",
-      copy: "Nudges are small value changes for the current card. Blue runs award them from correct guesses, and some Powers or Cheats change how strong they are.",
-      placement: "lower",
-    },
-    {
-      target: "#cheats-panel .cheat-scroll-window",
-      title: "Held Cheats",
-      copy: "Cheats live here. They can reveal information, move cards, save a bad guess, change values, award Powers, or set up a later reveal. Hold one for details.",
+      copy: "Nudges are small value changes for the current card. Blue runs award them from correct guesses, and some Powers make them stronger.",
       placement: "lower",
     },
     {
       target: "#controls",
       title: "Build Your Streak",
-      copy: "Keep guessing safely. At the reward threshold, you choose a Cheat for your hand.",
+      copy: "Keep guessing safely. At the reward threshold, you earn a special card choice.",
       requireGuess: true,
       untilCorrectAnswers: 3,
       waitForCheatOffer: true,
@@ -141,8 +135,8 @@ function createTutorialController() {
     },
     {
       target: "#cheat-choice-container .choice-modal",
-      title: "Choose Your Cheat",
-      copy: "Pick one Cheat. The card text tells you what it does; rarity affects how often it appears, not whether it is useful.",
+      title: "Choose Your First Cheat",
+      copy: "Cheats are one-use cards. They can reveal information, move cards, save guesses, change values, or set up rewards. Pick one.",
       requireCheatPick: true,
       showHighlight: false,
       clearView: true,
@@ -151,15 +145,16 @@ function createTutorialController() {
     },
     {
       target: "#cheats-panel .cheat-scroll-window",
-      title: "Using Cheats",
-      copy: "Tap a held Cheat to use it, or hold it to see what it does. Some work now; some resolve when the next card is revealed.",
+      title: "Held Cheats",
+      copy: "Chosen Cheats live here. Tap one to use it, or hold it to see what it does. Some work now; some wait for the next reveal.",
       clearView: true,
       placement: "lower",
     },
     {
-      target: "#seen-grid-wrap",
+      target: "#memory-panel",
       title: "The Grid",
       copy: "The grid records cards you have found. It helps you judge what values may still be face down, and some effects can hide or change what you know.",
+      focusBox: true,
       clearView: true,
       placement: "upper",
     },
@@ -252,6 +247,8 @@ function createTutorialController() {
   let phase = "run";
   let stepIndex = 0;
   let focusedTarget = null;
+  let focusBox = null;
+  let focusBoxMode = false;
   let cheatOfferPollTimer = null;
   let revealAdvancePollTimer = null;
   let tutorialCheatOfferHandled = false;
@@ -275,9 +272,41 @@ function createTutorialController() {
   }
 
   function clearFocusTarget() {
-    if (!focusedTarget) return;
-    focusedTarget.classList.remove("tutorial-focus-target");
+    if (focusedTarget) {
+      focusedTarget.classList.remove("tutorial-focus-target");
+    }
+    if (focusBox) {
+      focusBox.remove();
+      focusBox = null;
+    }
     focusedTarget = null;
+    focusBoxMode = false;
+  }
+
+  function updateFocusBox() {
+    if (!focusBox || !focusedTarget) return;
+    const rect = focusedTarget.getBoundingClientRect();
+    if (!rect.width || !rect.height) {
+      focusBox.classList.add("hidden");
+      return;
+    }
+    const inset = 6;
+    const left = Math.max(8, rect.left - inset);
+    const top = Math.max(8, rect.top - inset);
+    const right = Math.min(window.innerWidth - 8, rect.right + inset);
+    const bottom = Math.min(window.innerHeight - 8, rect.bottom + inset);
+    focusBox.style.left = `${left}px`;
+    focusBox.style.top = `${top}px`;
+    focusBox.style.width = `${Math.max(0, right - left)}px`;
+    focusBox.style.height = `${Math.max(0, bottom - top)}px`;
+    focusBox.classList.remove("hidden");
+  }
+
+  function ensureFocusBox() {
+    if (focusBox) return;
+    focusBox = document.createElement("div");
+    focusBox.className = "tutorial-focus-box hidden";
+    document.body.appendChild(focusBox);
   }
 
   function clearCheatOfferPoll() {
@@ -304,10 +333,19 @@ function createTutorialController() {
       clearFocusTarget();
       return;
     }
-    if (focusedTarget !== target) {
+    const useFocusBox = !!step?.focusBox;
+    if (focusedTarget !== target || focusBoxMode !== useFocusBox) {
       clearFocusTarget();
       focusedTarget = target;
-      target.classList.add("tutorial-focus-target");
+      focusBoxMode = useFocusBox;
+      if (useFocusBox) {
+        ensureFocusBox();
+      } else {
+        target.classList.add("tutorial-focus-target");
+      }
+    }
+    if (useFocusBox) {
+      updateFocusBox();
     }
   }
 
@@ -529,6 +567,10 @@ function createTutorialController() {
   function handleGuessResolved(type, before, after) {
     if (!active) return;
     if (phase !== "run") return;
+    if (!before.gameOver && after.gameOver) {
+      closeOverlay({ complete: false });
+      return;
+    }
     const steps = getActiveSteps();
     const step = steps[stepIndex];
     if (!step?.requireGuess) return;
@@ -615,6 +657,13 @@ function createTutorialController() {
   });
 
   skipBtn.addEventListener("click", () => closeOverlay({ complete: true }));
+
+  window.addEventListener("resize", updateFocusBox, { passive: true });
+  window.addEventListener("scroll", updateFocusBox, { passive: true });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", updateFocusBox, { passive: true });
+    window.visualViewport.addEventListener("scroll", updateFocusBox, { passive: true });
+  }
 
   return {
     maybeStartRun,
