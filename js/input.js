@@ -152,7 +152,7 @@ function createTutorialController() {
     {
       target: "#cheats-panel .cheat-scroll-window",
       title: "Using Cheats",
-      copy: "Tap a held Cheat when you want to use it, or hold for details. Some work immediately; some resolve when the next card is revealed.",
+      copy: "Tap a held Cheat to use it, or hold it to see what it does. Some work now; some resolve when the next card is revealed.",
       clearView: true,
       placement: "lower",
     },
@@ -496,11 +496,11 @@ function createTutorialController() {
 
       if (Array.isArray(state.pendingCheatOptions) && state.pendingCheatOptions.length > 0) {
         if (step?.requireCheatPick) {
-          state.message = "Choose one of the cheat cards to continue the tutorial.";
+          state.message = "Choose a Cheat.";
           render();
           return;
         }
-        state.message = "Tutorial bonus ready.";
+        state.message = "Cheat ready.";
         nextStep();
         render();
         return;
@@ -540,7 +540,8 @@ function createTutorialController() {
 
     const requiredCorrectAnswers = Number(step.untilCorrectAnswers) || 0;
     if (requiredCorrectAnswers > 0 && after.correctAnswers < requiredCorrectAnswers) {
-      state.message = `Nice. Keep going - ${requiredCorrectAnswers - after.correctAnswers} more correct guess${requiredCorrectAnswers - after.correctAnswers === 1 ? "" : "es"} to unlock a cheat choice.`;
+      const guessesLeft = requiredCorrectAnswers - after.correctAnswers;
+      state.message = `Keep going: ${guessesLeft} left.`;
       render();
       return;
     }
@@ -548,22 +549,22 @@ function createTutorialController() {
     if (step.waitForCheatOffer || step.requireCheatPick) {
       if (!Array.isArray(state.pendingCheatOptions) || state.pendingCheatOptions.length === 0) {
         state.message = step.requireCheatPick
-          ? "Nice streak. Your cheat choice is on the way..."
-          : "Nice streak. Waiting for your cheat offer...";
+          ? "Cheat incoming..."
+          : "Cheat offer soon...";
         render();
         waitForCheatOfferThenAdvance();
         return;
       }
 
       if (step.requireCheatPick) {
-        state.message = "Choose one of the cheat cards to continue the tutorial.";
+        state.message = "Choose a Cheat.";
         render();
         return;
       }
     }
 
     clearCheatOfferPoll();
-    state.message = `Nice. You picked ${type.toUpperCase()} and resolved a card.`;
+    state.message = `${type.toUpperCase()} resolved.`;
     advanceAfterRevealSettles(() => {
       nextStep();
       render();
@@ -575,7 +576,7 @@ function createTutorialController() {
     if (phase !== "power") return;
     if (isRewardChoice) return;
     const powerName = power?.name || "that power";
-    state.message = `Nice pick. ${powerName} is now your starting power.`;
+    state.message = `${powerName} selected.`;
     closeOverlay({ complete: false });
   }
 
@@ -586,7 +587,7 @@ function createTutorialController() {
     const choiceAvailable = Array.isArray(state.pendingCheatOptions) && state.pendingCheatOptions.length > 0;
     if (!step?.requireCheatPick && !choiceAvailable) return;
     tutorialCheatOfferHandled = true;
-    state.message = `Nice pick. ${cheat?.name || "That cheat"} is in hand.`;
+    state.message = `${cheat?.name || "Cheat"} added.`;
     nextStep();
     render();
   }
