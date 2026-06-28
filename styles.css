@@ -2859,12 +2859,11 @@ body.choice-modal-open #controls,
 .tutorial-focus-target {
   position: relative;
   z-index: 1303 !important;
-  outline: 3px solid rgba(255, 226, 79, 0.98);
-  outline-offset: 3px;
+  outline: 2px solid rgba(255, 226, 79, 0.95);
+  outline-offset: 2px;
   box-shadow:
-    0 0 0 4px rgba(255, 226, 79, 0.92),
-    0 0 22px rgba(255, 215, 64, 0.72),
-    0 0 58px rgba(255, 196, 0, 0.36);
+    0 0 0 1px rgba(255, 226, 79, 0.56),
+    0 0 16px rgba(255, 215, 64, 0.42);
   border-radius: inherit;
   animation: tutorial-focus-throb 900ms ease-in-out infinite;
   will-change: box-shadow, outline-color;
@@ -2874,12 +2873,11 @@ body.choice-modal-open #controls,
   position: fixed;
   z-index: 1303;
   pointer-events: none;
-  border: 3px solid rgba(255, 226, 79, 0.98);
+  border: 2px solid rgba(255, 226, 79, 0.95);
   border-radius: 12px;
   box-shadow:
-    0 0 0 4px rgba(255, 226, 79, 0.72),
-    0 0 24px rgba(255, 215, 64, 0.62),
-    0 0 58px rgba(255, 196, 0, 0.34);
+    0 0 0 1px rgba(255, 226, 79, 0.5),
+    0 0 18px rgba(255, 215, 64, 0.42);
   animation: tutorial-box-focus-throb 900ms ease-in-out infinite;
 }
 
@@ -2890,7 +2888,7 @@ body.choice-modal-open #controls,
 #cheats-panel .cheat-scroll-window.tutorial-focus-target,
 #seen-grid-wrap.tutorial-focus-target {
   border-radius: 12px;
-  outline-offset: 4px;
+  outline-offset: 2px;
 }
 
 #cheats-panel .cheat-scroll-window.tutorial-focus-target {
@@ -2907,10 +2905,8 @@ body.choice-modal-open #controls,
   outline-offset: -2px;
   animation: tutorial-memory-focus-throb 900ms ease-in-out infinite;
   box-shadow:
-    inset 0 0 0 3px rgba(255, 226, 79, 0.95),
-    inset 0 0 22px rgba(255, 215, 64, 0.2),
-    0 0 24px rgba(255, 215, 64, 0.48),
-    0 0 58px rgba(255, 196, 0, 0.24);
+    inset 0 0 0 2px rgba(255, 226, 79, 0.9),
+    0 0 16px rgba(255, 215, 64, 0.36);
 }
 
 @keyframes tutorial-memory-focus-throb {
@@ -2918,19 +2914,15 @@ body.choice-modal-open #controls,
   100% {
     outline-color: rgba(255, 226, 79, 0.88);
     box-shadow:
-      inset 0 0 0 3px rgba(255, 226, 79, 0.9),
-      inset 0 0 18px rgba(255, 215, 64, 0.18),
-      0 0 18px rgba(255, 215, 64, 0.5),
-      0 0 46px rgba(255, 196, 0, 0.22);
+      inset 0 0 0 2px rgba(255, 226, 79, 0.82),
+      0 0 14px rgba(255, 215, 64, 0.34);
   }
 
   50% {
     outline-color: rgba(255, 246, 143, 1);
     box-shadow:
-      inset 0 0 0 5px rgba(255, 236, 96, 1),
-      inset 0 0 26px rgba(255, 215, 64, 0.24),
-      0 0 34px rgba(255, 215, 64, 0.74),
-      0 0 82px rgba(255, 196, 0, 0.38);
+      inset 0 0 0 3px rgba(255, 236, 96, 0.94),
+      0 0 22px rgba(255, 215, 64, 0.5);
   }
 }
 
@@ -2939,17 +2931,15 @@ body.choice-modal-open #controls,
   100% {
     border-color: rgba(255, 226, 79, 0.9);
     box-shadow:
-      0 0 0 4px rgba(255, 226, 79, 0.66),
-      0 0 18px rgba(255, 215, 64, 0.52),
-      0 0 46px rgba(255, 196, 0, 0.24);
+      0 0 0 1px rgba(255, 226, 79, 0.42),
+      0 0 14px rgba(255, 215, 64, 0.36);
   }
 
   50% {
     border-color: rgba(255, 246, 143, 1);
     box-shadow:
-      0 0 0 6px rgba(255, 236, 96, 0.9),
-      0 0 34px rgba(255, 215, 64, 0.76),
-      0 0 82px rgba(255, 196, 0, 0.4);
+      0 0 0 2px rgba(255, 236, 96, 0.72),
+      0 0 22px rgba(255, 215, 64, 0.5);
   }
 }
 
@@ -2958,17 +2948,15 @@ body.choice-modal-open #controls,
   100% {
     outline-color: rgba(255, 226, 79, 0.88);
     box-shadow:
-      0 0 0 4px rgba(255, 226, 79, 0.82),
-      0 0 18px rgba(255, 215, 64, 0.54),
-      0 0 46px rgba(255, 196, 0, 0.24);
+      0 0 0 1px rgba(255, 226, 79, 0.5),
+      0 0 14px rgba(255, 215, 64, 0.38);
   }
 
   50% {
     outline-color: rgba(255, 246, 143, 1);
     box-shadow:
-      0 0 0 7px rgba(255, 236, 96, 1),
-      0 0 34px rgba(255, 215, 64, 0.88),
-      0 0 82px rgba(255, 196, 0, 0.46);
+      0 0 0 2px rgba(255, 236, 96, 0.72),
+      0 0 22px rgba(255, 215, 64, 0.56);
   }
 }
 

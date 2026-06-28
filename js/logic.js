@@ -1524,7 +1524,7 @@ function startRun(forceRandom = false) {
 function pickPowerFromChoice(index) {
   if (Date.now() < (state.powerChoiceLockedUntil || 0)) return;
   if (typeof window.isTutorialBlockingPowerPick === "function" && window.isTutorialBlockingPowerPick()) {
-    state.message = "Choose a power when the tutorial asks you to.";
+    state.message = "Pick a Power.";
     render();
     return;
   }

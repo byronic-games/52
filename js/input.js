@@ -119,7 +119,7 @@ function createTutorialController() {
     {
       target: "#cheats-panel",
       title: "Nudges",
-      copy: "Nudges are small value changes for the current card. Blue runs award them from correct guesses, and some Powers make them stronger.",
+      copy: "Nudges tweak the current card value. Blue runs award them from correct guesses, and some Powers make them stronger.",
       placement: "lower",
     },
     {
@@ -146,14 +146,14 @@ function createTutorialController() {
     {
       target: "#cheats-panel .cheat-scroll-window",
       title: "Held Cheats",
-      copy: "Chosen Cheats live here. Tap one to use it, or hold it to see what it does. Some work now; some wait for the next reveal.",
+      copy: "Chosen Cheats live here. Tap one to use it, or hold it for details. Some work now; some wait for reveal.",
       clearView: true,
       placement: "lower",
     },
     {
       target: "#memory-panel",
       title: "The Grid",
-      copy: "The grid records cards you have found. It helps you judge what values may still be face down, and some effects can hide or change what you know.",
+      copy: "The grid records found cards. Use it to judge what values may still be face down. Some effects can change what you know.",
       focusBox: true,
       clearView: true,
       placement: "upper",
@@ -290,7 +290,7 @@ function createTutorialController() {
       focusBox.classList.add("hidden");
       return;
     }
-    const inset = 6;
+    const inset = 3;
     const left = Math.max(8, rect.left - inset);
     const top = Math.max(8, rect.top - inset);
     const right = Math.min(window.innerWidth - 8, rect.right + inset);
@@ -591,8 +591,8 @@ function createTutorialController() {
     if (step.waitForCheatOffer || step.requireCheatPick) {
       if (!Array.isArray(state.pendingCheatOptions) || state.pendingCheatOptions.length === 0) {
         state.message = step.requireCheatPick
-          ? "Cheat incoming..."
-          : "Cheat offer soon...";
+          ? "Cheat next."
+          : "Reward soon.";
         render();
         waitForCheatOfferThenAdvance();
         return;
@@ -606,7 +606,7 @@ function createTutorialController() {
     }
 
     clearCheatOfferPoll();
-    state.message = `${type.toUpperCase()} resolved.`;
+    state.message = "Revealed.";
     advanceAfterRevealSettles(() => {
       nextStep();
       render();
@@ -618,7 +618,7 @@ function createTutorialController() {
     if (phase !== "power") return;
     if (isRewardChoice) return;
     const powerName = power?.name || "that power";
-    state.message = `${powerName} selected.`;
+    state.message = "Power picked.";
     closeOverlay({ complete: false });
   }
 
@@ -629,7 +629,7 @@ function createTutorialController() {
     const choiceAvailable = Array.isArray(state.pendingCheatOptions) && state.pendingCheatOptions.length > 0;
     if (!step?.requireCheatPick && !choiceAvailable) return;
     tutorialCheatOfferHandled = true;
-    state.message = `${cheat?.name || "Cheat"} added.`;
+    state.message = "Cheat added.";
     nextStep();
     render();
   }
@@ -639,7 +639,7 @@ function createTutorialController() {
     const steps = getActiveSteps();
     const step = steps[stepIndex];
     if (!step?.requireCheatUse) return;
-    state.message = "See if you can clear the whole deck. Good luck!";
+    state.message = "Good luck.";
     closeOverlay({ complete: true });
     render();
   }
@@ -650,7 +650,7 @@ function createTutorialController() {
     const step = steps[stepIndex];
     if (step?.requireGuess || step?.requirePowerPick || step?.requireCheatPick || step?.requireCheatUse) return;
     if (phase === "run" && stepIndex === steps.length - 1) {
-      state.message = "See if you can clear the whole deck. Good luck!";
+      state.message = "Good luck.";
     }
     nextStep();
     render();
@@ -1216,7 +1216,7 @@ document.getElementById("exit-btn")?.addEventListener("click", () => {
 
 function handleNudgeControlPress(direction) {
   if (typeof window.isTutorialBlockingNudge === "function" && window.isTutorialBlockingNudge()) {
-    state.message = "Nudges unlock once the tutorial ends.";
+    state.message = "Tutorial locked.";
     renderMessage();
     return;
   }

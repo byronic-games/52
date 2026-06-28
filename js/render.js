@@ -1332,6 +1332,9 @@ function getShortPlayerMessage(message = "") {
   if (/^Unlocked:/i.test(cleaned)) return "Unlocked";
   if (/^Choose/i.test(cleaned) && /cheat/i.test(cleaned)) return "Choose Cheat";
   if (/^Choose/i.test(cleaned) && /power/i.test(cleaned)) return "Choose Power";
+  if (/tutorial/i.test(cleaned) && /lock/i.test(cleaned)) return "Tutorial locked";
+  if (/unlock/i.test(cleaned) && /tutorial/i.test(cleaned)) return "Tutorial locked";
+  if (/next tutorial step/i.test(cleaned)) return "Tutorial locked";
   if (/^Guessed higher/i.test(cleaned)) return "Guessed higher";
   if (/^Guessed lower/i.test(cleaned)) return "Guessed lower";
   if (/YOU CLEARED THE DECK/i.test(cleaned)) return "Deck cleared";
@@ -3130,7 +3133,7 @@ function renderCheats() {
       if (held) return;
       hideCheatTooltip(true);
       if (typeof window.isTutorialBlockingCheatUse === "function" && window.isTutorialBlockingCheatUse()) {
-        state.message = "Cheat use unlocks at the next tutorial step.";
+        state.message = "Tutorial locked";
         renderMessage();
         return;
       }
