@@ -2150,12 +2150,26 @@ function getAdjustedNextNudgeTarget(baseDelta) {
   return adjustValueForLockySevens(currentValue, targetValue);
 }
 
-function getActiveNudgeDelta(baseDelta) {
+function rollErraticNudgeAmount() {
+  return Math.floor(Math.random() * 4);
+}
+
+function getActiveNudgeDelta(baseDelta, options = {}) {
+  const direction = baseDelta < 0 ? -1 : 1;
+  const baseAmount = runHasPower("erratic")
+    ? Math.max(0, Math.min(3, Math.floor(Number(options.erraticAmount) || 0)))
+    : Math.abs(baseDelta);
   const powerMultiplier = runHasPower("double_bubble") ? 2 : 1;
   const nudgeNudgeStacks = Math.max(0, Math.floor(Number(state.nudgeNudgeStacks) || 0));
   const legacyCheatStacks = nudgeNudgeStacks > 0 ? nudgeNudgeStacks : (state.nudgeNudgeArmed ? 1 : 0);
   const cheatMultiplier = 2 ** legacyCheatStacks;
-  return baseDelta * powerMultiplier * cheatMultiplier;
+  return direction * baseAmount * powerMultiplier * cheatMultiplier;
+}
+
+function getPotentialNudgeDelta(baseDelta) {
+  return getActiveNudgeDelta(baseDelta, {
+    erraticAmount: runHasPower("erratic") ? 3 : Math.abs(baseDelta),
+  });
 }
 
 function isAceWildAutoCorrect(currentComparisonValue, nextCard) {
@@ -2196,20 +2210,20 @@ function canUseNudge(direction) {
 
   if (direction === "up") {
     if (blankSpaceActive) {
-      const nextValue = getAdjustedNextNudgeTarget(getActiveNudgeDelta(1));
+      const nextValue = getAdjustedNextNudgeTarget(getPotentialNudgeDelta(1));
       return nextValue !== getUpcomingCheatValue(1);
     }
     if ((state.nudgeUpCharges || 0) <= 0) return false;
-    const nextValue = getAdjustedCurrentNudgeTarget(getActiveNudgeDelta(1));
+    const nextValue = getAdjustedCurrentNudgeTarget(getPotentialNudgeDelta(1));
     return nextValue !== getCurrentEffectiveValue();
   }
   if (direction === "down") {
     if (blankSpaceActive) {
-      const nextValue = getAdjustedNextNudgeTarget(getActiveNudgeDelta(-1));
+      const nextValue = getAdjustedNextNudgeTarget(getPotentialNudgeDelta(-1));
       return nextValue !== getUpcomingCheatValue(1);
     }
     if ((state.nudgeDownCharges || 0) <= 0) return false;
-    const nextValue = getAdjustedCurrentNudgeTarget(getActiveNudgeDelta(-1));
+    const nextValue = getAdjustedCurrentNudgeTarget(getPotentialNudgeDelta(-1));
     return nextValue !== getCurrentEffectiveValue();
   }
   return false;
@@ -2288,12 +2302,16 @@ function useNudgeCharge(direction) {
     }
   }
 
+  const erraticAmount = runHasPower("erratic") ? rollErraticNudgeAmount() : 1;
+  const appliedDelta = direction === "up"
+    ? getActiveNudgeDelta(1, { erraticAmount })
+    : getActiveNudgeDelta(-1, { erraticAmount });
   const currentValue = blankSpaceActive
     ? getUpcomingCheatValue(1)
     : getCurrentEffectiveValue();
   const targetValue = direction === "up"
-    ? (blankSpaceActive ? getAdjustedNextNudgeTarget(getActiveNudgeDelta(1)) : getAdjustedCurrentNudgeTarget(getActiveNudgeDelta(1)))
-    : (blankSpaceActive ? getAdjustedNextNudgeTarget(getActiveNudgeDelta(-1)) : getAdjustedCurrentNudgeTarget(getActiveNudgeDelta(-1)));
+    ? (blankSpaceActive ? getAdjustedNextNudgeTarget(appliedDelta) : getAdjustedCurrentNudgeTarget(appliedDelta))
+    : (blankSpaceActive ? getAdjustedNextNudgeTarget(appliedDelta) : getAdjustedCurrentNudgeTarget(appliedDelta));
   if (!Number.isFinite(currentValue) || !Number.isFinite(targetValue)) {
     return;
   }
@@ -2331,7 +2349,7 @@ function useNudgeCharge(direction) {
   const effective = blankSpaceActive ? getUpcomingCheatValue(1) : getCurrentEffectiveValue();
   const label = blankSpaceActive
     ? `Blank Space ${direction === "up" ? "up" : "down"}`
-    : (direction === "up" ? `Nudge +${getActiveNudgeDelta(1)}` : `Nudge ${getActiveNudgeDelta(-1)}`);
+    : (direction === "up" ? `Nudge +${Math.abs(appliedDelta)}` : `Nudge -${Math.abs(appliedDelta)}`);
   state.message = blankSpaceActive
     ? `Blank Space adjusted. Next card is now treated as ${valueToRank(effective)}.`
     : isGreenDeckRun()
@@ -2343,6 +2361,8 @@ function useNudgeCharge(direction) {
   appendRunDebugLog("nudge_used", {
     direction,
     label,
+    erraticAmount: runHasPower("erratic") ? erraticAmount : null,
+    appliedDelta,
     blankSpaceActive,
     resultingEffectiveValue: effective,
     nudgeUpCharges: state.nudgeUpCharges || 0,

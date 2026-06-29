@@ -36,6 +36,15 @@ const POWERS = [
     included: true,
   },
   {
+    id: "erratic",
+    name: "Erratic",
+    description: "Each Nudge charge randomly moves 0, 1, 2, or 3 per charge, with equal odds.",
+    rarity: "common",
+    unlockAt: 0,
+    weight: 1,
+    included: true,
+  },
+  {
     id: "quick_fingers",
     name: "Quick Fingers",
     description: "Choose a new Cheat every 2 successful guesses instead of every 3.",
@@ -209,6 +218,8 @@ function getPowerIcon(powerId) {
       return "↓";
     case "double_bubble":
       return "2x";
+    case "erratic":
+      return "?";
     case "quick_fingers":
       return "»";
     case "swap_stack":
@@ -281,7 +292,7 @@ function isNudgeStartingPower(power) {
 }
 
 function isNudgeSupportPower(power) {
-  return power?.id === "double_bubble";
+  return power?.id === "double_bubble" || power?.id === "erratic";
 }
 
 function pickPowerOptionFromPool(pool, seeded, rng) {
@@ -337,6 +348,20 @@ function getRandomPowerOptions(count = 2, seedString = "", includeAll = false, e
     const picked = pickPowerOptionFromPool(pool, seeded, rng);
     if (!picked) break;
     options.push(picked);
+  }
+
+  while (!options.some(isNudgeStartingPower) && options.some(isNudgeSupportPower)) {
+    const supportIndex = options.findIndex(isNudgeSupportPower);
+    const replacementPool = [...getUnlockedPowerPool(includeAll)]
+      .filter((power) => !excluded.has(power.id))
+      .filter(isNudgeStartingPower)
+      .filter((power) => !options.some((option) => option.id === power.id));
+    const replacement = pickPowerOptionFromPool(replacementPool, seeded, rng);
+    if (replacement) {
+      options[supportIndex] = replacement;
+    } else {
+      options.splice(supportIndex, 1);
+    }
   }
 
   return options;
