@@ -144,6 +144,16 @@ function normalizeDailyCardsCleared(value) {
   return Math.max(0, Math.min(52, Math.floor(Number(value) || 0)));
 }
 
+function normalizeDailySuitCounts(value) {
+  if (!value || typeof value !== "object") return null;
+  const source = value;
+  const counts = {};
+  for (const suit of SUITS) {
+    counts[suit] = Math.max(0, Math.min(13, Math.floor(Number(source[suit]) || 0)));
+  }
+  return counts;
+}
+
 function buildDailyScoreBreakdown({
   cardsCleared = 0,
   remainingCheats = 0,
@@ -241,6 +251,7 @@ function normalizeDailyEntry(entry) {
     dailyCleared: crownSnapshot.dailyCleared,
     dailyClears: crownSnapshot.dailyClears,
     crownSummary: crownSnapshot.summary,
+    suitCounts: normalizeDailySuitCounts(entry?.suitCounts ?? entry?.suit_counts),
   };
 }
 
@@ -494,6 +505,7 @@ function buildDailyEntry({
   dailyCleared,
   dailyClears,
   crownSummary,
+  suitCounts,
 }) {
   const normalizedSource = String(source || "local").toLowerCase();
   const shouldUseLocalCrowns =
@@ -544,6 +556,7 @@ function buildDailyEntry({
     dailyClears: dailyClears ?? localCrowns.dailyClears,
     dailyCleared: dailyCleared ?? localCrowns.dailyCleared,
     crownSummary: crownSummary ?? localCrowns.summary,
+    suitCounts,
   });
 }
 

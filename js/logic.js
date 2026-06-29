@@ -1453,6 +1453,17 @@ function handleRunFinished(finalScore) {
       : 0;
   const powerCount = basePowerCount + scoredBonusPowerPicks;
   const seenCardIds = state.seenCardIds instanceof Set ? state.seenCardIds : new Set();
+  const suitCounts = {};
+  for (const suit of SUITS) {
+    suitCounts[suit] = 0;
+  }
+  if (Array.isArray(state.deck)) {
+    for (const card of state.deck) {
+      if (card?.id && card.suit && !isJokerCard(card) && seenCardIds.has(card.id)) {
+        suitCounts[card.suit] = Math.min(13, (suitCounts[card.suit] || 0) + 1);
+      }
+    }
+  }
   const tearCount = dailyConfig?.scoreTornCards === false
     ? 0
     : Array.isArray(state.deck)
@@ -1504,6 +1515,7 @@ function handleRunFinished(finalScore) {
     powerBonus: dailyBreakdown.powerBonus,
     tearPenalty: dailyBreakdown.tearPenalty,
     totalScore: dailyBreakdown.totalScore,
+    suitCounts,
   });
 
   submitDailyResult(entry).finally(() => {

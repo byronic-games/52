@@ -1,5 +1,5 @@
 const DAILY_SHARE_BASE_URL = "https://byronicman.com/52/daily.html";
-const DAILY_SHARE_ENABLED = false; // Set true to enable the Daily Share button.
+const DAILY_SHARE_ENABLED = true;
 let dailyEntryPopoversEnabled = false;
 
 function formatDailyDateLabel(dateKey) {
@@ -59,27 +59,42 @@ function getDailyVariantLabel(variant) {
   return normalized === "hard" ? "Hard" : "Normal";
 }
 
+function getDailyShareSuitRows(entry) {
+  const counts = entry?.suitCounts && typeof entry.suitCounts === "object"
+    ? entry.suitCounts
+    : null;
+  if (!counts) return "";
+
+  return ["♠", "♥", "♦", "♣"].map((suit) => {
+    const count = Math.max(0, Math.min(13, Math.floor(Number(counts[suit]) || 0)));
+    return `${suit} ${String(count).padStart(2, " ")}  ${"■".repeat(count)}`;
+  }).join("\n");
+}
+
 function buildDailyShareText(entry, activeDateKey, todayKey, variant = "normal") {
-  const score = Math.max(0, Number(entry?.score ?? 0));
   const cards = Math.max(0, Number(entry?.cardsCleared ?? entry?.score ?? 0));
   const isToday = activeDateKey === todayKey;
   const variantLabel = getDailyVariantLabel(variant);
-  if (isToday) {
-    return `I cleared ${cards} cards and scored ${score} in today's ${variantLabel} 52! Daily. Can you do better?`;
+  const dateText = isToday
+    ? `today's ${variantLabel} 52! Daily`
+    : `the ${variantLabel} 52! Daily for ${formatDailyDateLabel(activeDateKey)}`;
+  const suitRows = getDailyShareSuitRows(entry);
+  const shareUrl = buildDailyShareUrl(activeDateKey, variant);
+  if (!suitRows) {
+    return `I scored ${cards}/52 on ${dateText}.\n\nTry to beat my run here:\n${shareUrl}`;
   }
-  return `I cleared ${cards} cards and scored ${score} in the ${variantLabel} 52! Daily for ${formatDailyDateLabel(activeDateKey)}. Can you do better?`;
+  return `I scored ${cards}/52 on ${dateText}:\n\n${suitRows}\n\nTry to beat my run here:\n${shareUrl}`;
 }
 
 async function shareDailyResult(entry, activeDateKey, todayKey, statusEl, variant = "normal") {
   if (!entry) return;
 
   const text = buildDailyShareText(entry, activeDateKey, todayKey, variant);
-  const url = buildDailyShareUrl(activeDateKey, variant);
   const title = "52! Daily";
 
   try {
     if (typeof navigator.share === "function") {
-      await navigator.share({ title, text, url });
+      await navigator.share({ title, text });
       if (statusEl) statusEl.innerText = "Daily score shared.";
       return;
     }
@@ -90,7 +105,7 @@ async function shareDailyResult(entry, activeDateKey, todayKey, statusEl, varian
     }
   }
 
-  const payload = `${text} ${url}`.trim();
+  const payload = text.trim();
   try {
     if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(payload);
