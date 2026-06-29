@@ -2314,7 +2314,8 @@ function useNudgeCharge(direction) {
     }
   }
 
-  const erraticAmount = runHasPower("erratic") ? rollErraticNudgeAmount() : 1;
+  const erraticActive = runHasPower("erratic");
+  const erraticAmount = erraticActive ? rollErraticNudgeAmount() : 1;
   const appliedDelta = direction === "up"
     ? getActiveNudgeDelta(1, { erraticAmount })
     : getActiveNudgeDelta(-1, { erraticAmount });
@@ -2362,18 +2363,20 @@ function useNudgeCharge(direction) {
   const label = blankSpaceActive
     ? `Blank Space ${direction === "up" ? "up" : "down"}`
     : (direction === "up" ? `Nudge +${Math.abs(appliedDelta)}` : `Nudge -${Math.abs(appliedDelta)}`);
-  state.message = blankSpaceActive
-    ? `Blank Space adjusted. Next card is now treated as ${valueToRank(effective)}.`
-    : isGreenDeckRun()
-      && (state.cryogenRemaining || 0) > 0
-        ? `${label} used. Current card treated as ${valueToRank(effective)}. Energy frozen at ${state.energy || 0}.`
-        : isGreenDeckRun()
-      ? `${label} used. Current card treated as ${valueToRank(effective)}. Energy left: ${state.energy || 0}.`
-      : `${label} used. Current card treated as ${valueToRank(effective)}.`;
+  state.message = erraticActive
+    ? label
+    : blankSpaceActive
+      ? `Blank Space adjusted. Next card is now treated as ${valueToRank(effective)}.`
+      : isGreenDeckRun()
+        && (state.cryogenRemaining || 0) > 0
+          ? `${label} used. Current card treated as ${valueToRank(effective)}. Energy frozen at ${state.energy || 0}.`
+          : isGreenDeckRun()
+        ? `${label} used. Current card treated as ${valueToRank(effective)}. Energy left: ${state.energy || 0}.`
+        : `${label} used. Current card treated as ${valueToRank(effective)}.`;
   appendRunDebugLog("nudge_used", {
     direction,
     label,
-    erraticAmount: runHasPower("erratic") ? erraticAmount : null,
+    erraticAmount: erraticActive ? erraticAmount : null,
     appliedDelta,
     blankSpaceActive,
     resultingEffectiveValue: effective,

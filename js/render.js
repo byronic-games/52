@@ -1215,7 +1215,20 @@ function shortenEffectPayload(effectName, payload) {
 
   if (!text) return getShortEffectLabel(name);
 
-  if (name === "Lucky Dip") return `Dip: ${truncateMessage(text, 30)}`;
+  if (name === "Lucky Dip") {
+    if (/higher than the current/i.test(text)) return "Dip: Higher";
+    if (/lower than the current/i.test(text)) return "Dip: Lower";
+    if (/equal to the current/i.test(text)) return "Dip: Equal";
+    return `Dip: ${truncateMessage(text, 18)}`;
+  }
+  if (name === "One of Next 2 Higher?") {
+    if (/yes|at least one/i.test(text)) return "High 2: Yes";
+    if (/no|neither/i.test(text)) return "High 2: No";
+  }
+  if (name === "One of Next 2 Lower?") {
+    if (/yes|at least one/i.test(text)) return "Low 2: Yes";
+    if (/no|neither/i.test(text)) return "Low 2: No";
+  }
   if (name === "Power Parity") return `Parity: ${truncateMessage(text, 26)}`;
   if (name === "The River") return `River: ${truncateMessage(text, 28)}`;
   if (name === "Red Herring") return `Herring: ${truncateMessage(text, 27)}`;
@@ -1335,6 +1348,10 @@ function getShortPlayerMessage(message = "") {
   if (/tutorial/i.test(cleaned) && /lock/i.test(cleaned)) return "Tutorial locked";
   if (/unlock/i.test(cleaned) && /tutorial/i.test(cleaned)) return "Tutorial locked";
   if (/next tutorial step/i.test(cleaned)) return "Tutorial locked";
+  {
+    const nudgeMatch = cleaned.match(/^Nudge\s*([+-])\s*(\d+)/i);
+    if (nudgeMatch) return `Nudge ${nudgeMatch[1]}${nudgeMatch[2]}`;
+  }
   if (/^Guessed higher/i.test(cleaned)) return "Guessed higher";
   if (/^Guessed lower/i.test(cleaned)) return "Guessed lower";
   if (/YOU CLEARED THE DECK/i.test(cleaned)) return "Deck cleared";
@@ -1351,6 +1368,10 @@ function getShortPlayerMessage(message = "") {
   if (/nudge/i.test(cleaned)) return cleaned.length > 38 ? "Nudge used" : cleaned;
   if (/Run started/i.test(cleaned)) return "Run started";
   return truncateMessage(cleaned, 34);
+}
+
+function getMessageBarText(message = "") {
+  return truncateMessage(getShortPlayerMessage(message), 22);
 }
 
 function addPlayerLogEntry(message = "", options = {}) {
@@ -3709,7 +3730,7 @@ function renderMessage() {
 
   if (state.victoryMessageActive) {
     addPlayerLogEntry(state.message || "Congratulations!");
-    el.innerText = getShortPlayerMessage(state.message || "Congratulations!");
+    el.innerText = getMessageBarText(state.message || "Congratulations!");
     state.victoryMessageJustReleased = false;
     el.classList.add("has-message", "is-victory");
     return;
@@ -3766,7 +3787,7 @@ function renderMessage() {
   }
 
   addPlayerLogEntry(state.message);
-  el.innerText = getShortPlayerMessage(state.message);
+  el.innerText = getMessageBarText(state.message);
   if (pendingReveal) pendingReveal.messageJustReleased = false;
   el.classList.add("has-message");
   const densitySteps = ["normal", "compact", "tight"];
