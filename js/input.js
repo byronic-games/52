@@ -595,7 +595,18 @@ function createTutorialController() {
       after.index !== before.index ||
       after.correctAnswers !== before.correctAnswers ||
       after.gameOver !== before.gameOver;
-    if (!resolved) return;
+    if (!resolved) {
+      if (state.pendingRevealAnimation) {
+        advanceAfterRevealSettles(() => {
+          handleGuessResolved(type, before, {
+            index: Number(state.index) || 0,
+            correctAnswers: Number(state.correctAnswers) || 0,
+            gameOver: !!state.gameOver,
+          });
+        });
+      }
+      return;
+    }
 
     const requiredCorrectAnswers = Number(step.untilCorrectAnswers) || 0;
     if (requiredCorrectAnswers > 0 && after.correctAnswers < requiredCorrectAnswers) {

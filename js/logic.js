@@ -3031,7 +3031,6 @@ function makeGuessLegacy(type) {
   state.hotOrColdArmed = false;
   state.stitchInTimeArmed = false;
   state.sellYourSoulArmed = false;
-  state.sellYourSoulArmed = false;
   state.catch22Armed = false;
   state.blackjackArmed = false;
   state.diamondGeezerArmed = false;
@@ -4010,6 +4009,7 @@ function makeGuess(type) {
   const marginForErrorWasArmed = !!state.marginForErrorArmed;
   const hotOrColdWasArmed = !!state.hotOrColdArmed;
   const stitchInTimeWasArmed = !!state.stitchInTimeArmed;
+  const sellYourSoulWasArmed = !!state.sellYourSoulArmed;
   const higherHigherHigherRemainingBeforeGuess = Number(state.higherHigherHigherRemaining || 0);
   const psychoRemainingBeforeGuess = Number(state.psychoRemaining || 0);
   const catch22WasArmed = !!state.catch22Armed;
@@ -4044,6 +4044,7 @@ function makeGuess(type) {
   state.marginForErrorArmed = false;
   state.hotOrColdArmed = false;
   state.stitchInTimeArmed = false;
+  state.sellYourSoulArmed = false;
   state.catch22Armed = false;
   state.blackjackArmed = false;
   state.diamondGeezerArmed = false;
@@ -4080,6 +4081,7 @@ function makeGuess(type) {
   let rescuedByMarginForError = false;
   let rescuedByHotOrCold = false;
   let rescuedByStitchInTime = false;
+  let rescuedBySellYourSoul = false;
   let comparisonCorrect = false;
   let wlLossSatisfied = false;
   let wlAdvancedToLoss = false;
@@ -4218,6 +4220,7 @@ function makeGuess(type) {
       killerQueenLivesBeforeGuess > 0;
     rescuedBySuitedAndBooted = !comparisonCorrect && suitedAndBootedWasArmed && !!suitedAndBootedSuit && nextSuitForResolution !== suitedAndBootedSuit;
     rescuedBySuitSave = !comparisonCorrect && !!passiveSuitSavePower;
+    rescuedBySellYourSoul = !comparisonCorrect && sellYourSoulWasArmed;
     const rescuedBySpecificSave =
       rescuedByLucky7 ||
       rescuedByFiveAlive ||
@@ -4229,7 +4232,8 @@ function makeGuess(type) {
       rescuedByRedDeadRedemption ||
       rescuedByKillerQueen ||
       rescuedBySuitedAndBooted ||
-      rescuedBySuitSave;
+      rescuedBySuitSave ||
+      rescuedBySellYourSoul;
     rescuedByCursedShield = !comparisonCorrect && !rescuedBySpecificSave && cursedShieldWasArmed;
     rescuedByOneLifeLeft =
       !comparisonCorrect &&
@@ -4251,7 +4255,8 @@ function makeGuess(type) {
       rescuedByKillerQueen ||
       rescuedByOneLifeLeft ||
       rescuedBySuitedAndBooted ||
-      rescuedBySuitSave;
+      rescuedBySuitSave ||
+      rescuedBySellYourSoul;
     if (rescuedByCursedShield) {
       state.cursedShieldCharges = Math.max(0, cursedShieldChargesBeforeGuess - 1);
       state.cursedShieldArmed = state.cursedShieldCharges > 0;
