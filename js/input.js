@@ -110,7 +110,7 @@ function createTutorialController() {
     {
       target: "#controls",
       title: "Make A Guess",
-      copy: "Tap Higher or Lower now. Tutorial guesses are protected so you can learn the reveal flow safely.",
+      copy: "Pick Higher or Lower. Tutorial guesses are protected while you learn.",
       requireGuess: true,
       clearView: true,
       compact: true,
@@ -125,7 +125,7 @@ function createTutorialController() {
     {
       target: "#controls",
       title: "Build Your Streak",
-      copy: "Keep guessing safely. At the reward threshold, you earn a special card choice.",
+      copy: "Keep guessing safely. A short streak earns a special card choice.",
       requireGuess: true,
       untilCorrectAnswers: 3,
       waitForCheatOffer: true,
@@ -365,6 +365,7 @@ function createTutorialController() {
     overlay.classList.remove("tutorial-clear-view");
     overlay.classList.remove("tutorial-dialog-upper");
     overlay.classList.remove("tutorial-dialog-compact");
+    overlay.classList.remove("tutorial-guided-guess");
     syncTutorialLockedControls();
     if (complete) {
       setTutorialCompleted();
@@ -373,6 +374,7 @@ function createTutorialController() {
 
   function renderStep() {
     if (!active) return;
+    maybeAdvanceReadyCheatOfferStep();
     const steps = getActiveSteps();
     const step = steps[stepIndex];
     if (!step) {
@@ -383,6 +385,7 @@ function createTutorialController() {
     progress.innerText = `Step ${currentStep} / ${totalSteps}`;
     title.innerText = step.title;
     copy.innerText = step.copy;
+    skipBtn.innerText = "Skip";
     nextBtn.innerText = step.requireGuess || step.requirePowerPick || step.requireCheatPick || step.requireCheatUse
       ? "Waiting..."
       : (step.nextLabel || (stepIndex === steps.length - 1 ? "Finish" : "Next"));
@@ -390,6 +393,7 @@ function createTutorialController() {
     overlay.classList.toggle("tutorial-clear-view", !!step.clearView);
     overlay.classList.toggle("tutorial-dialog-compact", !!step.compact);
     overlay.classList.toggle("tutorial-dialog-upper", resolveDialogPlacement(step) === "upper");
+    overlay.classList.toggle("tutorial-guided-guess", !!step.requireGuess);
     setFocusTarget(step);
     syncTutorialLockedControls();
   }
@@ -483,6 +487,19 @@ function createTutorialController() {
     const steps = getActiveSteps();
     const step = steps[stepIndex];
     return !!step?.requireGuess;
+  }
+
+  function maybeAdvanceReadyCheatOfferStep() {
+    if (!active || phase !== "run") return false;
+    const steps = getActiveSteps();
+    const step = steps[stepIndex];
+    if (!step?.requireGuess || !step?.waitForCheatOffer) return false;
+    if (!Array.isArray(state.pendingCheatOptions) || state.pendingCheatOptions.length === 0) return false;
+
+    clearCheatOfferPoll();
+    state.message = "Choose a Cheat.";
+    stepIndex = Math.min(stepIndex + 1, steps.length - 1);
+    return true;
   }
 
   function shouldForceCorrectGuess() {

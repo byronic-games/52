@@ -1173,6 +1173,7 @@ function makeTutorialFriendlyOpeningCard(deck) {
 }
 
 function startRunWithPower(powerId) {
+  document.body?.classList.remove("choice-modal-open", "power-choice-open", "cheat-choice-open");
   clearGameOverEffects();
   clearVictoryEffects();
   const chosenSeed =
