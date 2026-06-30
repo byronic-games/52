@@ -21,6 +21,7 @@ Variant notes:
 - Remove legacy date/player-only unique indexes when enabling variants. Known old names include `daily_52_date_player_uidx`, `daily_52_date_player_id_uidx`, and `daily_52_date_key_player_id_idx`.
 - Client leaderboard queries, including fallback/repair queries, must filter by `variant`. If a compatibility fallback drops the variant filter, Normal can display Hard rows.
 - Local-to-remote repair checks identity by `date_key` + `variant` + `player_id`.
+- Daily share suit totals are local-only metadata stored in `hl_prototype_daily_attempts_local` as `suitCounts`. They are not currently part of the Supabase contract; remote/historical attempts may share without suit rows.
 
 Required permissions:
 - anon `SELECT`

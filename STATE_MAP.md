@@ -37,6 +37,7 @@
 - Yellow/Orange Joker effects can mutate run state and persistent card-back status. Tearless hides one torn corner from a remaining card, RONG reverses guess meanings, Gridless clears the visible grid, Timeless rewinds revealed cards into the deck, Nudgeless clears nudge charges, Cheatless clears held Cheats, and Powerless clears persistent/armed effects.
 - Jokers count as safe/correct reveals for Cheat cadence, even though they are not normal playing cards.
 - Daily local attempts are variant-aware. Normal keeps the legacy date-only local key for compatibility; Hard uses a variant-prefixed key such as `hard|YYYY-MM-DD`.
+- Completed local Daily attempts may include `suitCounts` keyed by suit symbol for spoiler-light share text. Older attempts may not have this field.
 - Collection discovery grids read the discovered Cheat/Power/Joker keys and reveal details only after an item has been found in play.
 
 ## `sessionStorage`

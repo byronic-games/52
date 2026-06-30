@@ -789,6 +789,9 @@ function grantPowerToCurrentRun(powerId, source = "bonus") {
   if (state.powers.includes(power.id)) {
     return false;
   }
+  if (typeof recordDiscoveredPowers === "function") {
+    recordDiscoveredPowers(power.id);
+  }
   state.powers.push(power.id);
   applyRunPowerSetup(power.id);
   appendRunDebugLog("power_selected", {
@@ -832,9 +835,6 @@ function offerRewardPowerChoice(reason = "bonus") {
   state.message = "";
   state.temporaryMessageText = "";
   state.temporaryMessageUntil = 0;
-  if (typeof recordDiscoveredPowers === "function") {
-    recordDiscoveredPowers(state.pendingPowerOptions.map((option) => option.id));
-  }
 
   appendRunDebugLog("power_offer_presented", {
     awardReason: state.activePowerAwardReason,
@@ -1207,6 +1207,9 @@ function startRunWithPower(powerId) {
     : selectedPowerId
     ? Array.from(new Set([selectedPowerId, "nudge_engine"]))
     : ["nudge_engine"];
+  if (selectedPowerId && typeof recordDiscoveredPowers === "function") {
+    recordDiscoveredPowers(selectedPowerId);
+  }
   const openingDealAlreadyStarted =
     !blackRun &&
     deck[0]?.id &&

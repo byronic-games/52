@@ -29,7 +29,7 @@ Mobile-first browser card game (higher/lower) with deck progression, powers, che
 - Do not wipe local storage unless explicitly requested.
 - Keep mobile UX stable first.
 - After JS/CSS edits, bump asset query strings in HTML entry pages.
-- HTML revalidation is now enforced in `.htaccess`, but JS/CSS still rely on versioned asset URLs.
+- HTML revalidation is now enforced in `.htaccess`, but JS/CSS still rely on versioned asset URLs. When mobile/PWA freshness matters, also bump `CACHE_VERSION` and `GAME_ASSET_VERSION` in `service-worker.js`.
 
 ## Visual Layout Notes
 - `game.html` owns the gameplay layout skeleton. The main screen is an explicit vertical stack: top spacer, card area, lower spacer, message bar, cheat gap, cheat panel, controls, bottom spacer, memory grid.
@@ -40,7 +40,7 @@ Mobile-first browser card game (higher/lower) with deck progression, powers, che
 - Yellow and Orange runs show remaining Jokers in the compact `next-info` area and use the main message bar for Joker effects.
 
 ## Current Priority
-- Keep Daily Normal/Hard leaderboards separated and stable across devices.
+- Keep Daily Normal/Hard leaderboards and share links separated and stable across devices.
 - Re-check the Android reveal animation after reveal/render changes; it has previously rotated without showing the face during the flip.
 - Regression-test deck progression across Blue, Green, Yellow, Orange, and Black after animation/layout changes.
 
@@ -49,7 +49,9 @@ Mobile-first browser card game (higher/lower) with deck progression, powers, che
 - Unlock Decks in settings opens Level 1 of every visible deck for testing.
 - Players can choose Lower / Higher or Higher / Lower guess button order and Down / Up or Up / Down nudge order in Settings; the controls keep their existing styles.
 - Daily has separate Normal and Hard variants. Hard unlocks after Normal is attempted for the date, uses a different seed, hides torn-card hints, and does not score tears.
+- Daily result sharing is enabled on the Daily board. Shares are spoiler-light text snippets that include Normal/Hard, cards found, suit totals for newly completed attempts, and the Daily URL.
 - Daily leaderboard loads retry-upload a completed local Daily attempt when that player's online row is missing for the matching `date_key` + `variant` + `player_id`.
 - Supabase `daily_52` rows require `variant`; uniqueness must include variant so Normal and Hard attempts do not block or leak into each other.
-- Tutorial highlighting now styles the actual target element instead of a separate floating highlight box. Rendered card elements preserve the focus class across redraws, and focused tutorial targets throb again.
+- Tutorial highlighting uses a thin yellow focus treatment. Most tutorial copy sits over the grid; the grid step uses a measured focus box. Tutorial guesses are protected until the tutorial completes.
 - Choice modals are intended to hide the gameplay `Higher / Lower` row while open.
+- Power offers must include a standard Nudge-starting Power when offering Nudge-support Powers such as Double Bubble or Erratic. Double Bubble doubles Nudge movement; Erratic makes each spent Nudge charge randomly move 0, 1, 2, or 3 before other Nudge multipliers apply.

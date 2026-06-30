@@ -24,10 +24,14 @@
   - Hard: unlocked after Normal is attempted for that date, different Blue Level 1 seed, torn cards are hidden and tears do not affect score.
 - Daily variants use separate local attempt keys, seeds, and leaderboards. Supabase rows use `variant`; all leaderboard date/seed/fallback queries must filter by the active variant.
 - Daily leaderboard loads retry-upload a completed local Daily attempt if the matching `date_key` + `variant` + `player_id` row is missing online.
-- Daily now has a share button on the result panel, but it is intentionally code-gated off for now with `DAILY_SHARE_ENABLED = false` in `js/daily-page.js`.
+- Daily has an enabled share button on the result panel. Share text is spoiler-light: it names Normal/Hard, shows cards found, includes suit totals for newly completed local attempts, and links to the matching Daily URL.
 - Main menu uses playing-card action buttons. The old Shop entry is now Collection; Heroes is hidden from the main menu for now.
 - Collection owns card backs, deck reset/tear repair tools, and discovered Cheats/Powers/Jokers. Discovery cards are compact and use hold popovers for details.
 - Latest Cheat batch added: Ladies Night, Blackjack, Roll the Dice, Club Sandwich, Diamond Geezer, Red Herring, and Grave Digger. Blackjack and Diamond Geezer are reveal-triggered and should score their final-card Daily rewards without forcing post-game picks.
+- Recent Power/nudge behavior:
+  - Double Bubble and Erratic are Nudge-support Powers, not standalone Nudge coverage in Power offers.
+  - Power offers containing Double Bubble or Erratic should also include a standard Nudge-starting Power: Balanced Nudges, Updraft, or Downforce.
+  - Erratic rolls each spent Nudge charge as 0, 1, 2, or 3 movement with equal odds. Double Bubble and Nudge Nudge multipliers apply after that roll, and the message bar should show the exact result such as `Nudge -3` or `Nudge +0`.
 - Android standalone/home-screen sizing was tightened using `visualViewport.height` plus short-screen CSS compression.
 - The gameplay screen has a structured fixed-height vertical layout: `game.html` supplies spacer/gap rows, while `styles.css` uses container-query grid rows to fit the header, cards, message bar, cheat coins, controls, and memory grid into `--app-height`.
 - The default `NEW` visual mode renders white card faces with image suit icons, circular rarity cheat coins, and shield-shaped power cards/header chip.
@@ -36,13 +40,15 @@
 - Mobile cache behavior is now split:
   - HTML / manifest-style files revalidate via `.htaccess`
   - versioned JS / CSS assets remain aggressively cacheable
-- Tutorial highlighting now styles the actual target element instead of positioning a separate floating highlight box. Current-card and next-card focus classes are preserved through `js/render.js` redraws, and `.tutorial-focus-target` has a cyan throbbing ring in `styles.css`.
+  - service-worker freshness depends on bumping both `CACHE_VERSION` and `GAME_ASSET_VERSION`
+- Tutorial highlights use a thin yellow focus treatment. Most tutorial text sits over the grid; the grid step uses a measured focus box. Tutorial guesses are protected in `js/logic.js`, and the message bar is aggressively shortened via `getMessageBarText()`.
 
 ## Non-Negotiables
 - Do not wipe player storage unless explicitly asked.
 - Keep unlock order and existing progress compatible.
 - Keep mobile layout stable first; desktop is secondary.
 - After JS/CSS edits, bump HTML query versions on pages that load them even though HTML now revalidates on the server.
+- After mobile-facing JS/CSS edits, also bump `service-worker.js` cache versions so PWA installs pick up the change.
 - Avoid broad refactors unless requested.
 
 ## Current Known Live Bug
@@ -61,25 +67,30 @@
   - cheat inventory and cheat choices use circular coin treatment with rarity CSS variables; nudge controls are permanent coins beside the cheat scroll window
   - power choice cards and header power chip share shield SVG styling
 - Tutorial flow in `js/input.js`:
-  - power-pick blocking relaxed
-  - cheat-choice progression split from streak-building
-  - floating highlight plumbing removed
-- Tutorial focus visuals in `js/render.js` and `styles.css`:
-  - render-owned card elements preserve `tutorial-focus-target` after redraws
-  - current-card / face-down-card highlights throb again
+  - power choice has its own introductory steps before the run tutorial numbering continues
+  - cheat explanation is delayed until the first Cheat choice appears
+  - tutorial guesses are protected so learning cannot end the run
+- Tutorial focus visuals in `js/input.js` and `styles.css`:
+  - focus visuals are yellow and intentionally thin
+  - the grid step uses a measured `.tutorial-focus-box`
 - Choice modal visibility in `js/render.js` and `styles.css`:
   - `body.choice-modal-open` hides the gameplay guess row
 - Daily local-to-remote repair in `js/daily.js`:
   - completed local attempts are checked against Supabase when fetching that date's variant board
   - missing online rows are posted before the board renders
   - fallback queries must keep `variant=eq.normal|hard`; otherwise Normal can show Hard rows
+- Daily sharing in `js/daily-page.js`:
+  - `DAILY_SHARE_ENABLED` is currently `true`
+  - Normal share URLs omit `variant=hard`; Hard share URLs include it
+  - newly completed local attempts include `suitCounts`; older attempts share without suit rows
 - Daily Supabase schema:
   - `daily_52.variant` is required
   - uniqueness must include variant, e.g. `(date_key, variant, player_id)`
   - remove legacy date/player-only indexes such as `daily_52_date_player_uidx`
 - Cache behavior:
   - `.htaccess` now sends `no-cache` headers for HTML-like files
-  - `game.html` / `daily.html` asset query strings were bumped alongside JS/CSS fixes
+  - `game.html` / `daily.html` asset query strings should be bumped alongside JS/CSS fixes
+  - `service-worker.js` cache versions must be bumped for mobile/PWA freshness
 
 ## Crown/Leaderboard Rules (Current)
 - Daily board should render crowns from row-backed enrichment only (not viewer-local state).
@@ -88,9 +99,9 @@
 
 ## Quick "Do First" For New AI
 1. Run `RUNBOOK.md` smoke checks.
-2. Check Normal and Hard Daily boards on two devices after any Daily/Supabase change.
+2. Check Normal and Hard Daily boards and share text on two devices after any Daily/Supabase/share change.
 3. Re-test layout on a short mobile viewport before changing adjacent UI; confirm card pair, message bar, cheat coins, controls, and memory grid all remain visible without page scroll. Also check Black Deck, where the same layout hides power/cheat/nudge controls.
-4. Re-test tutorial overlays and choice-modal behavior on mobile before changing adjacent UI; confirm current-card and next-card highlights are visible and throbbing.
+4. Re-test tutorial overlays and choice-modal behavior on mobile before changing adjacent UI; confirm yellow focus boxes are visible, not too thick, and not obscuring the discussed area.
 5. Re-check Android reveal animation after any reveal/render/card-face work.
 6. Patch minimally and verify Daily/Heroes/Profile/Collection did not regress.
-7. If Daily sharing is being revisited, start in `js/daily-page.js` and keep the toggle code-only unless explicitly asked to expose it in the UI.
+7. If Daily sharing is being revisited, start in `js/daily-page.js`; keep it spoiler-light and variant-explicit.

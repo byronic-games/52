@@ -2585,9 +2585,6 @@ function offerCheatChoice(reason = "") {
   state.cheatChoiceIntroToken = (state.cheatChoiceIntroToken || 0) + 1;
   state.cheatChoicePreviewIndex = -1;
   state.cheatChoiceAnimating = null;
-  if (typeof recordDiscoveredCheats === "function") {
-    recordDiscoveredCheats(state.pendingCheatOptions.map((option) => option.id));
-  }
 
   if ((state.sixSevenRewardChoicesRemaining || 0) > 0) {
     state.message = "";
@@ -2665,7 +2662,7 @@ function pickCheatFromChoice(index, options = {}) {
   const cheat = state.pendingCheatOptions[index];
   if (!cheat) return;
 
-  const shouldTrackDiscovery = state.runMode !== "daily";
+  const shouldTrackDiscovery = !(typeof isDevModeRun === "function" && isDevModeRun());
   const wasNew = shouldTrackDiscovery && !hasCheatBeenDiscovered(cheat.id);
 
   if (wasNew) {
