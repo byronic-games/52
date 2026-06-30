@@ -1,6 +1,6 @@
-const CACHE_VERSION = "20260630m";
+const CACHE_VERSION = "20260630n";
 const CACHE_NAME = `byronic-52-${CACHE_VERSION}`;
-const GAME_ASSET_VERSION = "20260630m";
+const GAME_ASSET_VERSION = "20260630n";
 
 const APP_SHELL = [
   "./",
@@ -39,13 +39,14 @@ const APP_SHELL = [
   `./js/logic.js?v=${GAME_ASSET_VERSION}`,
   `./js/render.js?v=${GAME_ASSET_VERSION}`,
   `./js/input.js?v=${GAME_ASSET_VERSION}`,
-  "./js/main.js",
-  "./js/fullscreen.js",
-  "./js/daily.js",
+  `./js/main.js?v=${GAME_ASSET_VERSION}`,
+  `./js/fullscreen.js?v=${GAME_ASSET_VERSION}`,
+  `./js/daily.js?v=${GAME_ASSET_VERSION}`,
   `./js/daily-page.js?v=${GAME_ASSET_VERSION}`,
   "./js/settings.js",
   `./js/profile-page.js?v=${GAME_ASSET_VERSION}`,
   `./js/shop.js?v=${GAME_ASSET_VERSION}`,
+  `./js/collection.js?v=${GAME_ASSET_VERSION}`,
   "./js/heroes.js",
   `./js/leaderboard.js?v=${GAME_ASSET_VERSION}`,
   `./js/cheat-index.js?v=${GAME_ASSET_VERSION}`,

@@ -365,7 +365,6 @@ function createTutorialController() {
     overlay.classList.remove("tutorial-clear-view");
     overlay.classList.remove("tutorial-dialog-upper");
     overlay.classList.remove("tutorial-dialog-compact");
-    overlay.classList.remove("tutorial-guided-guess");
     syncTutorialLockedControls();
     if (complete) {
       setTutorialCompleted();
@@ -393,7 +392,6 @@ function createTutorialController() {
     overlay.classList.toggle("tutorial-clear-view", !!step.clearView);
     overlay.classList.toggle("tutorial-dialog-compact", !!step.compact);
     overlay.classList.toggle("tutorial-dialog-upper", resolveDialogPlacement(step) === "upper");
-    overlay.classList.toggle("tutorial-guided-guess", !!step.requireGuess);
     setFocusTarget(step);
     syncTutorialLockedControls();
   }

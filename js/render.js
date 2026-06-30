@@ -1179,6 +1179,30 @@ function getShortEffectLabel(effectName = "") {
     .toUpperCase() || truncateMessage(name, 14);
 }
 
+function normalizeComparisonValueForMessage(value = "") {
+  return String(value || "").replace(/['".!()]/g, "").trim();
+}
+
+function getShortCorrectComparisonMessage(cleaned = "") {
+  if (!/^Correct!/i.test(cleaned)) return "";
+  const comparisonMatch = cleaned.match(/['"]?(10|[A2-9JQK])['"]?\s+is\s+(higher|lower)\s+than\s+['"]?(10|[A2-9JQK])['"]?/i);
+  if (comparisonMatch) {
+    const nextValue = normalizeComparisonValueForMessage(comparisonMatch[1]);
+    const currentValue = normalizeComparisonValueForMessage(comparisonMatch[3]);
+    const operator = comparisonMatch[2].toLowerCase() === "higher" ? ">" : "<";
+    return `Correct! ${nextValue} ${operator} ${currentValue}`;
+  }
+
+  const equalsMatch = cleaned.match(/['"]?(10|[A2-9JQK])['"]?\s+equals\s+['"]?(10|[A2-9JQK])['"]?/i);
+  if (equalsMatch) {
+    const nextValue = normalizeComparisonValueForMessage(equalsMatch[1]);
+    const currentValue = normalizeComparisonValueForMessage(equalsMatch[2]);
+    return `Correct! ${nextValue} = ${currentValue}`;
+  }
+
+  return "";
+}
+
 function getKnownEffectNames() {
   const names = new Set(Object.keys(SHORT_EFFECT_LABELS));
   if (typeof CHEATS !== "undefined" && Array.isArray(CHEATS)) {
@@ -1359,6 +1383,8 @@ function getShortPlayerMessage(message = "") {
   if (/^Guessed lower/i.test(cleaned)) return "Guessed lower";
   if (/YOU CLEARED THE DECK/i.test(cleaned)) return "Deck cleared";
   if (/GAME OVER/i.test(cleaned)) return "Game over";
+  const correctComparison = getShortCorrectComparisonMessage(cleaned);
+  if (correctComparison) return correctComparison;
   if (/Correct! Cards match/i.test(cleaned)) return "Match";
   if (/Correct!/i.test(cleaned)) return "Correct";
   if (/Yellow Joker:/i.test(cleaned)) {
