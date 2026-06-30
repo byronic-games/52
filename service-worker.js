@@ -1,6 +1,6 @@
-const CACHE_VERSION = "20260630e";
+const CACHE_VERSION = "20260630f";
 const CACHE_NAME = `byronic-52-${CACHE_VERSION}`;
-const GAME_ASSET_VERSION = "20260630e";
+const GAME_ASSET_VERSION = "20260630f";
 
 const APP_SHELL = [
   "./",
@@ -34,7 +34,7 @@ const APP_SHELL = [
   `./js/state.js?v=${GAME_ASSET_VERSION}`,
   `./js/powers.js?v=${GAME_ASSET_VERSION}`,
   `./js/cheats.js?v=${GAME_ASSET_VERSION}`,
-  "./js/cheat-balance-overrides.js",
+  `./js/cheat-balance-overrides.js?v=${GAME_ASSET_VERSION}`,
   `./js/apply-cheat-balance-overrides.js?v=${GAME_ASSET_VERSION}`,
   `./js/logic.js?v=${GAME_ASSET_VERSION}`,
   `./js/render.js?v=${GAME_ASSET_VERSION}`,
