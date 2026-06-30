@@ -1340,6 +1340,7 @@ function startRunWithPower(powerId) {
     marginForErrorArmed: false,
     hotOrColdArmed: false,
     stitchInTimeArmed: false,
+    sellYourSoulArmed: false,
     higherHigherHigherRemaining: 0,
     psychoRemaining: 0,
     godSaveKingArmed: false,
@@ -1805,6 +1806,63 @@ function unmarkCardSeen(card) {
   if (state.gridCardIds instanceof Set) {
     state.gridCardIds.delete(card.id);
   }
+}
+
+function resolveSellYourSoulAfterReveal(wasArmed, naturallySafe) {
+  if (!wasArmed) {
+    return { savedWrongGuess: false, penaltyText: "", savedText: "" };
+  }
+
+  state.sellYourSoulArmed = false;
+  if (naturallySafe) {
+    const removedCheats = Array.isArray(state.cheats) ? state.cheats.length : 0;
+    const removedNudges = (Number(state.nudgeUpCharges) || 0) + (Number(state.nudgeDownCharges) || 0);
+    state.cheats = [];
+    state.nudgeUpCharges = 0;
+    state.nudgeDownCharges = 0;
+    return {
+      savedWrongGuess: false,
+      penaltyText: ` Sell Your Soul collected: lost ${removedCheats} held Cheat${removedCheats === 1 ? "" : "s"} and ${removedNudges} Nudge${removedNudges === 1 ? "" : "s"}.`,
+      savedText: "",
+    };
+  }
+
+  return {
+    savedWrongGuess: true,
+    penaltyText: "",
+    savedText: " Sell Your Soul saved the wrong guess.",
+  };
+}
+
+function getCurrentDeckTargetCount() {
+  return Array.isArray(state.deck) && state.deck.length > 0 ? state.deck.length : 52;
+}
+
+function completeRunAfterDeckExhausted(reason = "deck_exhausted") {
+  if (!state.current || state.gameOver) return false;
+  state.correctAnswers = Math.max(Number(state.correctAnswers) || 0, Math.max(0, getCurrentDeckTargetCount() - 1));
+  updateBestScoreIfNeeded();
+  appendRunDebugLog("guess_resolved", {
+    outcome: "deck_cleared",
+    reason,
+    cardsCleared: getDisplayedRunScore(),
+    deckSize: getCurrentDeckTargetCount(),
+    message: "Reduced deck cleared.",
+  });
+  if (!isDevModeRun()) {
+    if (state.runMode !== "daily") {
+      state.deckWins = recordDeckWin(state.currentDeckKey);
+      state.deckLevelClears = recordDeckLevelClear(state.currentDeckKey, state.currentLevelNumber);
+      recordDeckClearProgress(state.currentDeckKey);
+    } else {
+      recordDailyClearProgress();
+    }
+  }
+  state.message = "YOU CLEARED THE DECK!";
+  state.gameOver = true;
+  triggerVictoryEffect();
+  handleRunFinished(state.correctAnswers);
+  return true;
 }
 
 function advanceToCard(card, options = {}) {
@@ -2628,7 +2686,9 @@ function clearArmedPowerEffects() {
   state.fiveAliveArmed = false;
   state.fiveAliveNudgeLocked = false;
   state.marginForErrorArmed = false;
+  state.hotOrColdArmed = false;
   state.stitchInTimeArmed = false;
+  state.sellYourSoulArmed = false;
   state.higherHigherHigherRemaining = 0;
   state.godSaveKingArmed = false;
   state.lucky13Armed = false;
@@ -2863,9 +2923,21 @@ function maybeBiasUpcomingCardForNewPlayers() {
 }
 
 function isTutorialGuessProtectionActive() {
-  return typeof window !== "undefined" &&
-    typeof window.shouldForceTutorialCorrectGuess === "function" &&
-    window.shouldForceTutorialCorrectGuess() === true;
+  if (typeof window === "undefined") return false;
+  if (typeof window.shouldTutorialForceCorrectGuess === "function") {
+    return window.shouldTutorialForceCorrectGuess() === true;
+  }
+  if (typeof window.shouldForceTutorialCorrectGuess === "function") {
+    return window.shouldForceTutorialCorrectGuess() === true;
+  }
+  return false;
+}
+
+function forceTutorialGuessToResolveAsCorrect(type) {
+  if (!isTutorialGuessProtectionActive()) return;
+  if (typeof ensureTutorialGuessWillResolveAsCorrect === "function") {
+    ensureTutorialGuessWillResolveAsCorrect(type);
+  }
 }
 
 function makeGuessLegacy(type) {
@@ -2893,8 +2965,12 @@ function makeGuessLegacy(type) {
     return;
   }
 
-  // Soft onboarding protection for early players
-  maybeBiasUpcomingCardForNewPlayers();
+  if (isTutorialGuessProtectionActive()) {
+    forceTutorialGuessToResolveAsCorrect(type);
+  } else {
+    // Soft onboarding protection for early players
+    maybeBiasUpcomingCardForNewPlayers();
+  }
 
   next = peekNext();
   if (!next) return;
@@ -2917,6 +2993,7 @@ function makeGuessLegacy(type) {
   const marginForErrorWasArmed = !!state.marginForErrorArmed;
   const hotOrColdWasArmed = !!state.hotOrColdArmed;
   const stitchInTimeWasArmed = !!state.stitchInTimeArmed;
+  const sellYourSoulWasArmed = !!state.sellYourSoulArmed;
   const higherHigherHigherRemainingBeforeGuess = Number(state.higherHigherHigherRemaining || 0);
   const psychoRemainingBeforeGuess = Number(state.psychoRemaining || 0);
   const catch22WasArmed = !!state.catch22Armed;
@@ -2952,6 +3029,8 @@ function makeGuessLegacy(type) {
   state.marginForErrorArmed = false;
   state.hotOrColdArmed = false;
   state.stitchInTimeArmed = false;
+  state.sellYourSoulArmed = false;
+  state.sellYourSoulArmed = false;
   state.catch22Armed = false;
   state.blackjackArmed = false;
   state.diamondGeezerArmed = false;
@@ -2988,6 +3067,7 @@ function makeGuessLegacy(type) {
   let rescuedByMarginForError = false;
   let rescuedByHotOrCold = false;
   let rescuedByStitchInTime = false;
+  let rescuedBySellYourSoul = false;
   let allInGuessWasCorrect = false;
   let catch22Hit = false;
   let blackjackHit = false;
@@ -3096,6 +3176,7 @@ function makeGuessLegacy(type) {
       killerQueenLivesBeforeGuess > 0;
     rescuedBySuitedAndBooted = !comparisonCorrect && suitedAndBootedWasArmed && !!suitedAndBootedSuit && next.suit !== suitedAndBootedSuit;
     rescuedBySuitSave = !comparisonCorrect && !!passiveSuitSavePower;
+    rescuedBySellYourSoul = !comparisonCorrect && sellYourSoulWasArmed;
     const rescuedBySpecificSave =
       rescuedByLucky7 ||
       rescuedByFiveAlive ||
@@ -3107,7 +3188,8 @@ function makeGuessLegacy(type) {
       rescuedByRedDeadRedemption ||
       rescuedByKillerQueen ||
       rescuedBySuitedAndBooted ||
-      rescuedBySuitSave;
+      rescuedBySuitSave ||
+      rescuedBySellYourSoul;
     rescuedByCursedShield = !comparisonCorrect && !rescuedBySpecificSave && cursedShieldWasArmed;
     rescuedByOneLifeLeft =
       !comparisonCorrect &&
@@ -3129,7 +3211,8 @@ function makeGuessLegacy(type) {
       rescuedByKillerQueen ||
       rescuedByOneLifeLeft ||
       rescuedBySuitedAndBooted ||
-      rescuedBySuitSave;
+      rescuedBySuitSave ||
+      rescuedBySellYourSoul;
     if (rescuedByCursedShield) {
       state.cursedShieldCharges = Math.max(0, cursedShieldChargesBeforeGuess - 1);
       state.cursedShieldArmed = state.cursedShieldCharges > 0;
@@ -3189,6 +3272,10 @@ function makeGuessLegacy(type) {
   }
 
   // --- All correct guess logic below ---
+  const sellYourSoulResult = resolveSellYourSoulAfterReveal(
+    sellYourSoulWasArmed,
+    !!(match || aceAutoWin || jokerAutoCorrect || allInGuessWasCorrect)
+  );
   // Save the current card before advancing for correct log display
   const prevCard = state.current;
   recordCurrentCardGuess(state.current, type, true);
@@ -3665,6 +3752,11 @@ function makeGuessLegacy(type) {
     render();
     return;
   }
+  if (rescuedBySellYourSoul) {
+    state.message = appendEnergyFeedback(`Sell Your Soul saved the run - it was ${describeCard(next)}.`, revealDistance);
+    render();
+    return;
+  }
   if (rescuedBySuitSave && passiveSuitSavePower) {
     state.message = `${passiveSuitSavePower.name} saved the run - it was ${describeCard(next)}.`;
     render();
@@ -3787,7 +3879,11 @@ function makeGuess(type) {
     return;
   }
 
-  maybeBiasUpcomingCardForNewPlayers();
+  if (isTutorialGuessProtectionActive()) {
+    forceTutorialGuessToResolveAsCorrect(type);
+  } else {
+    maybeBiasUpcomingCardForNewPlayers();
+  }
   if (!isJokerCard(next)) {
     next = peekNext();
     if (!next) return;
@@ -4172,8 +4268,9 @@ function makeGuess(type) {
     }
   }
 
-  const naturallyCorrectGuess = comparisonCorrect || match || aceAutoWin || jokerAutoCorrect;
+  const naturallyCorrectGuess = comparisonCorrect || match || aceAutoWin || jokerAutoCorrect || nineDartAutoCorrectWasActive || konamiAutoCorrectWasActive;
   const allInGuessWasCorrect = naturallyCorrectGuess;
+  const sellYourSoulResult = resolveSellYourSoulAfterReveal(sellYourSoulWasArmed, naturallyCorrectGuess);
 
   const lucky13Text = resolveLucky13OnReveal(lucky13WasArmed, next);
   const refundResult = correct ? getRefundNudgeResult(refundWasArmed, type, nextComparisonValue) : null;
@@ -4749,7 +4846,7 @@ function makeGuess(type) {
   const killerQueenText = rescuedByKillerQueen
     ? ` Killer Queen saved this guess. ${state.killerQueenLives || 0} ${state.killerQueenLives === 1 ? "save" : "saves"} left.`
     : "";
-  const rescueBonusText = `${rescuedByCursedShield ? " Cursed Shield saved this guess." : ""}${rescuedByRedDeadRedemption ? " Red? Dead? Redemption saved this guess." : ""}${rescuedBySuitedAndBooted ? " Suited and Booted saved this guess." : ""}${rescuedByMarginForError ? " Margin For Error saved this guess." : ""}${rescuedByHotOrCold ? " Margin Of Error saved this guess." : ""}${rescuedByStitchInTime ? " A Stitch In Time saved this guess." : ""}${oneLifeLeftText}${killerQueenText}${forcedRewardText}${wlAdvanceText}${equals11MissText}${higherHigherHigherText}${refundText}${bingoAwardText}${timedEffectText}`;
+  const rescueBonusText = `${rescuedByCursedShield ? " Cursed Shield saved this guess." : ""}${rescuedByRedDeadRedemption ? " Red? Dead? Redemption saved this guess." : ""}${rescuedBySuitedAndBooted ? " Suited and Booted saved this guess." : ""}${rescuedByMarginForError ? " Margin For Error saved this guess." : ""}${rescuedByHotOrCold ? " Margin Of Error saved this guess." : ""}${rescuedByStitchInTime ? " A Stitch In Time saved this guess." : ""}${sellYourSoulResult.savedText}${sellYourSoulResult.penaltyText}${oneLifeLeftText}${killerQueenText}${forcedRewardText}${wlAdvanceText}${equals11MissText}${higherHigherHigherText}${refundText}${bingoAwardText}${timedEffectText}`;
 
   if (state.streak >= getCheatRewardThreshold()) {
     state.streak = 0;

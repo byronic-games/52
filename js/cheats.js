@@ -66,6 +66,23 @@ function pullRemainingRankToTop(rank, label) {
   return `${pulled.length} face-down ${label}${pulled.length === 1 ? "" : "s"} pulled to the top.`;
 }
 
+function burnNextFaceDownCard() {
+  if (!Array.isArray(state.deck) || !state.current) return "No active deck.";
+  const nextIndex = state.index + 1;
+  if (nextIndex >= state.deck.length) return "No face-down card to burn.";
+
+  const burnedCard = state.deck.splice(nextIndex, 1)[0];
+  state.nextCardValueModifier = 0;
+  if (burnedCard?.id && state.temporaryCardValues && typeof state.temporaryCardValues === "object") {
+    delete state.temporaryCardValues[burnedCard.id];
+  }
+  if (state.index >= state.deck.length - 1 && typeof completeRunAfterDeckExhausted === "function") {
+    completeRunAfterDeckExhausted("burn_the_next_one");
+    return "Burned the final face-down card. Reduced deck cleared.";
+  }
+  return `Burned the next face-down card. It is gone from this run.`;
+}
+
 function findNextFaceDownSuitCard(suit) {
   if (!Array.isArray(state.deck)) return null;
   return state.deck
@@ -393,6 +410,9 @@ const CHEAT_DESCRIPTIONS = {
   "Corporate Icebreaker": "Hear two true value-and-suit facts and one believable lie about the next three cards.",
   "Legends Ahead": "Your next Cheat pick offers Legendary Cheats only.",
   "Royal Flush": "Reveals whether the next face-down card is a royal card: 10, J, Q, K, or A.",
+  "Sell Your Soul": "Arm this card for the next reveal. Wrong guesses survive; naturally safe guesses discard all held Cheats and Nudges.",
+  "Coming Soon": "Reveals whether the card after next is higher, lower, or equal to the card before it.",
+  "Burn The Next One": "Destroy the top face-down card. It leaves the deck without being marked on the grid.",
   "Assemble": "Pull all remaining face-down cards matching the current value to the top of the face-down deck without changing any other face-down card order.",
   "The Number Of The Beast": "Pull all remaining face-down 6s to the top of the face-down deck without changing any other face-down card order.",
   "Jackpot": "Pull all remaining face-down 7s to the top of the face-down deck without changing any other face-down card order.",
@@ -2198,6 +2218,54 @@ const CHEATS = [
         ? "Royal Flush: yes, the next card is 10, J, Q, K, or A."
         : "Royal Flush: no, the next card is not 10, J, Q, K, or A.";
     },
+  },
+  {
+    id: "sell_your_soul",
+    name: "Sell Your Soul",
+    rarity: "legendary",
+    weight: 0.75,
+    included: true,
+    unlockAt: 30,
+    stacking: "unique",
+    consumeOnUse: true,
+    shouldConsumeResult: (result) => typeof result === "string" && result.startsWith("Sell Your Soul armed"),
+    use: () => {
+      state.sellYourSoulArmed = true;
+      return "Sell Your Soul armed - next wrong guess survives, but a safe guess costs all held Cheats and Nudges.";
+    },
+  },
+  {
+    id: "coming_soon",
+    name: "Coming Soon",
+    rarity: "rare",
+    weight: 0.8,
+    included: true,
+    unlockAt: 0,
+    stacking: "unique",
+    consumeOnUse: true,
+    use: () => {
+      const next = getNextCardAt(1);
+      const afterNext = getNextCardAt(2);
+      if (!next || !afterNext) return "Need at least two face-down cards.";
+      if (isJokerCard(next) || isJokerCard(afterNext)) return "Coming Soon: a Joker is involved.";
+      const nextValue = getUpcomingCheatValue(1);
+      const afterNextValue = getUpcomingCheatValue(2);
+      if (!Number.isFinite(nextValue) || !Number.isFinite(afterNextValue)) return "Coming Soon: unknown.";
+      if (afterNextValue > nextValue) return "Coming Soon: the card after next is higher.";
+      if (afterNextValue < nextValue) return "Coming Soon: the card after next is lower.";
+      return "Coming Soon: the card after next is equal.";
+    },
+  },
+  {
+    id: "burn_the_next_one",
+    name: "Burn The Next One",
+    rarity: "legendary",
+    weight: 0.75,
+    included: true,
+    unlockAt: 30,
+    stacking: "repeatable",
+    consumeOnUse: true,
+    use: () => burnNextFaceDownCard(),
   },
   {
     id: "assemble",

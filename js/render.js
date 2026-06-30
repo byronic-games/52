@@ -1307,6 +1307,9 @@ function getShortPlayerMessage(message = "") {
   if (matchingMatch) return `${matchingMatch[1]} matches left`;
   if (/^Royal Flush:\s*yes/i.test(cleaned)) return "RF: Yes";
   if (/^Royal Flush:\s*no/i.test(cleaned)) return "RF: No";
+  if (/^Sell Your Soul/i.test(cleaned)) return cleaned.includes("saved") ? "Soul saved" : "Soul armed";
+  if (/^Coming Soon/i.test(cleaned)) return "Coming Soon";
+  if (/^Burned the next/i.test(cleaned)) return "Card burned";
   const splitMatch = cleaned.match(/^Split the Difference:\s*(?:the\s+)?gap\s+is\s+(\d+)/i);
   if (splitMatch) return `Gap: ${splitMatch[1]}`;
   if (/^Split the Difference:.*Joker/i.test(cleaned)) return "Gap: Joker";
@@ -1386,6 +1389,7 @@ function addPlayerLogEntry(message = "", options = {}) {
     detail,
     summary: summaryOverride || getShortPlayerMessage(detail),
     cardsCleared: getDisplayedRunScore(),
+    deckSize: typeof getCurrentDeckTargetCount === "function" ? getCurrentDeckTargetCount() : 52,
     createdAt: Date.now(),
   };
 
@@ -1405,8 +1409,9 @@ function renderRunLogList() {
   }
 
   listEl.innerHTML = entries.map((entry) => {
+    const deckSize = Math.max(1, Number(entry.deckSize) || (typeof getCurrentDeckTargetCount === "function" ? getCurrentDeckTargetCount() : 52));
     const cardText = Number.isFinite(Number(entry.cardsCleared))
-      ? `${Math.max(0, Number(entry.cardsCleared))}/52`
+      ? `${Math.max(0, Number(entry.cardsCleared))}/${deckSize}`
       : "--/52";
     return `
       <article class="run-log-entry">
@@ -1649,6 +1654,7 @@ function getActiveEffectsTooltipPayload() {
   if (state.marginForErrorArmed) waiting.push("Margin For Error: wrong by 2 or less survives.");
   if (state.hotOrColdArmed) waiting.push("Margin Of Error: wrong by 3 or less survives.");
   if (state.stitchInTimeArmed) waiting.push("A Stitch In Time: next wrong guess survives.");
+  if (state.sellYourSoulArmed) waiting.push("Sell Your Soul: wrong survives; safe guess loses held Cheats and Nudges.");
   if (state.godSaveKingArmed) waiting.push("God Save The King: King reveal saves a wrong guess.");
   if (state.lucky13Armed) waiting.push("Lucky 13: King reveal gives +5 Nudge Up and +5 Nudge Down.");
   if (state.alwaysBetBlackArmed) waiting.push("Always Bet On The Black: Club or Spade reveal saves a wrong guess.");
@@ -3221,6 +3227,7 @@ function renderCheats() {
             fiveAlive: !!state.fiveAliveArmed,
             marginForError: !!state.marginForErrorArmed,
             stitchInTime: !!state.stitchInTimeArmed,
+            sellYourSoul: !!state.sellYourSoulArmed,
             higherHigherHigherRemaining: Number(state.higherHigherHigherRemaining) || 0,
             godSaveKing: !!state.godSaveKingArmed,
             alwaysBetBlack: !!state.alwaysBetBlackArmed,
@@ -3653,7 +3660,8 @@ function renderSeenGrid() {
   const gridCardIds = state.gridCardIds instanceof Set ? state.gridCardIds : state.seenCardIds;
 
   if (labelEl) {
-    setAnimatedText(labelEl, `FOUND: ${foundCount}/52`);
+    const deckSize = typeof getCurrentDeckTargetCount === "function" ? getCurrentDeckTargetCount() : 52;
+    setAnimatedText(labelEl, `FOUND: ${foundCount}/${deckSize}`);
   }
 
   for (const suit of SUITS) {

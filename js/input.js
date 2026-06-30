@@ -698,6 +698,7 @@ window.isTutorialGuessButtonsDisabled = () =>
   window.tutorialController?.isGuessButtonsDisabled?.() || false;
 window.shouldTutorialForceCorrectGuess = () =>
   window.tutorialController?.shouldForceCorrectGuess?.() || false;
+window.shouldForceTutorialCorrectGuess = window.shouldTutorialForceCorrectGuess;
 window.isTutorialBlockingPowerPick = () =>
   window.tutorialController?.isBlockingPowerPick?.() || false;
 window.isTutorialCheatOfferActive = () =>

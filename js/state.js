@@ -102,6 +102,7 @@ function createEmptyState() {
     marginForErrorArmed: false,
     hotOrColdArmed: false,
     stitchInTimeArmed: false,
+    sellYourSoulArmed: false,
     higherHigherHigherRemaining: 0,
     psychoRemaining: 0,
     godSaveKingArmed: false,
