@@ -1332,7 +1332,13 @@ function getShortPlayerMessage(message = "") {
   if (/^Royal Flush:\s*yes/i.test(cleaned)) return "RF: Yes";
   if (/^Royal Flush:\s*no/i.test(cleaned)) return "RF: No";
   if (/^Sell Your Soul/i.test(cleaned)) return cleaned.includes("saved") ? "Soul saved" : "Soul armed";
-  if (/^Coming Soon/i.test(cleaned)) return "Coming Soon";
+  if (/^Coming Soon/i.test(cleaned)) {
+    if (/higher/i.test(cleaned)) return "Soon: Higher";
+    if (/lower/i.test(cleaned)) return "Soon: Lower";
+    if (/equal|equals/i.test(cleaned)) return "Soon: Equal";
+    if (/Joker/i.test(cleaned)) return "Soon: Joker";
+    return "Coming Soon";
+  }
   if (/^Burned the next/i.test(cleaned)) return "Card burned";
   const splitMatch = cleaned.match(/^Split the Difference:\s*(?:the\s+)?gap\s+is\s+(\d+)/i);
   if (splitMatch) return `Gap: ${splitMatch[1]}`;

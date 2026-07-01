@@ -3307,7 +3307,8 @@ function makeGuess(type) {
     rescuedByKillerQueen =
       !comparisonCorrect &&
       type === "lower" &&
-      state.current?.rank === "Q" &&
+      Number.isFinite(currentComparisonValue) &&
+      currentComparisonValue === 12 &&
       Number.isFinite(nextComparisonValue) &&
       nextComparisonValue === 13 &&
       killerQueenLivesBeforeGuess > 0;

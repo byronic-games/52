@@ -593,7 +593,7 @@ window.CHEAT_BALANCE_OVERRIDES = {
                       },
     "coming_soon":  {
                         "stacking":  "unique",
-                        "description":  "Reveals whether the card after next is higher, lower, or equal to the card before it.",
+                        "description":  "Reveals whether card 2 is higher, lower, or equal to card 1 in the face-down deck.",
                         "weight":  0.8,
                         "unlockAt":  0,
                         "name":  "Coming Soon",

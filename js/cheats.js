@@ -400,7 +400,7 @@ const CHEAT_DESCRIPTIONS = {
   "Lucky 13": "Arm this card. If the next revealed card is a King, gain 5 Nudge +1 and 5 Nudge -1 charges.",
   "Cursed Shield": "Lose all currently stored nudges now. Gain one shield. Each shield survives one wrong guess.",
   "One Life Left": "Adds one stored life. Each life survives one wrong guess, and multiple lives can be stacked.",
-  "Killer Queen": "Adds one stored save. It continues the run when you guess Lower on a Queen and reveal a King.",
+  "Killer Queen": "Adds one stored save. It continues the run when you guess Lower from a Queen value and reveal a King.",
   "The Higher The Better": "Locks this card's value. You must choose Higher on your next guess and gain Nudge +1 charges equal to the card-value difference.",
   "The Lower The Better": "Locks this card's value. You must choose Lower on your next guess and gain Nudge -1 charges equal to the card-value difference.",
   "Suited and Booted": "Survive your next guess regardless of outcome unless the revealed next card matches the current card's suit.",
@@ -411,7 +411,7 @@ const CHEAT_DESCRIPTIONS = {
   "Legends Ahead": "Your next Cheat pick offers Legendary Cheats only.",
   "Royal Flush": "Reveals whether the next face-down card is a royal card: 10, J, Q, K, or A.",
   "Sell Your Soul": "Arm this card for the next reveal. Wrong guesses survive; naturally safe guesses discard all held Cheats and Nudges.",
-  "Coming Soon": "Reveals whether the card after next is higher, lower, or equal to the card before it.",
+  "Coming Soon": "Reveals whether card 2 is higher, lower, or equal to card 1 in the face-down deck.",
   "Burn The Next One": "Destroy the top face-down card. It leaves the deck without being marked on the grid.",
   "Assemble": "Pull all remaining face-down cards matching the current value to the top of the face-down deck without changing any other face-down card order.",
   "The Number Of The Beast": "Pull all remaining face-down 6s to the top of the face-down deck without changing any other face-down card order.",
@@ -2251,9 +2251,9 @@ const CHEATS = [
       const nextValue = getUpcomingCheatValue(1);
       const afterNextValue = getUpcomingCheatValue(2);
       if (!Number.isFinite(nextValue) || !Number.isFinite(afterNextValue)) return "Coming Soon: unknown.";
-      if (afterNextValue > nextValue) return "Coming Soon: the card after next is higher.";
-      if (afterNextValue < nextValue) return "Coming Soon: the card after next is lower.";
-      return "Coming Soon: the card after next is equal.";
+      if (afterNextValue > nextValue) return "Coming Soon: card 2 is higher than card 1.";
+      if (afterNextValue < nextValue) return "Coming Soon: card 2 is lower than card 1.";
+      return "Coming Soon: card 2 equals card 1.";
     },
   },
   {
