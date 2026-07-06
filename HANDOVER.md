@@ -30,9 +30,10 @@
 - Latest Cheat batches added/fixed: Ladies Night, Blackjack, Roll the Dice, Club Sandwich, Diamond Geezer, Red Herring, Grave Digger, Assemble, Sell Your Soul, Coming soon, and Burn The Next One. Blackjack, Diamond Geezer, Find The Lady, Killer Queen, Next Card Parity, and other reveal-triggered effects should resolve when the card is revealed, not when the Cheat is played.
 - Save Scum is a checkpoint restore: on game over it restores deck, grid, held Cheats, Powers, and run state to the moment it was played.
 - Recent Power/nudge behavior:
-  - Double Bubble and Erratic are Nudge-support Powers, not standalone Nudge coverage in Power offers.
-  - Power offers containing Double Bubble or Erratic should also include a standard Nudge-starting Power: Balanced Nudges, Updraft, or Downforce.
+  - Double Bubble, Erratic, and Double Your Luck are Nudge-support Powers, not standalone Nudge coverage in Power offers.
+  - Power offers containing Double Bubble, Erratic, or Double Your Luck should also include a standard Nudge-starting Power: Balanced Nudges, Updraft, or Downforce.
   - Erratic rolls each spent Nudge charge as 0, 1, 2, or 3 movement with equal odds. Double Bubble and Nudge Nudge multipliers apply after that roll, and the message bar should show the exact result such as `Nudge -3` or `Nudge +0`.
+  - Double Your Luck gives each Nudge charge a 50% chance not to be consumed. It still requires a banked charge, and Green Energy is still spent.
   - Insurance is a broad one-shot save that fires only after more specific saves and the existing broad Cheat saves.
   - Lucky Charm gives three Cheat selections before the first guess.
 - Android standalone/home-screen sizing was tightened using `visualViewport.height` plus short-screen CSS compression.

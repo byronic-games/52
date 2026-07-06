@@ -899,7 +899,7 @@ window.CHEAT_BALANCE_OVERRIDES = {
                               },
     "emergency_services":  {
                                "stacking":  "unique",
-                               "description":  "Treat the next three non-Joker face-down card reveals as temporary 9s. Each card returns to its normal value once face-up.",
+                               "description":  "Pulls all remaining face-down 9s to the top of the face-down deck, preserving every other face-down card's order.",
                                "weight":  0.75,
                                "unlockAt":  0,
                                "name":  "Emergency Services",

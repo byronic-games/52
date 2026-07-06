@@ -24,7 +24,7 @@
 "lower_of_next_two","Lower of Next Two","uncommon","30","true","unique","1","","Meta progression >= 30","Reveals the lowest value of the next two face down cards."
 "next_card_parity","Next Card Parity","common","0","true","unique","1","","Available from run start","Reveals if the next card is odd, even or a picture card."
 "power_parity","Power Parity","rare","0","true","unique","0.75","","Available from run start","Reveals the parity of the next three face-down cards in order: odd, even, face, or Joker."
-"emergency_services","Emergency Services","rare","0","true","unique","0.75","","Available from run start","Treat the next three non-Joker face-down card reveals as temporary 9s. Each card returns to its normal value once face-up."
+"emergency_services","Emergency Services","rare","0","true","unique","0.75","","Available from run start","Pulls all remaining face-down 9s to the top of the face-down deck, preserving every other face-down card's order."
 "chance_higher","Chance Higher","rare","50","false","unique","1","","Meta progression >= 50 | Excluded from random pool","Calculates the probability that one of the remaining cards is higher than the current card."
 "chance_lower","Chance Lower","rare","50","false","unique","1","","Meta progression >= 50 | Excluded from random pool","Calculates the probability that one of the remaining cards is lower than the current card."
 "nudge_up","Nudge +1","common","0","true","stackable","1","nudge_engine","Available from run start | Excluded when power 'nudge_engine' is active","Increases the value of the current face card by one for the next guess."

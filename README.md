@@ -54,7 +54,7 @@ Mobile-first browser card game (higher/lower) with deck progression, powers, che
 - Supabase `daily_52` rows require `variant`; uniqueness must include variant so Normal and Hard attempts do not block or leak into each other.
 - Tutorial highlighting uses a thin yellow focus treatment. Most tutorial copy sits over the grid; the grid step uses a measured focus box. Tutorial guesses are protected until the tutorial completes, including by moving a suitable next card into place when needed.
 - Choice modals are intended to hide the gameplay `Higher / Lower` row while open.
-- Power offers must include a standard Nudge-starting Power when offering Nudge-support Powers such as Double Bubble or Erratic. Double Bubble doubles Nudge movement; Erratic makes each spent Nudge charge randomly move 0, 1, 2, or 3 before other Nudge multipliers apply.
+- Power offers must include a standard Nudge-starting Power when offering Nudge-support Powers such as Double Bubble, Erratic, or Double Your Luck. Double Bubble doubles Nudge movement; Erratic makes each spent Nudge charge randomly move 0, 1, 2, or 3 before other Nudge multipliers apply; Double Your Luck gives each Nudge charge a 50% chance not to be consumed.
 - Recent Power additions:
   - `Insurance`: one broad wrong-guess save, used only after card-specific and other specific saves have had priority.
   - `Lucky Charm`: offers three Cheat selections before the first guess.

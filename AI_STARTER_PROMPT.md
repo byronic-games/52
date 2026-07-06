@@ -27,7 +27,7 @@ You are taking over project `52!` in folder `USETHIS`.
 - Daily has two variants: `normal` and `hard`. Hard unlocks after Normal is attempted for that date, uses a different seed, hides torn-card hints, does not score tears, and has its own leaderboard.
 - Daily share text is spoiler-light and does not name Normal/Hard; the URL preserves the active variant.
 - Jokers are safe/correct reveals and now count toward the Cheat-reveal cadence. If the threshold lands on a Joker, show the Joker result briefly, then offer the Cheat.
-- Current sensitive rules: Double Bubble/Erratic need a standard Nudge-starting Power in their offers; Insurance should fire after more specific saves; Lucky Charm queues three opening Cheat choices; reveal-triggered Cheats/Powers should resolve on reveal after deck manipulation.
+- Current sensitive rules: Double Bubble/Erratic/Double Your Luck need a standard Nudge-starting Power in their offers; Insurance should fire after more specific saves; Lucky Charm queues three opening Cheat choices; reveal-triggered Cheats/Powers should resolve on reveal after deck manipulation.
 
 ## Current Priority
 - Keep Daily Normal/Hard leaderboards, Supabase variant filtering, and mobile layout stable while iterating on gameplay.

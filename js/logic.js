@@ -2466,6 +2466,8 @@ function useNudgeCharge(direction) {
 
   const erraticActive = runHasPower("erratic");
   const erraticAmount = erraticActive ? rollErraticNudgeAmount() : 1;
+  const doubleYourLuckActive = runHasPower("double_your_luck") && !blankSpaceActive;
+  const nudgeChargeKept = doubleYourLuckActive && Math.random() < 0.5;
   const appliedDelta = direction === "up"
     ? getActiveNudgeDelta(1, { erraticAmount })
     : getActiveNudgeDelta(-1, { erraticAmount });
@@ -2486,16 +2488,24 @@ function useNudgeCharge(direction) {
     state.blankSpaceValue = clampCardValue(blankBaseValue + (targetValue - currentValue));
   } else {
     if (direction === "up") {
-      state.nudgeUpCharges = Math.max(0, (state.nudgeUpCharges || 0) - 1);
+      if (!nudgeChargeKept) {
+        state.nudgeUpCharges = Math.max(0, (state.nudgeUpCharges || 0) - 1);
+      }
       const nudgeDelta = targetValue - currentValue;
       state.currentValueModifier += nudgeDelta;
-      state.currentNudgeUpUsed = (state.currentNudgeUpUsed || 0) + 1;
+      if (!nudgeChargeKept) {
+        state.currentNudgeUpUsed = (state.currentNudgeUpUsed || 0) + 1;
+      }
       state.currentNudgeValueModifier = (state.currentNudgeValueModifier || 0) + nudgeDelta;
     } else if (direction === "down") {
-      state.nudgeDownCharges = Math.max(0, (state.nudgeDownCharges || 0) - 1);
+      if (!nudgeChargeKept) {
+        state.nudgeDownCharges = Math.max(0, (state.nudgeDownCharges || 0) - 1);
+      }
       const nudgeDelta = targetValue - currentValue;
       state.currentValueModifier += nudgeDelta;
-      state.currentNudgeDownUsed = (state.currentNudgeDownUsed || 0) + 1;
+      if (!nudgeChargeKept) {
+        state.currentNudgeDownUsed = (state.currentNudgeDownUsed || 0) + 1;
+      }
       state.currentNudgeValueModifier = (state.currentNudgeValueModifier || 0) + nudgeDelta;
     } else {
       return;
@@ -2513,21 +2523,24 @@ function useNudgeCharge(direction) {
   const label = blankSpaceActive
     ? `Blank Space ${direction === "up" ? "up" : "down"}`
     : (direction === "up" ? `Nudge +${Math.abs(appliedDelta)}` : `Nudge -${Math.abs(appliedDelta)}`);
+  const luckText = nudgeChargeKept ? " Charge kept." : "";
   state.message = erraticActive
-    ? label
+    ? `${label}${luckText}`
     : blankSpaceActive
       ? `Blank Space adjusted. Next card is now treated as ${valueToRank(effective)}.`
       : isGreenDeckRun()
         && (state.cryogenRemaining || 0) > 0
-          ? `${label} used. Current card treated as ${valueToRank(effective)}. Energy frozen at ${state.energy || 0}.`
+          ? `${label} used.${luckText} Current card treated as ${valueToRank(effective)}. Energy frozen at ${state.energy || 0}.`
           : isGreenDeckRun()
-        ? `${label} used. Current card treated as ${valueToRank(effective)}. Energy left: ${state.energy || 0}.`
-        : `${label} used. Current card treated as ${valueToRank(effective)}.`;
+        ? `${label} used.${luckText} Current card treated as ${valueToRank(effective)}. Energy left: ${state.energy || 0}.`
+        : `${label} used.${luckText} Current card treated as ${valueToRank(effective)}.`;
   appendRunDebugLog("nudge_used", {
     direction,
     label,
     erraticAmount: erraticActive ? erraticAmount : null,
     appliedDelta,
+    doubleYourLuckActive,
+    nudgeChargeKept,
     blankSpaceActive,
     resultingEffectiveValue: effective,
     nudgeUpCharges: state.nudgeUpCharges || 0,

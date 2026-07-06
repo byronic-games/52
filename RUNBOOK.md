@@ -72,13 +72,14 @@
 
 ## Power / Nudge Check
 1. Start multiple Power offers and confirm Double Bubble never appears without one of Balanced Nudges, Updraft, or Downforce.
-2. Confirm Erratic follows the same support-Power rule as Double Bubble.
+2. Confirm Erratic and Double Your Luck follow the same support-Power rule as Double Bubble.
 3. With Erratic active, spend several Nudge charges and confirm the message bar shows the exact rolled result: `Nudge +0`, `Nudge +1`, `Nudge +2`, `Nudge +3`, or the matching negative form.
 4. With Erratic plus Double Bubble and/or Nudge Nudge, confirm the rolled amount is multiplied after the 0-3 roll.
 5. Confirm a roll of 0 spends one Nudge charge and does not move the card.
 6. With Insurance active, make a wrong guess that is not covered by a specific save and confirm Insurance saves the run and is consumed.
 7. With Insurance plus a specific save armed, confirm the specific save fires before Insurance.
 8. With Lucky Charm selected as the starting Power, confirm three Cheat choices are offered before the first guess.
+9. With Double Your Luck active, spend Nudges and confirm some charges are kept; on Green, Energy should still be spent whether or not the charge is kept.
 
 ## Recent Cheat Regression Check
 1. Play Assemble on a nudged card and confirm it pulls remaining cards of the current effective value, not just the printed card value.

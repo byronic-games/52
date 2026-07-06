@@ -1383,6 +1383,7 @@ function getShortPlayerMessage(message = "") {
   if (/^Psycho/i.test(cleaned)) return "Psycho";
   if (/^Brucie Bonus/i.test(cleaned)) return "Brucie Bonus";
   if (/^You Can Cheat A Cheater/i.test(cleaned)) return "Cheater paid";
+  if (/^Emergency Services/i.test(cleaned) && /9/i.test(cleaned)) return "9s pulled";
   if (/^Power gained:/i.test(cleaned)) return "Power gained";
   if (/^Unlocked:/i.test(cleaned)) return "Unlocked";
   if (/^Choose/i.test(cleaned) && /cheat/i.test(cleaned)) return "Choose Cheat";
@@ -1392,7 +1393,10 @@ function getShortPlayerMessage(message = "") {
   if (/next tutorial step/i.test(cleaned)) return "Tutorial locked";
   {
     const nudgeMatch = cleaned.match(/^Nudge\s*([+-])\s*(\d+)/i);
-    if (nudgeMatch) return `Nudge ${nudgeMatch[1]}${nudgeMatch[2]}`;
+    if (nudgeMatch) {
+      const kept = /charge kept/i.test(cleaned) ? " kept" : "";
+      return `Nudge ${nudgeMatch[1]}${nudgeMatch[2]}${kept}`;
+    }
   }
   if (/^Guessed higher/i.test(cleaned)) return "Guessed higher";
   if (/^Guessed lower/i.test(cleaned)) return "Guessed lower";

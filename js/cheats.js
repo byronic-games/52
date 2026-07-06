@@ -66,6 +66,21 @@ function pullRemainingRankToTop(rank, label) {
   return `${pulled.length} face-down ${label}${pulled.length === 1 ? "" : "s"} pulled to the top.`;
 }
 
+function dispatchEmergencyServices() {
+  if (!Array.isArray(state.deck) || !state.current) return "Emergency Services needs an active deck.";
+  const faceDownStart = state.index + 1;
+  if (faceDownStart >= state.deck.length) return "Emergency Services found no face-down cards.";
+
+  const faceUp = state.deck.slice(0, faceDownStart);
+  const faceDown = state.deck.slice(faceDownStart);
+  const pulled = faceDown.filter((card) => !isJokerCard(card) && card.rank === "9");
+  if (!pulled.length) return "Emergency Services found no face-down 9s.";
+
+  const remaining = faceDown.filter((card) => isJokerCard(card) || card.rank !== "9");
+  state.deck = [...faceUp, ...pulled, ...remaining];
+  return `Emergency Services dispatched - ${pulled.length} face-down 9${pulled.length === 1 ? "" : "s"} pulled to the top.`;
+}
+
 function burnNextFaceDownCard() {
   if (!Array.isArray(state.deck) || !state.current) return "No active deck.";
   const nextIndex = state.index + 1;
@@ -344,7 +359,7 @@ const CHEAT_DESCRIPTIONS = {
   "Lower of Next Two": "Reveals the lowest value of the next two face down cards.",
   "Next Card Parity": "Reveals if the next card is odd, even, a face card, or a Joker.",
   "Power Parity": "Reveals the parity of the next three face-down cards in order: odd, even, face, or Joker.",
-  "Emergency Services": "Treat the next three non-Joker face-down card reveals as temporary 9s. Each card returns to its normal value once face-up.",
+  "Emergency Services": "Pull all remaining face-down 9s to the top of the face-down deck without changing any other face-down card order.",
   "Chance Higher": "Calculates the probability that one of the remaining cards is higher than the current card.",
   "Chance Lower": "Calculates the probability that one of the remaining cards is lower than the current card.",
   "Nudge +1": "Increases the value of the current face card by one for the next guess.",
@@ -887,15 +902,7 @@ const CHEATS = [
     unlockAt: 0,
     stacking: "unique",
     consumeOnUse: true,
-    use: () => {
-      const upcoming = [1, 2, 3].map((offset) => getNextCardAt(offset)).filter(Boolean);
-      if (!upcoming.length) return "No next card.";
-      const changed = upcoming.reduce((count, card) => {
-        return setTemporaryCardValue(card, 9) ? count + 1 : count;
-      }, 0);
-      if (!changed) return "Emergency Services found only Jokers - no card values changed.";
-      return `Emergency Services dispatched - ${changed} upcoming card${changed === 1 ? "" : "s"} will reveal as TEMP 9, then return to normal.`;
-    },
+    use: () => dispatchEmergencyServices(),
   },
   {
     id: "chance_higher",

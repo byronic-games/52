@@ -24,8 +24,9 @@
 - Verify `Higher / Lower` stays hidden whenever power or cheat choice modals are open.
 - Verify game-over and deck-clear flows still animate correctly.
 - Verify Cursed Shield overlay badge behavior unaffected.
-- Verify Power offers never show Double Bubble or Erratic without a standard Nudge-starting Power in the same offer.
+- Verify Power offers never show Double Bubble, Erratic, or Double Your Luck without a standard Nudge-starting Power in the same offer.
 - Verify Erratic nudge spend messages show exact rolled results (`Nudge +0`, `Nudge -3`, etc.) and do not overflow the message bar.
+- Verify Double Your Luck can keep Nudge charges and still spends Green Energy.
 - Verify Insurance saves exactly one non-specific wrong guess and is consumed after Cursed Shield / One Life Left / specific saves have priority.
 - Verify Lucky Charm queues exactly three Cheat selections before the first guess.
 - Verify the recent Cheat batch:

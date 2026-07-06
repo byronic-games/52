@@ -45,6 +45,15 @@ const POWERS = [
     included: true,
   },
   {
+    id: "double_your_luck",
+    name: "Double Your Luck",
+    description: "Each Nudge charge you use has a 50% chance not to be consumed. Green Energy is still spent.",
+    rarity: "rare",
+    unlockAt: 0,
+    weight: 1,
+    included: true,
+  },
+  {
     id: "quick_fingers",
     name: "Quick Fingers",
     description: "Choose a new Cheat every 2 successful guesses instead of every 3.",
@@ -238,6 +247,8 @@ function getPowerIcon(powerId) {
       return "2x";
     case "erratic":
       return "?";
+    case "double_your_luck":
+      return "50";
     case "quick_fingers":
       return "»";
     case "insurance":
@@ -314,7 +325,7 @@ function isNudgeStartingPower(power) {
 }
 
 function isNudgeSupportPower(power) {
-  return power?.id === "double_bubble" || power?.id === "erratic";
+  return power?.id === "double_bubble" || power?.id === "erratic" || power?.id === "double_your_luck";
 }
 
 function pickPowerOptionFromPool(pool, seeded, rng) {

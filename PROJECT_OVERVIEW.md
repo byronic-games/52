@@ -47,8 +47,8 @@
 - Equal-value comparisons continue the run.
 - Cards-cleared model is now "start at 1" (starting face-up card counts).
 - Nudges use separate + / - charge pools.
-- Nudge-support Powers are not standalone offer coverage: Double Bubble and Erratic may appear in a Power offer only when a standard Nudge-starting Power is also present, unless no support Power is selected.
-- Double Bubble doubles each Nudge charge. Erratic makes each spent Nudge charge roll 0, 1, 2, or 3 movement with equal odds; Double Bubble and Nudge Nudge multipliers apply after that roll. Erratic nudge messages intentionally show only the rolled result, e.g. `Nudge -3` or `Nudge +0`.
+- Nudge-support Powers are not standalone offer coverage: Double Bubble, Erratic, and Double Your Luck may appear in a Power offer only when a standard Nudge-starting Power is also present, unless no support Power is selected.
+- Double Bubble doubles each Nudge charge. Erratic makes each spent Nudge charge roll 0, 1, 2, or 3 movement with equal odds; Double Bubble and Nudge Nudge multipliers apply after that roll. Double Your Luck gives each Nudge charge a 50% chance not to be consumed, while Green Energy is still spent. Erratic nudge messages intentionally show only the rolled result, e.g. `Nudge -3` or `Nudge +0`, with `kept` added when Double Your Luck saves the charge.
 - Insurance is a broad one-shot wrong-guess save. It is intentionally lower priority than specific saves such as suit saves, Killer Queen, Margin For Error, and other reveal/card-specific protections. Cursed Shield and One Life Left also resolve before Insurance.
 - Lucky Charm queues three standard Cheat selections before the first guess, using the same seeded/variant-aware offer flow as other Cheat picks.
 - Yellow and Orange runs insert 1-4 Joker hazard cards after the first four deck positions, so they can only appear after three correct guesses. A Joker consumes the next-card reveal without caring whether the player guessed Higher or Lower, applies its negative effect, counts as a safe/correct reveal for Cheat cadence, and leaves the current normal card in play.
