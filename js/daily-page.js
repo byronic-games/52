@@ -74,16 +74,15 @@ function getDailyShareSuitRows(entry) {
 function buildDailyShareText(entry, activeDateKey, todayKey, variant = "normal") {
   const cards = Math.max(0, Number(entry?.cardsCleared ?? entry?.score ?? 0));
   const isToday = activeDateKey === todayKey;
-  const variantLabel = getDailyVariantLabel(variant);
   const dateText = isToday
-    ? `today's ${variantLabel} 52! Daily`
-    : `the ${variantLabel} 52! Daily for ${formatDailyDateLabel(activeDateKey)}`;
+    ? "today's 52! Daily"
+    : `the 52! Daily for ${formatDailyDateLabel(activeDateKey)}`;
   const suitRows = getDailyShareSuitRows(entry);
   const shareUrl = buildDailyShareUrl(activeDateKey, variant);
   if (!suitRows) {
-    return `I scored ${cards}/52 on ${dateText}.\n\nTry to beat my run here:\n${shareUrl}`;
+    return `I scored ${cards}/52 on ${dateText}.\n\nYou've one chance to tackle the same deck:\n${shareUrl}`;
   }
-  return `I scored ${cards}/52 on ${dateText}:\n\n${suitRows}\n\nTry to beat my run here:\n${shareUrl}`;
+  return `I scored ${cards}/52 on ${dateText}.\n\n${suitRows}\n\nYou've one chance to tackle the same deck:\n${shareUrl}`;
 }
 
 async function shareDailyResult(entry, activeDateKey, todayKey, statusEl, variant = "normal") {
