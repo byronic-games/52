@@ -897,6 +897,7 @@ function previewPendingRunBehindPowerChoice(deck, runMode = "standard", deckKey 
   state.temporaryCardValues = {};
   state.bingoCornersAwarded = false;
   state.bingoLineAwardCount = 0;
+  state.insuranceLives = 0;
   state.oneLifeLeftLives = 0;
   state.killerQueenLives = 0;
   state.cursedShieldArmed = false;
@@ -1097,6 +1098,9 @@ function applyRunPowerSetup(powerId) {
     case "downforce":
       state.nudgeDownCharges = (state.nudgeDownCharges || 0) + 10;
       break;
+    case "insurance":
+      state.insuranceLives = Math.max(1, Number(state.insuranceLives) || 0);
+      break;
     case "swap_stack":
       addCheatCopiesToHand("swap", 4);
       break;
@@ -1131,6 +1135,18 @@ function applyRunPowerSetup(powerId) {
     default:
       break;
   }
+}
+
+function queueLuckyCharmOpeningChoices(powerId) {
+  if (powerId !== "lucky_charm") return false;
+  if (state.gameOver || state.index !== 0 || (state.correctAnswers || 0) !== 0) return false;
+  if ((state.pendingCheatAwardQueue || []).length > 0 || (state.pendingCheatOptions || []).length > 0) return false;
+
+  queueCheatAward("lucky_charm");
+  queueCheatAward("lucky_charm");
+  queueCheatAward("lucky_charm");
+  state.message = "Lucky Charm: choose 3 Cheats before your first guess.";
+  return true;
 }
 
 function shouldApplyTutorialAssistForStandardRun(runMode = "standard") {
@@ -1368,6 +1384,7 @@ function startRunWithPower(powerId) {
     cursedShieldCharges: 0,
     nudgeNudgeArmed: false,
     nudgeNudgeStacks: 0,
+    insuranceLives: 0,
     oneLifeLeftLives: 0,
     killerQueenLives: 0,
     suitedAndBootedArmed: false,
@@ -1416,7 +1433,13 @@ function startRunWithPower(powerId) {
     saveSelectedLevel(currentLevelNumber);
     saveLastRunSeed(chosenSeed);
   }
+  const luckyCharmQueued = queueLuckyCharmOpeningChoices(selectedPowerId);
   render();
+  if (luckyCharmQueued) {
+    setTimeout(() => {
+      resolvePendingRewardQueues();
+    }, openingDealAlreadyStarted ? 0 : 450);
+  }
   if (typeof window.maybeStartFirstRunTutorial === "function") {
     window.maybeStartFirstRunTutorial();
   }
@@ -2780,6 +2803,7 @@ function clearArmedPowerEffects() {
   state.cursedShieldCharges = 0;
   state.nudgeNudgeArmed = false;
   state.nudgeNudgeStacks = 0;
+  state.insuranceLives = 0;
   state.oneLifeLeftLives = 0;
   state.killerQueenLives = 0;
   state.suitedAndBootedArmed = false;
@@ -3186,6 +3210,7 @@ function makeGuess(type) {
   const cursedShieldChargesBeforeGuess = Math.max(0, Number(state.cursedShieldCharges) || 0);
   const cursedShieldWasArmed = cursedShieldChargesBeforeGuess > 0 || !!state.cursedShieldArmed;
   const refundWasArmed = !!state.refundArmed;
+  const insuranceLivesBeforeGuess = Math.max(0, Number(state.insuranceLives) || 0);
   const oneLifeLeftLivesBeforeGuess = Math.max(0, Number(state.oneLifeLeftLives) || 0);
   const killerQueenLivesBeforeGuess = Math.max(0, Number(state.killerQueenLives) || 0);
   const suitedAndBootedWasArmed = !!state.suitedAndBootedArmed;
@@ -3235,6 +3260,7 @@ function makeGuess(type) {
   let rescuedByRedDeadRedemption = false;
   let rescuedByCursedShield = false;
   let rescuedByOneLifeLeft = false;
+  let rescuedByInsurance = false;
   let rescuedByKillerQueen = false;
   let rescuedBySuitedAndBooted = false;
   let rescuedByMarginForError = false;
@@ -3396,6 +3422,12 @@ function makeGuess(type) {
       !rescuedBySpecificSave &&
       !rescuedByCursedShield &&
       oneLifeLeftLivesBeforeGuess > 0;
+    rescuedByInsurance =
+      !comparisonCorrect &&
+      !rescuedBySpecificSave &&
+      !rescuedByCursedShield &&
+      !rescuedByOneLifeLeft &&
+      insuranceLivesBeforeGuess > 0;
     correct =
       comparisonCorrect ||
       tutorialAutoCorrect ||
@@ -3410,6 +3442,7 @@ function makeGuess(type) {
       rescuedByCursedShield ||
       rescuedByKillerQueen ||
       rescuedByOneLifeLeft ||
+      rescuedByInsurance ||
       rescuedBySuitedAndBooted ||
       rescuedBySuitSave ||
       rescuedBySellYourSoul;
@@ -3419,6 +3452,9 @@ function makeGuess(type) {
     }
     if (rescuedByOneLifeLeft) {
       state.oneLifeLeftLives = Math.max(0, oneLifeLeftLivesBeforeGuess - 1);
+    }
+    if (rescuedByInsurance) {
+      state.insuranceLives = Math.max(0, insuranceLivesBeforeGuess - 1);
     }
     if (rescuedByKillerQueen) {
       state.killerQueenLives = Math.max(0, killerQueenLivesBeforeGuess - 1);
@@ -3498,6 +3534,8 @@ function makeGuess(type) {
       oddOneOutWasArmed,
       sixSevenWasArmed,
       cursedShieldWasArmed,
+      insuranceLivesBeforeGuess,
+      insuranceLivesAfterGuess: state.insuranceLives || 0,
       killerQueenLivesBeforeGuess,
       killerQueenLivesAfterGuess: state.killerQueenLives || 0,
       suitedAndBootedWasArmed,
@@ -3508,6 +3546,7 @@ function makeGuess(type) {
       rescuedByAlwaysBetBlack,
       rescuedByRedDeadRedemption,
       rescuedByCursedShield,
+      rescuedByInsurance,
       rescuedByKillerQueen,
       rescuedBySuitedAndBooted,
       rescuedByMarginForError,
@@ -3730,20 +3769,24 @@ function makeGuess(type) {
         ? "match"
         : rescuedByCursedShield
           ? "cursed_shield"
-          : rescuedByAlwaysBetBlack
-            ? "always_bet_on_the_black"
-            : rescuedByRedDeadRedemption
-              ? "red_dead_redemption"
-              : rescuedByKillerQueen
-                ? "killer_queen"
-                : rescuedBySuitedAndBooted
-                  ? "suited_and_booted"
-                  : rescuedByMarginForError
-                    ? "margin_for_error"
-                    : rescuedByHotOrCold
-                      ? "margin_of_error"
-                      : rescuedByStitchInTime
-                        ? "stitch_in_time_saves"
+          : rescuedByOneLifeLeft
+            ? "one_life_left"
+            : rescuedByInsurance
+              ? "insurance"
+              : rescuedByAlwaysBetBlack
+                ? "always_bet_on_the_black"
+                : rescuedByRedDeadRedemption
+                  ? "red_dead_redemption"
+                  : rescuedByKillerQueen
+                    ? "killer_queen"
+                    : rescuedBySuitedAndBooted
+                      ? "suited_and_booted"
+                      : rescuedByMarginForError
+                        ? "margin_for_error"
+                        : rescuedByHotOrCold
+                          ? "margin_of_error"
+                          : rescuedByStitchInTime
+                            ? "stitch_in_time_saves"
         : lucky7WasArmed
           ? "lucky_7"
           : fiveAliveWasArmed
@@ -3782,6 +3825,8 @@ function makeGuess(type) {
     oddOneOutWasArmed,
     sixSevenWasArmed,
     cursedShieldWasArmed,
+    insuranceLivesBeforeGuess,
+    insuranceLivesAfterGuess: state.insuranceLives || 0,
     oneLifeLeftLivesBeforeGuess,
     oneLifeLeftLivesAfterGuess: state.oneLifeLeftLives || 0,
     killerQueenLivesBeforeGuess,
@@ -3797,6 +3842,7 @@ function makeGuess(type) {
     rescuedByRedDeadRedemption,
     rescuedByCursedShield,
     rescuedByOneLifeLeft,
+    rescuedByInsurance,
     rescuedByKillerQueen,
     rescuedBySuitedAndBooted,
     rescuedByMarginForError,
@@ -4003,10 +4049,13 @@ function makeGuess(type) {
   const oneLifeLeftText = rescuedByOneLifeLeft
     ? ` One Life Left saved this guess. ${state.oneLifeLeftLives || 0} ${state.oneLifeLeftLives === 1 ? "life" : "lives"} left.`
     : "";
+  const insuranceText = rescuedByInsurance
+    ? ` Insurance saved this guess. ${state.insuranceLives || 0} cover left.`
+    : "";
   const killerQueenText = rescuedByKillerQueen
     ? ` Killer Queen saved this guess. ${state.killerQueenLives || 0} ${state.killerQueenLives === 1 ? "save" : "saves"} left.`
     : "";
-  const rescueBonusText = `${rescuedByCursedShield ? " Cursed Shield saved this guess." : ""}${rescuedByRedDeadRedemption ? " Red? Dead? Redemption saved this guess." : ""}${rescuedBySuitedAndBooted ? " Suited and Booted saved this guess." : ""}${rescuedByMarginForError ? " Margin For Error saved this guess." : ""}${rescuedByHotOrCold ? " Margin Of Error saved this guess." : ""}${rescuedByStitchInTime ? " A Stitch In Time saved this guess." : ""}${sellYourSoulResult.savedText}${sellYourSoulResult.penaltyText}${oneLifeLeftText}${killerQueenText}${forcedRewardText}${wlAdvanceText}${equals11MissText}${higherHigherHigherText}${refundText}${bingoAwardText}${timedEffectText}`;
+  const rescueBonusText = `${rescuedByCursedShield ? " Cursed Shield saved this guess." : ""}${rescuedByRedDeadRedemption ? " Red? Dead? Redemption saved this guess." : ""}${rescuedBySuitedAndBooted ? " Suited and Booted saved this guess." : ""}${rescuedByMarginForError ? " Margin For Error saved this guess." : ""}${rescuedByHotOrCold ? " Margin Of Error saved this guess." : ""}${rescuedByStitchInTime ? " A Stitch In Time saved this guess." : ""}${sellYourSoulResult.savedText}${sellYourSoulResult.penaltyText}${oneLifeLeftText}${insuranceText}${killerQueenText}${forcedRewardText}${wlAdvanceText}${equals11MissText}${higherHigherHigherText}${refundText}${bingoAwardText}${timedEffectText}`;
 
   if (state.streak >= getCheatRewardThreshold()) {
     state.streak = 0;
@@ -4127,6 +4176,11 @@ function makeGuess(type) {
   }
   if (rescuedByOneLifeLeft) {
     state.message = appendEnergyFeedback(`One Life Left saved the run - it was ${describeCard(next)}. ${state.oneLifeLeftLives || 0} ${state.oneLifeLeftLives === 1 ? "life" : "lives"} left.${bingoAwardText}`, revealDistance);
+    render();
+    return;
+  }
+  if (rescuedByInsurance) {
+    state.message = appendEnergyFeedback(`Insurance saved the run - it was ${describeCard(next)}. ${state.insuranceLives || 0} cover left.${bingoAwardText}`, revealDistance);
     render();
     return;
   }

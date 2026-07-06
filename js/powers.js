@@ -54,6 +54,24 @@ const POWERS = [
     included: true,
   },
   {
+    id: "insurance",
+    name: "Insurance",
+    description: "Start each run with one general save against a wrong guess. More specific saves trigger first.",
+    rarity: "common",
+    unlockAt: 0,
+    weight: 1,
+    included: true,
+  },
+  {
+    id: "lucky_charm",
+    name: "Lucky Charm",
+    description: "Choose three Cheats before your first guess each run.",
+    rarity: "rare",
+    unlockAt: 0,
+    weight: 1,
+    included: true,
+  },
+  {
     id: "swap_stack",
     name: "Swap Stack",
     description: "Start each run with four Swap Cheats in hand.",
@@ -222,6 +240,10 @@ function getPowerIcon(powerId) {
       return "?";
     case "quick_fingers":
       return "»";
+    case "insurance":
+      return "IN";
+    case "lucky_charm":
+      return "3C";
     case "swap_stack":
       return "⇄";
     case "aces_wild":

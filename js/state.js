@@ -129,6 +129,7 @@ function createEmptyState() {
     cursedShieldCharges: 0,
     nudgeNudgeArmed: false,
     nudgeNudgeStacks: 0,
+    insuranceLives: 0,
     oneLifeLeftLives: 0,
     killerQueenLives: 0,
     suitedAndBootedArmed: false,

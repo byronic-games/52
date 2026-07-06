@@ -853,7 +853,7 @@ const CHEATS = [
       const next = peekNext();
       if (!next) return "No next card.";
       const nextValue = getUpcomingCheatValue(1);
-      return getParityLabel(nextValue);
+      return `Next Card Parity: ${getParityLabel(nextValue)}.`;
     },
   },
   {

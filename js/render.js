@@ -1235,6 +1235,9 @@ function shortenEffectPayload(effectName, payload) {
     .replace(/\bNudge -1\b/g, "-")
     .replace(/\s+/g, " ")
     .trim();
+  if (name !== "Cheaters Prosper") {
+    text = text.replace(/\s+Cheaters Prosper:\s*gained.+$/i, "").trim();
+  }
 
   if (!text) return getShortEffectLabel(name);
 
@@ -1253,6 +1256,13 @@ function shortenEffectPayload(effectName, payload) {
     if (/no|neither/i.test(text)) return "Low 2: No";
   }
   if (name === "Power Parity") return `Parity: ${truncateMessage(text, 26)}`;
+  if (name === "Next Card Parity") {
+    if (/picture/i.test(text)) return "Parity: Picture";
+    if (/joker/i.test(text)) return "Parity: Joker";
+    if (/even/i.test(text)) return "Parity: Even";
+    if (/odd/i.test(text)) return "Parity: Odd";
+    return `Parity: ${truncateMessage(text, 14)}`;
+  }
   if (name === "The River") return `River: ${truncateMessage(text, 28)}`;
   if (name === "Red Herring") return `Herring: ${truncateMessage(text, 27)}`;
   if (name === "Ace ahead?") {
@@ -1718,6 +1728,7 @@ function getActiveEffectsTooltipPayload() {
   if (cursedShieldCharges > 0 || state.cursedShieldArmed) {
     waiting.push(`Cursed Shield: ${Math.max(1, cursedShieldCharges)} wrong guess${Math.max(1, cursedShieldCharges) === 1 ? "" : "es"} survive.`);
   }
+  if ((state.insuranceLives || 0) > 0) waiting.push(`Insurance: ${state.insuranceLives} wrong guess save${state.insuranceLives === 1 ? "" : "s"} left.`);
   if ((state.oneLifeLeftLives || 0) > 0) waiting.push(`One Life Left: ${state.oneLifeLeftLives} ${state.oneLifeLeftLives === 1 ? "life" : "lives"} stored.`);
   if ((state.killerQueenLives || 0) > 0) waiting.push(`Killer Queen: ${state.killerQueenLives} save${state.killerQueenLives === 1 ? "" : "s"} for Lower on Queen into King.`);
   if (state.suitedAndBootedArmed) {
@@ -3262,6 +3273,7 @@ function renderCheats() {
             suitsYouSirSuit: state.suitsYouSirSuit || "",
             oddOneOut: !!state.oddOneOutArmed,
             cursedShield: (Number(state.cursedShieldCharges) || 0) > 0 || !!state.cursedShieldArmed,
+            insuranceLives: Number(state.insuranceLives) || 0,
             oneLifeLeftLives: Number(state.oneLifeLeftLives) || 0,
             killerQueenLives: Number(state.killerQueenLives) || 0,
             suitedAndBooted: !!state.suitedAndBootedArmed,
