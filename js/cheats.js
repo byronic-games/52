@@ -1856,9 +1856,9 @@ const CHEATS = [
     shouldConsumeResult: (result) => typeof result === "string" && result.startsWith("Save Scum armed"),
     use: () => {
       if (!state.current) return "No current card.";
-      if (state.saveScumArmed || state.saveScumPendingContinue) return "Save Scum is already active.";
+      if (state.saveScumArmed || state.saveScumSnapshot) return "Save Scum is already active.";
       state.saveScumArmed = true;
-      return "Save Scum armed - your next Game Over becomes a Continue.";
+      return "Save Scum armed - your next Game Over rewinds to this point.";
     },
   },
   {

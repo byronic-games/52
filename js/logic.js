@@ -1359,6 +1359,7 @@ function startRunWithPower(powerId) {
     findLadyArmed: false,
     saveScumArmed: false,
     saveScumPendingContinue: false,
+    saveScumSnapshot: null,
     cryogenRemaining: 0,
     cryogenFrozenEnergy: 0,
     lockySevensActive: false,
@@ -2175,17 +2176,81 @@ function resolveCryogenAfterReveal() {
   return ` Cryogen thawed: Energy held at ${frozenEnergy}.`;
 }
 
-function continueSaveScumRun() {
-  if (!state.saveScumPendingContinue) return false;
-  state.gameOver = false;
+function cloneSaveScumValue(value) {
+  if (value instanceof Set) return new Set(Array.from(value));
+  if (Array.isArray(value)) return value.map((item) => cloneSaveScumValue(item));
+  if (!value || typeof value !== "object") return value;
+  const clone = {};
+  Object.entries(value).forEach(([key, entryValue]) => {
+    clone[key] = cloneSaveScumValue(entryValue);
+  });
+  return clone;
+}
+
+function createSaveScumSnapshot() {
+  const snapshot = {};
+  Object.entries(state).forEach(([key, value]) => {
+    if (key === "saveScumSnapshot") return;
+    snapshot[key] = cloneSaveScumValue(value);
+  });
+  snapshot.saveScumArmed = false;
+  snapshot.saveScumPendingContinue = false;
+  snapshot.saveScumSnapshot = null;
+  snapshot.pendingRevealAnimation = null;
+  snapshot.gameOverDisplayCards = null;
+  snapshot.gameOver = false;
+  return snapshot;
+}
+
+function activateSaveScumCheckpoint() {
+  if (!state.current || state.gameOver) return false;
+  state.saveScumSnapshot = createSaveScumSnapshot();
+  state.saveScumArmed = true;
   state.saveScumPendingContinue = false;
+  return true;
+}
+
+function persistRestoredSaveScumState() {
+  if (!isDevModeRun()) {
+    saveMetaProgression(state.metaProgression);
+    saveExperience(state.experience);
+    saveCardStats(state.cardStats);
+    saveCardBackStatuses(state.cardBackStatuses);
+  }
+}
+
+function restoreSaveScumCheckpoint(message = "Save Scum restored the checkpoint.") {
+  if (!state.saveScumArmed || !state.saveScumSnapshot) return false;
+  const snapshot = cloneSaveScumValue(state.saveScumSnapshot);
+  const currentRunDebugLog = Array.isArray(state.runDebugLog) ? [...state.runDebugLog] : [];
+  Object.keys(state).forEach((key) => {
+    if (!(key in snapshot)) delete state[key];
+  });
+  Object.entries(snapshot).forEach(([key, value]) => {
+    state[key] = cloneSaveScumValue(value);
+  });
   state.saveScumArmed = false;
+  state.saveScumPendingContinue = false;
+  state.saveScumSnapshot = null;
   state.pendingRevealAnimation = null;
   state.gameOverDisplayCards = null;
+  state.gameOver = false;
   state.gameOverMessageReady = false;
   state.gameOverMessageJustReleased = false;
   state.restartConfirmArmed = false;
-  state.message = "Save Scum continued the run.";
+  state.temporaryMessageText = "";
+  state.temporaryMessageUntil = 0;
+  state.runDebugLog = currentRunDebugLog;
+  state.message = message;
+  persistRestoredSaveScumState();
+  appendRunDebugLog("save_scum_restored", {
+    restoredToTurn: state.correctAnswers || 0,
+    currentCard: describeCardForDebug(state.current),
+    nextCard: describeCardForDebug(peekNext()),
+    cardsCleared: getDisplayedRunScore(),
+    deckSize: getCurrentDeckTargetCount(),
+    message,
+  });
   render();
   return true;
 }
@@ -2706,6 +2771,7 @@ function clearArmedPowerEffects() {
   state.findLadyArmed = false;
   state.saveScumArmed = false;
   state.saveScumPendingContinue = false;
+  state.saveScumSnapshot = null;
   state.cryogenRemaining = 0;
   state.cryogenFrozenEnergy = 0;
   state.lockySevensActive = false;
@@ -2962,8 +3028,8 @@ function makeGuess(type) {
   const currentIsJoker = isJokerCard(state.current);
   const nineDartAutoCorrectWasActive = !!state.nineDartAutoCorrect;
   const konamiAutoCorrectWasActive = (Number(state.konamiAutoCorrectRemaining) || 0) > 0;
-  const saveScumText = state.saveScumArmed
-    ? " Save Scum is ready: tap Continue to carry on."
+  const saveScumText = state.saveScumArmed && state.saveScumSnapshot
+    ? " Save Scum will rewind to its checkpoint."
     : "";
 
   if (state.forcedNextGuess && type !== state.forcedNextGuess && !isJokerCard(next) && !currentIsJoker) {
@@ -3246,17 +3312,13 @@ function makeGuess(type) {
         sixSevenWasArmed,
         message: lossMessage,
       });
+      if (state.saveScumArmed && restoreSaveScumCheckpoint("Save Scum restored the checkpoint.")) {
+        return;
+      }
       if (state.pendingRevealAnimation) {
-        state.pendingRevealAnimation.gameOverDetail = state.saveScumArmed
-          ? `${lossMessage} Save Scum is ready: tap Continue to carry on.`
-          : lossMessage;
+        state.pendingRevealAnimation.gameOverDetail = lossMessage;
       }
       state.message = `💀 ${lossMessage}`;
-      if (state.saveScumArmed) {
-        state.message = `${state.message} Save Scum is ready: tap Continue to carry on.`;
-        state.saveScumArmed = false;
-        state.saveScumPendingContinue = true;
-      }
       state.gameOver = true;
       updateBestScoreIfNeeded();
       render();
@@ -3455,17 +3517,15 @@ function makeGuess(type) {
       message: lossDetail,
     });
 
-    state.message = `${gameOverMessage}${allInText}${timedEffectText}${saveScumText}`;
-    if (state.saveScumArmed) {
-      state.saveScumArmed = false;
-      state.saveScumPendingContinue = true;
+    if (state.saveScumArmed && restoreSaveScumCheckpoint("Save Scum restored the checkpoint.")) {
+      return;
     }
+
+    state.message = `${gameOverMessage}${allInText}${timedEffectText}${saveScumText}`;
     state.gameOver = true;
     updateBestScoreIfNeeded();
     render();
-    if (!state.saveScumPendingContinue) {
-      handleRunFinished(state.correctAnswers);
-    }
+    handleRunFinished(state.correctAnswers);
     return;
   }
 

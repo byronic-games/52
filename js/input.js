@@ -745,11 +745,6 @@ document.getElementById("restart-btn").onclick = () => {
     typeof getRunScoreFromCorrectAnswers === "function" &&
     getRunScoreFromCorrectAnswers(state.correctAnswers) >= 52;
 
-  if (state.saveScumPendingContinue && typeof continueSaveScumRun === "function") {
-    continueSaveScumRun();
-    return;
-  }
-
   if (state.runMode === "daily") {
     const variantLabel = typeof getDailyVariantConfig === "function"
       ? getDailyVariantConfig(state.dailyVariant).label || "Daily"

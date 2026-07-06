@@ -75,7 +75,7 @@
 "local_low","Local low","common","0","true","unique","1","","Available from run start","Reveals the lowest value among the next three face-down cards."
 "find_the_lady","Find The Lady","uncommon","25","true","unique","0.85","","Meta progression >= 25","If the next revealed card is a Queen, choose a new Power."
 "konami_code","Konami Code","rare","0","true","unique","0.75","","Available from run start","If your next four guesses are Up, Up, Down, Down, the following four guesses are safe."
-"save_scum","Save Scum","legendary","30","true","unique","0.65","","Meta progression >= 30","Record where you are in the deck. The next Game Over becomes a Continue, starting over from this point."
+"save_scum","Save Scum","legendary","30","true","unique","0.65","","Meta progression >= 30","Record a one-off checkpoint. The next Game Over rewinds the deck, grid, hand, Powers, and Nudges to this point."
 "cryogen","Cryogen","rare","0","true","unique","0.75","","Available from run start","Freeze Energy at its current value for the next three card turns."
 "equals_11","Equals 11","uncommon","60","true","unique","0.85","","Meta progression >= 60","Arm this card. If it and the next revealed card total 11, choose 3 extra cheats."
 "wl","WL","uncommon","60","true","unique","0.8","","Meta progression >= 60","Win your next guess, then lose the one after. If you do, the run survives and you choose 3 extra cheats."

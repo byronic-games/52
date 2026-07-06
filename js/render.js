@@ -697,7 +697,6 @@ function scheduleExperienceBankingAfterGameOver() {
   if (state.experienceBanking) return;
   clearExperienceBankingTimers();
   if (state.experienceAwardedForRun || !state.gameOver) return;
-  if (state.saveScumPendingContinue) return;
   if (typeof loadExperienceDisplayEnabled === "function" && !loadExperienceDisplayEnabled()) {
     awardExperienceForCurrentRun({ animate: false, pulse: false });
     return;
@@ -1710,7 +1709,7 @@ function getActiveEffectsTooltipPayload() {
     waiting.push(`Konami Code: ${state.konamiAutoCorrectRemaining} safe guess${state.konamiAutoCorrectRemaining === 1 ? "" : "es"} left.`);
   }
   if (state.findLadyArmed) waiting.push("Find The Lady: Queen reveal gives a Power pick.");
-  if (state.saveScumArmed) waiting.push("Save Scum: next Game Over becomes Continue.");
+  if (state.saveScumArmed && state.saveScumSnapshot) waiting.push("Save Scum: next Game Over rewinds to its checkpoint.");
   if ((state.cryogenRemaining || 0) > 0) {
     waiting.push(`Cryogen: Energy frozen at ${state.cryogenFrozenEnergy || state.energy || 0} for ${state.cryogenRemaining} turn${state.cryogenRemaining === 1 ? "" : "s"}.`);
   }
@@ -1959,11 +1958,6 @@ function renderRestartButton() {
     state.gameOver &&
     typeof getRunScoreFromCorrectAnswers === "function" &&
     getRunScoreFromCorrectAnswers(state.correctAnswers) >= 52;
-  if (state.gameOver && state.saveScumPendingContinue) {
-    btn.innerText = "Continue";
-    btn.disabled = false;
-    return;
-  }
   if (state.runMode === "daily" && state.gameOver) {
     const variantLabel = typeof getDailyVariantConfig === "function"
       ? getDailyVariantConfig(state.dailyVariant).label || "Daily"
@@ -3289,6 +3283,9 @@ function renderCheats() {
           const originalIndex = state.cheats.findIndex((c) => c.id === entry.cheat.id);
           if (originalIndex >= 0) removeCheatAt(originalIndex);
           state.cheatUsesOnCurrentCard = (state.cheatUsesOnCurrentCard || 0) + 1;
+          if (entry.cheat.id === "save_scum" && typeof activateSaveScumCheckpoint === "function") {
+            activateSaveScumCheckpoint();
+          }
         }
         if (typeof window.handleTutorialCheatUsed === "function") {
           window.handleTutorialCheatUsed(entry.cheat, result);

@@ -120,6 +120,7 @@ function createEmptyState() {
     findLadyArmed: false,
     saveScumArmed: false,
     saveScumPendingContinue: false,
+    saveScumSnapshot: null,
     cryogenRemaining: 0,
     cryogenFrozenEnergy: 0,
     lockySevensActive: false,

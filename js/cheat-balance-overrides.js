@@ -266,7 +266,7 @@ window.CHEAT_BALANCE_OVERRIDES = {
                        },
     "save_scum":  {
                       "stacking":  "unique",
-                      "description":  "Record where you are in the deck. The next Game Over becomes a Continue, starting over from this point.",
+                      "description":  "Record a one-off checkpoint. The next Game Over rewinds the deck, grid, hand, Powers, and Nudges to this point.",
                       "weight":  0.65,
                       "unlockAt":  30,
                       "name":  "Save Scum",
