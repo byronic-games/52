@@ -7,8 +7,9 @@
   - completed local attempts retry-upload to the matching variant only.
 - Verify Hard Daily unlocks after Normal is attempted for that date, uses the Hard seed, hides torn-card hints, and does not score tears.
 - Verify Daily share text on mobile for both variants:
-  - Normal says Normal and uses the Normal URL.
-  - Hard says Hard and includes `variant=hard`.
+  - Both variants use the same visible wording: `I scored xx/52 on today's 52! Daily.`
+  - Normal uses the Normal URL and omits `variant=hard`.
+  - Hard includes `variant=hard` in the URL.
   - new attempts include suit rows; old attempts without `suitCounts` do not show zero suit rows.
 - Verify Joker reveals count toward Cheat cadence. If a Joker is the third/fourth/etc. counted reveal, show the Joker result first and then the Cheat picker.
 - Verify final-card Daily bonus scoring still counts unpicked Cheat/Power awards, including a final Joker that completes the Cheat cadence.
@@ -25,6 +26,14 @@
 - Verify Cursed Shield overlay badge behavior unaffected.
 - Verify Power offers never show Double Bubble or Erratic without a standard Nudge-starting Power in the same offer.
 - Verify Erratic nudge spend messages show exact rolled results (`Nudge +0`, `Nudge -3`, etc.) and do not overflow the message bar.
+- Verify Insurance saves exactly one non-specific wrong guess and is consumed after Cursed Shield / One Life Left / specific saves have priority.
+- Verify Lucky Charm queues exactly three Cheat selections before the first guess.
+- Verify the recent Cheat batch:
+  - Assemble uses the current effective value, including nudges.
+  - Sell Your Soul saves wrong and punishes right.
+  - Coming soon compares against the current face-down card clearly.
+  - Burn The Next One removes a card without marking the grid and lowers the deck denominator.
+  - Save Scum restores the full checkpoint rather than continuing in place.
 - On Android Chrome, re-check reveal animation after any reveal/render/card-face edit. It has previously rotated without showing the face.
 
 ## P1 - Identity Hardening

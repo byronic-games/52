@@ -49,9 +49,19 @@ Mobile-first browser card game (higher/lower) with deck progression, powers, che
 - Unlock Decks in settings opens Level 1 of every visible deck for testing.
 - Players can choose Lower / Higher or Higher / Lower guess button order and Down / Up or Up / Down nudge order in Settings; the controls keep their existing styles.
 - Daily has separate Normal and Hard variants. Hard unlocks after Normal is attempted for the date, uses a different seed, hides torn-card hints, and does not score tears.
-- Daily result sharing is enabled on the Daily board. Shares are spoiler-light text snippets that include Normal/Hard, cards found, suit totals for newly completed attempts, and the Daily URL.
+- Daily result sharing is enabled on the Daily board. Shares are spoiler-light text snippets: cards found, suit totals for newly completed attempts, and "You've one chance to tackle the same deck" with the Daily URL. The share copy does not name Normal/Hard; the URL still targets the matching variant.
 - Daily leaderboard loads retry-upload a completed local Daily attempt when that player's online row is missing for the matching `date_key` + `variant` + `player_id`.
 - Supabase `daily_52` rows require `variant`; uniqueness must include variant so Normal and Hard attempts do not block or leak into each other.
-- Tutorial highlighting uses a thin yellow focus treatment. Most tutorial copy sits over the grid; the grid step uses a measured focus box. Tutorial guesses are protected until the tutorial completes.
+- Tutorial highlighting uses a thin yellow focus treatment. Most tutorial copy sits over the grid; the grid step uses a measured focus box. Tutorial guesses are protected until the tutorial completes, including by moving a suitable next card into place when needed.
 - Choice modals are intended to hide the gameplay `Higher / Lower` row while open.
 - Power offers must include a standard Nudge-starting Power when offering Nudge-support Powers such as Double Bubble or Erratic. Double Bubble doubles Nudge movement; Erratic makes each spent Nudge charge randomly move 0, 1, 2, or 3 before other Nudge multipliers apply.
+- Recent Power additions:
+  - `Insurance`: one broad wrong-guess save, used only after card-specific and other specific saves have had priority.
+  - `Lucky Charm`: offers three Cheat selections before the first guess.
+- Recent Cheat additions/fixes:
+  - `Assemble`: moves the remaining cards of the current, possibly nudged, value to the top of the deck.
+  - `Sell Your Soul`: next reveal saves a wrong guess, but a right guess costs all held Cheats and Nudges.
+  - `Coming soon`: reports whether the card after next is higher/lower than the current face-down card.
+  - `Burn The Next One`: destroys the top face-down card without marking it on the grid and reduces the deck total.
+  - `Save Scum`: restores the deck, grid, Cheats, Powers, and run state to its checkpoint on game over.
+  - `Next Card Parity`, `Killer Queen`, and reveal-triggered Cheats/Powers should resolve against the revealed card, after any allowed deck manipulation.

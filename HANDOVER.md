@@ -24,14 +24,17 @@
   - Hard: unlocked after Normal is attempted for that date, different Blue Level 1 seed, torn cards are hidden and tears do not affect score.
 - Daily variants use separate local attempt keys, seeds, and leaderboards. Supabase rows use `variant`; all leaderboard date/seed/fallback queries must filter by the active variant.
 - Daily leaderboard loads retry-upload a completed local Daily attempt if the matching `date_key` + `variant` + `player_id` row is missing online.
-- Daily has an enabled share button on the result panel. Share text is spoiler-light: it names Normal/Hard, shows cards found, includes suit totals for newly completed local attempts, and links to the matching Daily URL.
+- Daily has an enabled share button on the result panel. Share text is spoiler-light and variant-ambiguous: it shows cards found, optional suit totals for newly completed local attempts, and "You've one chance to tackle the same deck" with the matching Daily URL. Normal/Hard is preserved by the URL, not named in the visible copy.
 - Main menu uses playing-card action buttons. The old Shop entry is now Collection; Heroes is hidden from the main menu for now.
 - Collection owns card backs, deck reset/tear repair tools, and discovered Cheats/Powers/Jokers. Discovery cards are compact and use hold popovers for details.
-- Latest Cheat batch added: Ladies Night, Blackjack, Roll the Dice, Club Sandwich, Diamond Geezer, Red Herring, and Grave Digger. Blackjack and Diamond Geezer are reveal-triggered and should score their final-card Daily rewards without forcing post-game picks.
+- Latest Cheat batches added/fixed: Ladies Night, Blackjack, Roll the Dice, Club Sandwich, Diamond Geezer, Red Herring, Grave Digger, Assemble, Sell Your Soul, Coming soon, and Burn The Next One. Blackjack, Diamond Geezer, Find The Lady, Killer Queen, Next Card Parity, and other reveal-triggered effects should resolve when the card is revealed, not when the Cheat is played.
+- Save Scum is a checkpoint restore: on game over it restores deck, grid, held Cheats, Powers, and run state to the moment it was played.
 - Recent Power/nudge behavior:
   - Double Bubble and Erratic are Nudge-support Powers, not standalone Nudge coverage in Power offers.
   - Power offers containing Double Bubble or Erratic should also include a standard Nudge-starting Power: Balanced Nudges, Updraft, or Downforce.
   - Erratic rolls each spent Nudge charge as 0, 1, 2, or 3 movement with equal odds. Double Bubble and Nudge Nudge multipliers apply after that roll, and the message bar should show the exact result such as `Nudge -3` or `Nudge +0`.
+  - Insurance is a broad one-shot save that fires only after more specific saves and the existing broad Cheat saves.
+  - Lucky Charm gives three Cheat selections before the first guess.
 - Android standalone/home-screen sizing was tightened using `visualViewport.height` plus short-screen CSS compression.
 - The gameplay screen has a structured fixed-height vertical layout: `game.html` supplies spacer/gap rows, while `styles.css` uses container-query grid rows to fit the header, cards, message bar, cheat coins, controls, and memory grid into `--app-height`.
 - The default `NEW` visual mode renders white card faces with image suit icons, circular rarity cheat coins, and shield-shaped power cards/header chip.
@@ -81,6 +84,7 @@
   - fallback queries must keep `variant=eq.normal|hard`; otherwise Normal can show Hard rows
 - Daily sharing in `js/daily-page.js`:
   - `DAILY_SHARE_ENABLED` is currently `true`
+  - visible share text no longer names Normal/Hard
   - Normal share URLs omit `variant=hard`; Hard share URLs include it
   - newly completed local attempts include `suitCounts`; older attempts share without suit rows
 - Daily Supabase schema:
@@ -104,4 +108,4 @@
 4. Re-test tutorial overlays and choice-modal behavior on mobile before changing adjacent UI; confirm yellow focus boxes are visible, not too thick, and not obscuring the discussed area.
 5. Re-check Android reveal animation after any reveal/render/card-face work.
 6. Patch minimally and verify Daily/Heroes/Profile/Collection did not regress.
-7. If Daily sharing is being revisited, start in `js/daily-page.js`; keep it spoiler-light and variant-explicit.
+7. If Daily sharing is being revisited, start in `js/daily-page.js`; keep it spoiler-light and preserve the variant in the URL without naming it in the share copy.

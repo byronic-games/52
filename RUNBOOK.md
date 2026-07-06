@@ -66,8 +66,8 @@
 7. Crowns should be per-player, not per-viewer.
 8. For a completed local Daily attempt that failed to save online, opening that Daily board while connected should upload the missing row for the matching variant only.
 9. Hard should hide torn-card hints and should not score tears.
-10. After completing a Normal Daily, share text should say `Normal 52! Daily`, omit `variant=hard`, and include suit rows for newly completed attempts.
-11. After completing a Hard Daily, share text should say `Hard 52! Daily`, include `variant=hard` in the URL, and include suit rows for newly completed attempts.
+10. After completing a Normal Daily, share text should say `I scored xx/52 on today's 52! Daily.`, omit `variant=hard` from the URL, and include suit rows for newly completed attempts.
+11. After completing a Hard Daily, share text should use the same variant-ambiguous wording, include `variant=hard` in the URL, and include suit rows for newly completed attempts.
 12. Older completed attempts without stored suit totals should still share cleanly without misleading zero-count suit rows.
 
 ## Power / Nudge Check
@@ -76,6 +76,18 @@
 3. With Erratic active, spend several Nudge charges and confirm the message bar shows the exact rolled result: `Nudge +0`, `Nudge +1`, `Nudge +2`, `Nudge +3`, or the matching negative form.
 4. With Erratic plus Double Bubble and/or Nudge Nudge, confirm the rolled amount is multiplied after the 0-3 roll.
 5. Confirm a roll of 0 spends one Nudge charge and does not move the card.
+6. With Insurance active, make a wrong guess that is not covered by a specific save and confirm Insurance saves the run and is consumed.
+7. With Insurance plus a specific save armed, confirm the specific save fires before Insurance.
+8. With Lucky Charm selected as the starting Power, confirm three Cheat choices are offered before the first guess.
+
+## Recent Cheat Regression Check
+1. Play Assemble on a nudged card and confirm it pulls remaining cards of the current effective value, not just the printed card value.
+2. Play Sell Your Soul and confirm the next wrong guess survives, while the next naturally correct guess clears held Cheats and Nudges.
+3. Play Coming soon and confirm the short/log copy states the result relative to the current face-down card.
+4. Play Burn The Next One and confirm the top face-down card is removed, not shown on the grid, and the run total drops below 52.
+5. Play Save Scum, then lose, and confirm deck, grid, held Cheats, Powers, and run state restore to the checkpoint.
+6. Arm Killer Queen and confirm it saves Lower on Queen into King at reveal time.
+7. Use Next Card Parity with Cheaters Prosper and confirm the parity result is shown clearly without being swallowed by the Prosper nudge text.
 
 ## Collection Check
 1. Open Collection from the main menu.
@@ -95,6 +107,15 @@
 - `.htaccess` now forces HTML-like files to revalidate, but do not rely on that alone for JS/CSS changes.
 - For mobile/PWA freshness, also bump `CACHE_VERSION` and `GAME_ASSET_VERSION` in `service-worker.js`.
 - When Daily sharing or Daily completion data changes, bump both `daily.html` script query strings and the `daily.js` query string in `game.html`.
+- When `daily-page.js` changes, bump its query string in `daily.html`; otherwise mobile can keep old share text.
+
+## Cheat Catalog Import
+- Balance tweaks in `cheat-catalog.csv` are not applied automatically at runtime. Reimport them into `js/cheat-balance-overrides.js`.
+- From the repo root, use:
+  - `powershell -ExecutionPolicy Bypass -File .\tools\import-cheats.ps1 -CsvPath .\cheat-catalog.csv -OutputPath .\js\cheat-balance-overrides.js`
+- From inside `tools`, use:
+  - `powershell -ExecutionPolicy Bypass -File .\import-cheats.ps1 -CsvPath ..\cheat-catalog.csv -OutputPath ..\js\cheat-balance-overrides.js`
+- After importing, bump the relevant asset query strings and service-worker versions for mobile/PWA freshness.
 
 ## Supabase Quick Health
 - `daily_52`: anon `SELECT` + `INSERT`.

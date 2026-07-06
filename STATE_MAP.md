@@ -38,7 +38,10 @@
 - Jokers count as safe/correct reveals for Cheat cadence, even though they are not normal playing cards.
 - Daily local attempts are variant-aware. Normal keeps the legacy date-only local key for compatibility; Hard uses a variant-prefixed key such as `hard|YYYY-MM-DD`.
 - Completed local Daily attempts may include `suitCounts` keyed by suit symbol for spoiler-light share text. Older attempts may not have this field.
+- Daily share text is variant-ambiguous in visible copy; the URL preserves whether the run was Normal or Hard.
 - Collection discovery grids read the discovered Cheat/Power/Joker keys and reveal details only after an item has been found in play.
+- Run-state-only fields include broad save counters such as `insuranceLives`, Cheat save counters such as `oneLifeLeftLives` / `killerQueenLives`, and full-checkpoint data in `saveScumSnapshot`.
+- Lucky Charm uses the normal pending Cheat award queue before the first guess rather than a separate persistent storage key.
 
 ## `sessionStorage`
 - `hl_prototype_game_state_snapshot`

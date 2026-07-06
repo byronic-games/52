@@ -49,6 +49,8 @@
 - Nudges use separate + / - charge pools.
 - Nudge-support Powers are not standalone offer coverage: Double Bubble and Erratic may appear in a Power offer only when a standard Nudge-starting Power is also present, unless no support Power is selected.
 - Double Bubble doubles each Nudge charge. Erratic makes each spent Nudge charge roll 0, 1, 2, or 3 movement with equal odds; Double Bubble and Nudge Nudge multipliers apply after that roll. Erratic nudge messages intentionally show only the rolled result, e.g. `Nudge -3` or `Nudge +0`.
+- Insurance is a broad one-shot wrong-guess save. It is intentionally lower priority than specific saves such as suit saves, Killer Queen, Margin For Error, and other reveal/card-specific protections. Cursed Shield and One Life Left also resolve before Insurance.
+- Lucky Charm queues three standard Cheat selections before the first guess, using the same seeded/variant-aware offer flow as other Cheat picks.
 - Yellow and Orange runs insert 1-4 Joker hazard cards after the first four deck positions, so they can only appear after three correct guesses. A Joker consumes the next-card reveal without caring whether the player guessed Higher or Lower, applies its negative effect, counts as a safe/correct reveal for Cheat cadence, and leaves the current normal card in play.
 - Yellow Joker pool: Tearless hides one torn corner from an unseen card, RONG reverses Higher/Lower meanings for the rest of the run, Gridless clears the visible found-card grid, Nudgeless clears banked Nudges, Timeless shuffles recently revealed playing cards back into the deck, Cheatless clears held Cheats, and Powerless clears persistent/armed effects. Higher levels add more Jokers from this pool.
 - Orange combines Blue nudge rewards, Green Energy costs, and Yellow Joker hazards. Energy starts at 10/8/6/5 for Levels 1-4.
@@ -57,10 +59,16 @@
   - Normal: Blue Level 1 daily seed using the player's current deck/card state.
   - Hard: unlocks after Normal is attempted for that date, uses a different Blue Level 1 seed, hides torn-card hints, and does not score tears.
 - Daily/Heroes support Supabase + local fallback behavior. Daily fallback and repair queries must preserve `variant` filtering so Normal and Hard do not leak into each other.
-- Daily sharing uses a spoiler-light text payload. New local Daily attempts store suit totals for sharing; remote rows and older local attempts may not have those totals and should still share without the suit rows.
+- Daily sharing uses a spoiler-light text payload: `I scored xx/52 on today's 52! Daily.`, optional suit-total rows, and `You've one chance to tackle the same deck:` plus the Daily URL. The visible text does not name Normal/Hard; the URL still preserves the selected Daily variant. New local Daily attempts store suit totals for sharing; remote rows and older local attempts may not have those totals and should still share without the suit rows.
 - Recent Cheat additions:
   - `Ladies Night`, `Roll the Dice`, `Club Sandwich`, `Red Herring`, and `Grave Digger` resolve immediately.
   - `Blackjack` and `Diamond Geezer` arm and resolve on the next reveal; Daily final-card scoring credits their unpicked rewards.
+  - `Assemble` pulls remaining cards of the current effective value to the top of the deck, including nudged values.
+  - `Sell Your Soul` saves the next wrong guess but punishes a right guess by clearing held Cheats and Nudges.
+  - `Coming soon` compares the card after next to the current face-down card and should log that relationship clearly.
+  - `Burn The Next One` removes the top face-down card from the deck entirely without marking it on the grid, reducing the run denominator.
+  - `Save Scum` is a one-off checkpoint restore, not a simple continue.
+  - Reveal-triggered Cheats/Powers, including `Find The Lady`, `Killer Queen`, and `Next Card Parity`, should resolve on reveal so deck manipulation after play is respected.
 
 ## Main Code Ownership
 - `js/logic.js`: game rules and state transitions
@@ -82,5 +90,6 @@
   - most tutorial dialogs sit over the grid to avoid covering the face-up card
   - focus styling is a thin yellow guide; the grid step uses a measured focus box
   - tutorial guess resolution is protected in `js/logic.js`, with a defensive overlay close if game-over still occurs
+  - while the rules are being taught, tutorial guesses should always resolve as safe by moving a suitable next card to the top where possible
   - gameplay guess buttons should hide while power / cheat choice modals are open
   - top message-bar text is aggressively shortened via `getMessageBarText()` in `js/render.js`
