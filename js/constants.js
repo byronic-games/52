@@ -54,8 +54,8 @@ const GAME_STATE_SNAPSHOT_KEY = "hl_prototype_game_state_snapshot";
 
     const CHEAT_RARITY = {
       common: 50,
-      uncommon: 30,
-      rare: 20,
+      uncommon: 25,
+      rare: 15,
       legendary: 0,
     };
 

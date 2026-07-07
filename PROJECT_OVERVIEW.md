@@ -60,6 +60,7 @@
   - Hard: unlocks after Normal is attempted for that date, uses a different Blue Level 1 seed, hides torn-card hints, and does not score tears.
 - Daily/Heroes support Supabase + local fallback behavior. Daily fallback and repair queries must preserve `variant` filtering so Normal and Hard do not leak into each other.
 - Daily sharing uses a spoiler-light text payload: `I scored xx/52 on today's 52! Daily.`, optional suit-total rows, and `You've one chance to tackle the same deck:` plus the Daily URL. The visible text does not name Normal/Hard; the URL still preserves the selected Daily variant. New local Daily attempts store suit totals for sharing; remote rows and older local attempts may not have those totals and should still share without the suit rows.
+- Cheat offer rarity weights live in `js/constants.js`. Current normal-pool weights are common `50`, uncommon `25`, rare `15`, and legendary `0` outside Legendary-only effects.
 - Recent Cheat additions:
   - `Ladies Night`, `Roll the Dice`, `Club Sandwich`, `Red Herring`, and `Grave Digger` resolve immediately.
   - `Blackjack` and `Diamond Geezer` arm and resolve on the next reveal; Daily final-card scoring credits their unpicked rewards.

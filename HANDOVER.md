@@ -36,6 +36,7 @@
   - Double Your Luck gives each Nudge charge a 50% chance not to be consumed. It still requires a banked charge, and Green Energy is still spent.
   - Insurance is a broad one-shot save that fires only after more specific saves and the existing broad Cheat saves.
   - Lucky Charm gives three Cheat selections before the first guess.
+- Cheat offer rarity weights are currently tuned in `js/constants.js` as common `50`, uncommon `25`, rare `15`, and legendary `0` for the normal pool. Legendary Cheats still appear through Legendary-only effects.
 - Android standalone/home-screen sizing was tightened using `visualViewport.height` plus short-screen CSS compression.
 - The gameplay screen has a structured fixed-height vertical layout: `game.html` supplies spacer/gap rows, while `styles.css` uses container-query grid rows to fit the header, cards, message bar, cheat coins, controls, and memory grid into `--app-height`.
 - The default `NEW` visual mode renders white card faces with image suit icons, circular rarity cheat coins, and shield-shaped power cards/header chip.
