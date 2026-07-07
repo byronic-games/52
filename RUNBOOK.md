@@ -89,6 +89,7 @@
 5. Play Save Scum, then lose, and confirm deck, grid, held Cheats, Powers, and run state restore to the checkpoint.
 6. Arm Killer Queen and confirm it saves Lower on Queen into King at reveal time.
 7. Use Next Card Parity with Cheaters Prosper and confirm the parity result is shown clearly without being swallowed by the Prosper nudge text.
+8. Play Enchant, make a wrong guess that only an enchanted unseen card can save, and confirm it jumps to the top, reveals with the enchanted visual, then loses its enchantment. Also confirm Collection can clear an unused enchantment.
 
 ## Collection Check
 1. Open Collection from the main menu.

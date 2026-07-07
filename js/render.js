@@ -134,18 +134,20 @@ function renderRevealOverlayCard(pending, showFace) {
     ? pending.revealEffectiveValue
     : Number.isFinite(storedTemporaryValue)
       ? storedTemporaryValue
-    : revealCard.value;
+      : revealCard.value;
   const revealIsTemp = !!pending.revealIsTemp || Number.isFinite(storedTemporaryValue);
+  const revealIsEnchanted = !!revealStatus.enchanted || state.recentEnchantedRevealCardId === revealCard.id;
   const revealBackColor = getDeckBackColor(state.currentDeckKey || state.selectedDeckKey);
 
   overlayEl.innerHTML = "";
   if (showFace) {
-    overlayEl.className = `reveal-overlay card-face ${isJokerCard(revealCard) ? "joker-card-face" : (isRed(revealCard) ? "red" : "black")} ${revealStatus.tornCorner ? "torn-corner-face" : ""} ${revealIsTemp ? "temporary-value" : ""}`.trim();
+    overlayEl.className = `reveal-overlay card-face ${isJokerCard(revealCard) ? "joker-card-face" : (isRed(revealCard) ? "red" : "black")} ${revealStatus.tornCorner ? "torn-corner-face" : ""} ${revealIsEnchanted ? "enchanted-card-face" : ""} ${revealIsTemp ? "temporary-value" : ""}`.trim();
     overlayEl.innerHTML = renderCardFaceMarkup(
       revealCard,
       revealValue,
       revealIsTemp,
-      revealStatus.tornCorner
+      revealStatus.tornCorner,
+      { isEnchanted: revealIsEnchanted }
     );
   } else {
     overlayEl.className = `reveal-overlay card-back card-back-${revealBackColor} ${revealStatus.tornCorner ? "torn-corner" : ""}`.trim();
@@ -1152,6 +1154,7 @@ const SHORT_EFFECT_LABELS = Object.freeze({
   "Psycho": "Psycho",
   "Brucie Bonus": "Brucie",
   "You Can Cheat A Cheater": "Cheater",
+  "Enchant": "Enchant",
 });
 
 function truncateMessage(text, maxLength = 36) {
@@ -1286,6 +1289,10 @@ function shortenEffectPayload(effectName, payload) {
     const rollMatch = text.match(/rolled\s+(\d+)/i);
     if (rollMatch) return `Dice: +${rollMatch[1]}/-${rollMatch[1]}`;
   }
+  if (name === "Enchant") {
+    if (/marked/i.test(text)) return "Enchant set";
+    if (/found no|needs/i.test(text)) return "Enchant: none";
+  }
   if (name === "Ladies Night") {
     const countMatch = text.match(/^(\d+)/);
     if (countMatch) return `Queens: ${countMatch[1]} pulled`;
@@ -1349,6 +1356,8 @@ function getShortPlayerMessage(message = "") {
     return "Coming Soon";
   }
   if (/^Burned the next/i.test(cleaned)) return "Card burned";
+  if (/^Enchant marked/i.test(cleaned)) return "Enchant set";
+  if (/^Enchant saved/i.test(cleaned)) return "Enchant saved";
   const splitMatch = cleaned.match(/^Split the Difference:\s*(?:the\s+)?gap\s+is\s+(\d+)/i);
   if (splitMatch) return `Gap: ${splitMatch[1]}`;
   if (/^Split the Difference:.*Joker/i.test(cleaned)) return "Gap: Joker";
@@ -1960,6 +1969,7 @@ function getCheatIcon(name) {
   if (name === "Sixth Sense") return "6?";
   if (name === "One Life Left") return "♥1";
   if (name === "Killer Queen") return "KQ";
+  if (name === "Enchant") return "EN";
   return CHEAT_ICON_BY_NAME[name] || "✦";
 }
 
@@ -2125,9 +2135,13 @@ function renderCardFaceMarkup(card, displayValue, isTemporarilyModified, include
       ? `<span class="card-nudge-old-rank card-nudge-old-rank-tl">${nudgeFromRank}</span><span class="card-nudge-old-rank card-nudge-old-rank-br" aria-hidden="true">${nudgeFromRank}</span>`
       : `<span class="card-nudge-old-label">${nudgeFromRank}${card.suit}</span>`
     : "";
+  const enchantHtml = options.isEnchanted
+    ? '<span class="card-enchant-sparkles" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></span>'
+    : "";
   return `
     ${labelHtml}
     ${nudgeOldRankHtml}
+    ${enchantHtml}
     ${isTemporarilyModified ? '<span class="card-temp-chip">TEMP</span>' : ""}
     ${showShieldBadge ? '<span class="card-shield-badge" aria-label="Cursed Shield active" title="Cursed Shield active">🛡️</span>' : ""}
     ${lifeBadgeCount > 0 ? `<span class="card-life-badge" aria-label="${lifeBadgeCount} ${lifeBadgeCount === 1 ? "life" : "lives"} left" title="${lifeBadgeCount} ${lifeBadgeCount === 1 ? "life" : "lives"} left"><span aria-hidden="true">♥</span>${lifeBadgeCount > 1 ? `<span class="card-life-count">${lifeBadgeCount}</span>` : ""}</span>` : ""}
@@ -2245,6 +2259,7 @@ function renderCurrentCard() {
   }
 
   const backStatus = getCardBackStatus(cardToRender.id);
+  const isEnchantedCard = !!backStatus.enchanted || state.recentEnchantedRevealCardId === cardToRender.id;
   const effectiveValue = showPinnedCurrentCard
     ? pendingReveal.fromEffectiveValue
     : gameOverCards?.leftCard && cardToRender.id === gameOverCards.leftCard.id
@@ -2265,7 +2280,7 @@ function renderCurrentCard() {
     ? `nudge-animate nudge-${nudgeAnimation.direction === "down" ? "down" : "up"}`
     : "";
 
-  currentCardEl.className = `card-face ${isJokerCard(cardToRender) ? "joker-card-face" : (isRed(cardToRender) ? "red" : "black")} ${backStatus.tornCorner ? "torn-corner-face" : ""} ${isTemporarilyModified ? "temporary-value" : ""} ${feedbackClass} ${nudgeClass}${getPreservedTutorialFocusClass(currentCardEl)}`.trim();
+  currentCardEl.className = `card-face ${isJokerCard(cardToRender) ? "joker-card-face" : (isRed(cardToRender) ? "red" : "black")} ${backStatus.tornCorner ? "torn-corner-face" : ""} ${isEnchantedCard ? "enchanted-card-face" : ""} ${isTemporarilyModified ? "temporary-value" : ""} ${feedbackClass} ${nudgeClass}${getPreservedTutorialFocusClass(currentCardEl)}`.trim();
   currentCardEl.innerHTML = renderCardFaceMarkup(
     cardToRender,
     effectiveValue,
@@ -2275,6 +2290,7 @@ function renderCurrentCard() {
       showShieldBadge: (Number(state.cursedShieldCharges) || 0) > 0 || !!state.cursedShieldArmed,
       lifeBadgeCount: state.oneLifeLeftLives || 0,
       nudgeFromValue: nudgeAnimation?.fromValue,
+      isEnchanted: isEnchantedCard,
     }
   );
   const currentCardTooltipPayload = getCurrentCardTooltipPayload(cardToRender);
@@ -2441,15 +2457,17 @@ function renderFaceDownDeck() {
       ? gameOverCards.rightEffectiveValue
       : Number.isFinite(storedTemporaryValue)
         ? storedTemporaryValue
-      : revealCard.value;
+        : revealCard.value;
     const revealIsTemp = !!gameOverCards.rightIsTemp || Number.isFinite(storedTemporaryValue);
+    const revealIsEnchanted = !!revealStatus.enchanted || state.recentEnchantedRevealCardId === revealCard.id;
 
-    deckEl.className = `card-face ${isJokerCard(revealCard) ? "joker-card-face" : (isRed(revealCard) ? "red" : "black")} ${revealStatus.tornCorner ? "torn-corner-face" : ""} ${revealIsTemp ? "temporary-value" : ""}${getPreservedTutorialFocusClass(deckEl)}`.trim();
+    deckEl.className = `card-face ${isJokerCard(revealCard) ? "joker-card-face" : (isRed(revealCard) ? "red" : "black")} ${revealStatus.tornCorner ? "torn-corner-face" : ""} ${revealIsEnchanted ? "enchanted-card-face" : ""} ${revealIsTemp ? "temporary-value" : ""}${getPreservedTutorialFocusClass(deckEl)}`.trim();
     deckEl.innerHTML = renderCardFaceMarkup(
       revealCard,
       revealValue,
       revealIsTemp,
-      revealStatus.tornCorner
+      revealStatus.tornCorner,
+      { isEnchanted: revealIsEnchanted }
     );
     deckEl.removeAttribute("data-back-color");
     deckEl.classList.remove("has-deck-stats-tooltip");
@@ -2485,7 +2503,7 @@ function renderFaceDownDeck() {
 
   const backStatus = next
     ? getCardBackStatus(next.id)
-    : { tornCorner: false, backColor: "blue" };
+    : { tornCorner: false, enchanted: false, backColor: "blue" };
   const blankSpaceActive = !!next && typeof isBlankSpaceActiveForNextCard === "function" && isBlankSpaceActiveForNextCard(next);
 
   const backColor = getDeckBackColor(state.currentDeckKey);

@@ -124,14 +124,14 @@
     }
   }
 
-  function restoreTornCard(cardId) {
+  function restoreMarkedCard(cardId) {
     if (!cardId || typeof loadCardBackStatuses !== "function" || typeof saveCardBackStatuses !== "function") return false;
     const statuses = loadCardBackStatuses();
     const current = statuses?.[cardId];
-    if (!current?.tornCorner) return false;
+    if (!current?.tornCorner && !current?.enchanted) return false;
 
-    const nextStatus = { ...current, tornCorner: false };
-    const isDefaultStatus = !nextStatus.tornCorner && (!nextStatus.backColor || nextStatus.backColor === "blue");
+    const nextStatus = { ...current, tornCorner: false, enchanted: false };
+    const isDefaultStatus = !nextStatus.tornCorner && !nextStatus.enchanted && (!nextStatus.backColor || nextStatus.backColor === "blue");
     if (isDefaultStatus) {
       delete statuses[cardId];
       syncSnapshotCardBackStatus(cardId, null);
@@ -152,28 +152,39 @@
         .filter(([, status]) => !!status?.tornCorner)
         .map(([cardId]) => cardId)
     );
+    const enchantedIds = new Set(
+      Object.entries(statuses || {})
+        .filter(([, status]) => !!status?.enchanted)
+        .map(([cardId]) => cardId)
+    );
 
     cardStateGridEl.innerHTML = "";
     SUITS.forEach((suit) => {
       RANKS.forEach((rank) => {
         const cardId = getCardId(suit, rank.r);
         const isTorn = tornIds.has(cardId);
+        const isEnchanted = enchantedIds.has(cardId);
         const cell = document.createElement("button");
         cell.type = "button";
         cell.dataset.cardId = cardId;
         cell.dataset.cardLabel = `${rank.r}${suit}`;
         cell.dataset.cardTextLabel = getCardTextLabel(rank.r, suit);
         cell.dataset.torn = isTorn ? "true" : "false";
-        cell.className = `profile-card-state-cell ${suit === SUITS[1] || suit === SUITS[2] ? "red" : "black"} ${isTorn ? "torn" : ""}`;
-        cell.setAttribute("aria-label", `${rank.r}${suit}${isTorn ? " has a torn corner" : " has no tear"}`);
+        cell.dataset.enchanted = isEnchanted ? "true" : "false";
+        cell.className = `profile-card-state-cell ${suit === SUITS[1] || suit === SUITS[2] ? "red" : "black"} ${isTorn ? "torn" : ""} ${isEnchanted ? "enchanted" : ""}`;
+        const marks = [isTorn ? "torn corner" : "", isEnchanted ? "enchanted" : ""].filter(Boolean).join(" and ");
+        cell.setAttribute("aria-label", `${rank.r}${suit}${marks ? ` has ${marks}` : " has no marks"}`);
         cell.innerHTML = `<span class="profile-card-state-rank">${rank.r}</span><span class="profile-card-state-suit">${suit}</span>`;
         cardStateGridEl.appendChild(cell);
       });
     });
 
-    cardStateSummaryEl.textContent = tornIds.size > 0
-      ? `${tornIds.size} torn ${tornIds.size === 1 ? "card" : "cards"} marked.`
-      : "No torn cards currently marked.";
+    const parts = [];
+    if (tornIds.size > 0) parts.push(`${tornIds.size} torn ${tornIds.size === 1 ? "card" : "cards"}`);
+    if (enchantedIds.size > 0) parts.push(`${enchantedIds.size} enchanted ${enchantedIds.size === 1 ? "card" : "cards"}`);
+    cardStateSummaryEl.textContent = parts.length > 0
+      ? `${parts.join(", ")} marked.`
+      : "No card marks currently active.";
   }
 
   function clearRestoreHold() {
@@ -186,7 +197,7 @@
   }
 
   function beginRestoreHold(cell) {
-    if (!cell || cell.dataset.torn !== "true") return;
+    if (!cell || (cell.dataset.torn !== "true" && cell.dataset.enchanted !== "true")) return;
     clearRestoreHold();
     activeRestoreCell = cell;
     cell.classList.add("restore-hold-active");
@@ -194,10 +205,10 @@
     holdTimer = setTimeout(() => {
       const cardId = cell.dataset.cardId || "";
       const label = cell.dataset.cardTextLabel || cell.dataset.cardLabel || "Card";
-      const restored = restoreTornCard(cardId);
+      const restored = restoreMarkedCard(cardId);
       clearRestoreHold();
       if (resetDeckStatus) {
-        resetDeckStatus.innerText = restored ? `${label} repaired.` : "That card is already repaired.";
+        resetDeckStatus.innerText = restored ? `${label} restored.` : "That card has no marks.";
       }
       renderCardStateGrid();
     }, RESTORE_HOLD_DURATION_MS);
@@ -364,7 +375,7 @@
 
   cardStateGridEl?.addEventListener("pointerdown", (event) => {
     if (event.button !== undefined && event.button !== 0) return;
-    const cell = event.target.closest(".profile-card-state-cell.torn");
+    const cell = event.target.closest(".profile-card-state-cell.torn, .profile-card-state-cell.enchanted");
     if (!cell || !cardStateGridEl.contains(cell)) return;
     event.preventDefault();
     cell.setPointerCapture?.(event.pointerId);
@@ -379,12 +390,12 @@
     if (now < resetConfirmUntil) {
       if (typeof resetDeckAlterations === "function") resetDeckAlterations();
       resetConfirmUntil = 0;
-      if (resetDeckStatus) resetDeckStatus.innerText = "Deck state reset. Tears removed.";
+      if (resetDeckStatus) resetDeckStatus.innerText = "Deck state reset. Marks removed.";
       renderCardStateGrid();
       return;
     }
     resetConfirmUntil = now + 3500;
-    if (resetDeckStatus) resetDeckStatus.innerText = "Tap Reset Deck again to remove all tears and card-back marks.";
+    if (resetDeckStatus) resetDeckStatus.innerText = "Tap Reset Deck again to remove all tears, enchantments, and card-back marks.";
   });
 
   renderCurrentCosmetic();

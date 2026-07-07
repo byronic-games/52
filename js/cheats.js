@@ -81,6 +81,21 @@ function dispatchEmergencyServices() {
   return `Emergency Services dispatched - ${pulled.length} face-down 9${pulled.length === 1 ? "" : "s"} pulled to the top.`;
 }
 
+function enchantBottomFaceDownCard() {
+  if (!Array.isArray(state.deck) || !state.current) return "Enchant needs an active deck.";
+  const faceDownStart = state.index + 1;
+  if (faceDownStart >= state.deck.length) return "Enchant found no face-down cards.";
+
+  for (let i = state.deck.length - 1; i >= faceDownStart; i -= 1) {
+    const card = state.deck[i];
+    if (!card || isJokerCard(card) || getCardBackStatus(card.id).enchanted) continue;
+    setCardBackStatus(card.id, { enchanted: true });
+    return "Enchant marked the bottom face-down card.";
+  }
+
+  return "Enchant found no unenchanted normal face-down cards.";
+}
+
 function burnNextFaceDownCard() {
   if (!Array.isArray(state.deck) || !state.current) return "No active deck.";
   const nextIndex = state.index + 1;
@@ -429,6 +444,7 @@ const CHEAT_DESCRIPTIONS = {
   "Coming Soon": "Reveals whether card 2 is higher, lower, or equal to card 1 in the face-down deck.",
   "Burn The Next One": "Destroy the top face-down card. It leaves the deck without being marked on the grid.",
   "Assemble": "Pull all remaining face-down cards matching the current value to the top of the face-down deck without changing any other face-down card order.",
+  "Enchant": "Permanently enchant the bottom face-down card. Later, it jumps to the top and is consumed if it is the only way to save a wrong guess.",
   "The Number Of The Beast": "Pull all remaining face-down 6s to the top of the face-down deck without changing any other face-down card order.",
   "Jackpot": "Pull all remaining face-down 7s to the top of the face-down deck without changing any other face-down card order.",
   "Emergency Cord": "Gain 10 Nudge +1 and 10 Nudge -1, then shuffle two random Yellow Jokers into the face-down deck.",
@@ -2291,6 +2307,17 @@ const CHEATS = [
       const label = rank;
       return pullRemainingRankToTop(rank, label);
     },
+  },
+  {
+    id: "enchant",
+    name: "Enchant",
+    rarity: "legendary",
+    weight: 0.75,
+    included: true,
+    unlockAt: 30,
+    stacking: "repeatable",
+    consumeOnUse: true,
+    use: () => enchantBottomFaceDownCard(),
   },
   {
     id: "number_of_the_beast",

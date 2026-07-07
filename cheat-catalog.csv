@@ -100,6 +100,7 @@
 "coming_soon","Coming Soon","uncommon","0","true","unique","0.8","","Available from run start","Reveals whether card 2 is higher, lower, or equal to card 1 in the face-down deck."
 "burn_the_next_one","Burn The Next One","rare","30","true","repeatable","0.75","","Meta progression >= 30","Destroy the top face-down card. It leaves the deck without being marked on the grid."
 "assemble","Assemble","legendary","30","true","unique","0.75","","Meta progression >= 30","Pulls all remaining face-down cards matching the current value to the top of the face-down deck, preserving every other face-down card's order."
+"enchant","Enchant","legendary","30","true","repeatable","0.75","","Meta progression >= 30","Permanently enchants the bottom face-down card. If it is the only way to save a wrong guess, it springs to the top and the enchantment is consumed."
 "number_of_the_beast","The Number Of The Beast","rare","30","true","unique","0.75","","Meta progression >= 30","Pulls all remaining face-down 6s to the top of the face-down deck, preserving every other face-down card's order."
 "jackpot","Jackpot","rare","30","true","unique","0.75","","Meta progression >= 30","Pulls all remaining face-down 7s to the top of the face-down deck, preserving every other face-down card's order."
 "emergency_cord","Emergency Cord","rare","30","true","unique","0.75","","Meta progression >= 30","Gain 10 Nudge +1 and 10 Nudge -1, then shuffle two random hazardous Jokers into the face-down deck."

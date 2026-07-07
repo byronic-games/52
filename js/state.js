@@ -163,6 +163,7 @@ function createEmptyState() {
     cheatChoicePreviewIndex: -1,
     cheatChoiceAnimating: null,
     recentlySeenCardId: "",
+    recentEnchantedRevealCardId: "",
     nudgeUpCharges: 0,
     nudgeDownCharges: 0,
     bingoCornersAwarded: false,

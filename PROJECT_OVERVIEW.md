@@ -68,6 +68,7 @@
   - `Sell Your Soul` saves the next wrong guess but punishes a right guess by clearing held Cheats and Nudges.
   - `Coming soon` compares the card after next to the current face-down card and should log that relationship clearly.
   - `Burn The Next One` removes the top face-down card from the deck entirely without marking it on the grid, reducing the run denominator.
+  - `Enchant` permanently marks the bottom face-down card. It triggers only after other specific saves fail, moves the enchanted card to the top if it can save the guess, then consumes that enchantment. Collection Deck State can clear enchantments like torn corners.
   - `Save Scum` is a one-off checkpoint restore, not a simple continue.
   - Reveal-triggered Cheats/Powers, including `Find The Lady`, `Killer Queen`, and `Next Card Parity`, should resolve on reveal so deck manipulation after play is respected.
 

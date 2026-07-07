@@ -63,5 +63,6 @@ Mobile-first browser card game (higher/lower) with deck progression, powers, che
   - `Sell Your Soul`: next reveal saves a wrong guess, but a right guess costs all held Cheats and Nudges.
   - `Coming soon`: reports whether the card after next is higher/lower than the current face-down card.
   - `Burn The Next One`: destroys the top face-down card without marking it on the grid and reduces the deck total.
+  - `Enchant`: permanently marks the bottom face-down card; if it is the only way to save a wrong guess, it jumps to the top and the enchantment is consumed.
   - `Save Scum`: restores the deck, grid, Cheats, Powers, and run state to its checkpoint on game over.
   - `Next Card Parity`, `Killer Queen`, and reveal-triggered Cheats/Powers should resolve against the revealed card, after any allowed deck manipulation.

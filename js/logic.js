@@ -1339,6 +1339,7 @@ function startRunWithPower(powerId) {
     cheatChoicePreviewIndex: -1,
     cheatChoiceAnimating: null,
     recentlySeenCardId: "",
+    recentEnchantedRevealCardId: "",
     nudgeUpCharges: 0,
     nudgeDownCharges: 0,
     nudgeNudgeArmed: false,
@@ -2645,6 +2646,7 @@ function getCardCorrectPercentage(card) {
 function getCardBackStatus(cardId) {
   const status = state.cardBackStatuses[cardId] || {
     tornCorner: false,
+    enchanted: false,
     backColor: "blue",
   };
   const activeDailyVariant = state.runMode === "daily"
@@ -2667,14 +2669,59 @@ function getCardBackStatus(cardId) {
 function setCardBackStatus(cardId, patch) {
   const current = state.cardBackStatuses[cardId] || {
     tornCorner: false,
+    enchanted: false,
     backColor: "blue",
   };
-  state.cardBackStatuses[cardId] = { ...current, ...patch };
+  const nextStatus = { ...current, ...patch };
+  if (!nextStatus.tornCorner && !nextStatus.enchanted && (!nextStatus.backColor || nextStatus.backColor === "blue")) {
+    delete state.cardBackStatuses[cardId];
+  } else {
+    state.cardBackStatuses[cardId] = nextStatus;
+  }
   if (state.temporaryCardBackRepairs?.[cardId]) {
     delete state.temporaryCardBackRepairs[cardId];
   }
   if (isDevModeRun()) return;
   saveCardBackStatuses(state.cardBackStatuses);
+}
+
+function isGuessSafeWithCard(card, guessType, currentComparisonValue) {
+  if (!card || isJokerCard(card)) return false;
+  const cardComparisonValue = getNextComparisonValueForGuess(card);
+  if (!Number.isFinite(cardComparisonValue) || !Number.isFinite(currentComparisonValue)) return false;
+  if (cardComparisonValue === currentComparisonValue) return true;
+  if (isAceWildAutoCorrect(currentComparisonValue, card)) return true;
+  return guessType === "higher"
+    ? cardComparisonValue > currentComparisonValue
+    : cardComparisonValue < currentComparisonValue;
+}
+
+function findEnchantedSaveCard(guessType, currentComparisonValue) {
+  if (!Array.isArray(state.deck)) return null;
+  const startIndex = Math.max(0, Number(state.index) || 0) + 1;
+  for (let i = startIndex; i < state.deck.length; i += 1) {
+    const card = state.deck[i];
+    if (!card || !getCardBackStatus(card.id).enchanted) continue;
+    if (isGuessSafeWithCard(card, guessType, currentComparisonValue)) {
+      return { card, index: i };
+    }
+  }
+  return null;
+}
+
+function moveFaceDownCardToTop(originalIndex) {
+  if (!Array.isArray(state.deck)) return null;
+  const topIndex = Math.max(0, Number(state.index) || 0) + 1;
+  if (originalIndex < topIndex || originalIndex >= state.deck.length) return null;
+  const [card] = state.deck.splice(originalIndex, 1);
+  state.deck.splice(topIndex, 0, card);
+  return card || null;
+}
+
+function consumeEnchantedCard(cardId) {
+  if (!cardId) return;
+  setCardBackStatus(cardId, { enchanted: false });
+  state.recentEnchantedRevealCardId = cardId;
 }
 
 function getFaceDownCount() {
@@ -3065,7 +3112,8 @@ function makeGuess(type) {
   const currentIsJoker = isJokerCard(state.current);
   const nineDartAutoCorrectWasActive = !!state.nineDartAutoCorrect;
   const konamiAutoCorrectWasActive = (Number(state.konamiAutoCorrectRemaining) || 0) > 0;
-  const saveScumText = state.saveScumArmed && state.saveScumSnapshot
+  const saveScumCanRestore = !!state.saveScumArmed && !!state.saveScumSnapshot;
+  const saveScumText = saveScumCanRestore
     ? " Save Scum will rewind to its checkpoint."
     : "";
 
@@ -3086,10 +3134,10 @@ function makeGuess(type) {
   }
 
   const currentComparisonValue = getCurrentEffectiveValue();
-  const nextComparisonValue = getNextComparisonValueForGuess(next);
+  let nextComparisonValue = getNextComparisonValueForGuess(next);
   flushCurrentNudgeLogEntry();
   const equals11WasArmed = !!state.equals11Armed;
-  const revealDistance = Number.isFinite(nextComparisonValue) && Number.isFinite(currentComparisonValue)
+  let revealDistance = Number.isFinite(nextComparisonValue) && Number.isFinite(currentComparisonValue)
     ? Math.abs(nextComparisonValue - currentComparisonValue)
     : 0;
   const formatEnergyFeedback = (delta) => {
@@ -3101,7 +3149,7 @@ function makeGuess(type) {
   };
 
   const nextModifierBeforeGuess = state.nextCardValueModifier || 0;
-  const lockySevenCarryModifier = getLockySevenCarryModifier(next, nextComparisonValue, nextModifierBeforeGuess);
+  let lockySevenCarryModifier = getLockySevenCarryModifier(next, nextComparisonValue, nextModifierBeforeGuess);
   const currentWasBase = state.currentValueModifier === 0;
   const el = document.getElementById("next-info");
   if (el) el.innerText = "";
@@ -3233,7 +3281,7 @@ function makeGuess(type) {
   const wlStageBeforeGuess = state.wlStage || "";
   const forcedNextGuessDirection = state.forcedNextGuess || "";
   const passiveSuitSavePower = getPassiveSuitSavePower(state.current);
-  const nextSuitForResolution = blankSpaceWasActive ? "" : (next.suit || "");
+  let nextSuitForResolution = blankSpaceWasActive ? "" : (next.suit || "");
 
   state.lucky7Armed = false;
   state.fiveAliveArmed = false;
@@ -3274,6 +3322,9 @@ function makeGuess(type) {
   let rescuedByCursedShield = false;
   let rescuedByOneLifeLeft = false;
   let rescuedByInsurance = false;
+  let rescuedByEnchant = false;
+  let enchantedSaveCardId = "";
+  let enchantedSaveOriginalIndex = -1;
   let rescuedByKillerQueen = false;
   let rescuedBySuitedAndBooted = false;
   let rescuedByMarginForError = false;
@@ -3298,7 +3349,7 @@ function makeGuess(type) {
       : forcedNextGuessDirection === "lower"
         ? "down"
         : "";
-  const forcedNudgeReward = forcedNudgeDirection && Number.isFinite(nextComparisonValue) && Number.isFinite(currentComparisonValue)
+  let forcedNudgeReward = forcedNudgeDirection && Number.isFinite(nextComparisonValue) && Number.isFinite(currentComparisonValue)
     ? Math.abs(nextComparisonValue - currentComparisonValue)
     : 0;
 
@@ -3441,6 +3492,33 @@ function makeGuess(type) {
       !rescuedByCursedShield &&
       !rescuedByOneLifeLeft &&
       insuranceLivesBeforeGuess > 0;
+    const enchantedSave = !comparisonCorrect &&
+      !tutorialAutoCorrect &&
+      !rescuedBySpecificSave &&
+      !rescuedByCursedShield &&
+      !rescuedByOneLifeLeft &&
+      !rescuedByInsurance &&
+      !saveScumCanRestore &&
+      wlStageBeforeGuess !== "need_loss"
+      ? findEnchantedSaveCard(type, currentComparisonValue)
+      : null;
+    if (enchantedSave?.card) {
+      rescuedByEnchant = true;
+      enchantedSaveCardId = enchantedSave.card.id || "";
+      enchantedSaveOriginalIndex = enchantedSave.index;
+      moveFaceDownCardToTop(enchantedSave.index);
+      next = peekNext();
+      nextComparisonValue = getNextComparisonValueForGuess(next);
+      revealDistance = Number.isFinite(nextComparisonValue) && Number.isFinite(currentComparisonValue)
+        ? Math.abs(nextComparisonValue - currentComparisonValue)
+        : 0;
+      nextSuitForResolution = blankSpaceWasActive ? "" : (next.suit || "");
+      lockySevenCarryModifier = getLockySevenCarryModifier(next, nextComparisonValue, nextModifierBeforeGuess);
+      forcedNudgeReward = forcedNudgeDirection && Number.isFinite(nextComparisonValue) && Number.isFinite(currentComparisonValue)
+        ? Math.abs(nextComparisonValue - currentComparisonValue)
+        : 0;
+      consumeEnchantedCard(enchantedSaveCardId);
+    }
     correct =
       comparisonCorrect ||
       tutorialAutoCorrect ||
@@ -3456,6 +3534,7 @@ function makeGuess(type) {
       rescuedByKillerQueen ||
       rescuedByOneLifeLeft ||
       rescuedByInsurance ||
+      rescuedByEnchant ||
       rescuedBySuitedAndBooted ||
       rescuedBySuitSave ||
       rescuedBySellYourSoul;
@@ -3559,6 +3638,9 @@ function makeGuess(type) {
       rescuedByAlwaysBetBlack,
       rescuedByRedDeadRedemption,
       rescuedByCursedShield,
+      rescuedByEnchant,
+      enchantedSaveCardId,
+      enchantedSaveOriginalIndex,
       rescuedByInsurance,
       rescuedByKillerQueen,
       rescuedBySuitedAndBooted,
@@ -3702,6 +3784,9 @@ function makeGuess(type) {
       forcedNudgeDirection,
       forcedNudgeReward,
       rescuedByCursedShield,
+      rescuedByEnchant,
+      enchantedSaveCardId,
+      enchantedSaveOriginalIndex,
       rescuedByKillerQueen,
       rescuedBySuitedAndBooted,
       dailyFinalBonus,
@@ -3786,29 +3871,31 @@ function makeGuess(type) {
             ? "one_life_left"
             : rescuedByInsurance
               ? "insurance"
-              : rescuedByAlwaysBetBlack
-                ? "always_bet_on_the_black"
-                : rescuedByRedDeadRedemption
-                  ? "red_dead_redemption"
-                  : rescuedByKillerQueen
-                    ? "killer_queen"
-                    : rescuedBySuitedAndBooted
-                      ? "suited_and_booted"
-                      : rescuedByMarginForError
-                        ? "margin_for_error"
-                        : rescuedByHotOrCold
-                          ? "margin_of_error"
-                          : rescuedByStitchInTime
-                            ? "stitch_in_time_saves"
-        : lucky7WasArmed
-          ? "lucky_7"
-          : fiveAliveWasArmed
-            ? "five_alive"
-            : godSaveKingWasArmed
-              ? "god_save_the_king"
-              : oddOneOutWasArmed
-                ? "odd_one_out_safe"
-                : "comparison_correct",
+              : rescuedByEnchant
+                ? "enchant"
+                : rescuedByAlwaysBetBlack
+                  ? "always_bet_on_the_black"
+                  : rescuedByRedDeadRedemption
+                    ? "red_dead_redemption"
+                    : rescuedByKillerQueen
+                      ? "killer_queen"
+                      : rescuedBySuitedAndBooted
+                        ? "suited_and_booted"
+                        : rescuedByMarginForError
+                          ? "margin_for_error"
+                          : rescuedByHotOrCold
+                            ? "margin_of_error"
+                            : rescuedByStitchInTime
+                              ? "stitch_in_time_saves"
+                              : lucky7WasArmed
+                                ? "lucky_7"
+                                : fiveAliveWasArmed
+                                  ? "five_alive"
+                                  : godSaveKingWasArmed
+                                    ? "god_save_the_king"
+                                    : oddOneOutWasArmed
+                                      ? "odd_one_out_safe"
+                                      : "comparison_correct",
     currentComparisonValue,
     nextComparisonValue,
     revealDistance,
@@ -3856,6 +3943,9 @@ function makeGuess(type) {
     rescuedByCursedShield,
     rescuedByOneLifeLeft,
     rescuedByInsurance,
+    rescuedByEnchant,
+    enchantedSaveCardId,
+    enchantedSaveOriginalIndex,
     rescuedByKillerQueen,
     rescuedBySuitedAndBooted,
     rescuedByMarginForError,
@@ -4065,10 +4155,13 @@ function makeGuess(type) {
   const insuranceText = rescuedByInsurance
     ? ` Insurance saved this guess. ${state.insuranceLives || 0} cover left.`
     : "";
+  const enchantText = rescuedByEnchant
+    ? " Enchant saved this guess."
+    : "";
   const killerQueenText = rescuedByKillerQueen
     ? ` Killer Queen saved this guess. ${state.killerQueenLives || 0} ${state.killerQueenLives === 1 ? "save" : "saves"} left.`
     : "";
-  const rescueBonusText = `${rescuedByCursedShield ? " Cursed Shield saved this guess." : ""}${rescuedByRedDeadRedemption ? " Red? Dead? Redemption saved this guess." : ""}${rescuedBySuitedAndBooted ? " Suited and Booted saved this guess." : ""}${rescuedByMarginForError ? " Margin For Error saved this guess." : ""}${rescuedByHotOrCold ? " Margin Of Error saved this guess." : ""}${rescuedByStitchInTime ? " A Stitch In Time saved this guess." : ""}${sellYourSoulResult.savedText}${sellYourSoulResult.penaltyText}${oneLifeLeftText}${insuranceText}${killerQueenText}${forcedRewardText}${wlAdvanceText}${equals11MissText}${higherHigherHigherText}${refundText}${bingoAwardText}${timedEffectText}`;
+  const rescueBonusText = `${rescuedByCursedShield ? " Cursed Shield saved this guess." : ""}${rescuedByRedDeadRedemption ? " Red? Dead? Redemption saved this guess." : ""}${rescuedBySuitedAndBooted ? " Suited and Booted saved this guess." : ""}${rescuedByMarginForError ? " Margin For Error saved this guess." : ""}${rescuedByHotOrCold ? " Margin Of Error saved this guess." : ""}${rescuedByStitchInTime ? " A Stitch In Time saved this guess." : ""}${sellYourSoulResult.savedText}${sellYourSoulResult.penaltyText}${oneLifeLeftText}${insuranceText}${enchantText}${killerQueenText}${forcedRewardText}${wlAdvanceText}${equals11MissText}${higherHigherHigherText}${refundText}${bingoAwardText}${timedEffectText}`;
 
   if (state.streak >= getCheatRewardThreshold()) {
     state.streak = 0;
@@ -4194,6 +4287,11 @@ function makeGuess(type) {
   }
   if (rescuedByInsurance) {
     state.message = appendEnergyFeedback(`Insurance saved the run - it was ${describeCard(next)}. ${state.insuranceLives || 0} cover left.${bingoAwardText}`, revealDistance);
+    render();
+    return;
+  }
+  if (rescuedByEnchant) {
+    state.message = appendEnergyFeedback(`Enchant saved the run - ${describeCard(next)} sprang to the top.${bingoAwardText}`, revealDistance);
     render();
     return;
   }
