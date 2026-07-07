@@ -2654,10 +2654,18 @@ function getCardBackStatus(cardId) {
     : state.pendingRunMode === "daily"
       ? state.pendingDailyVariant
       : "normal";
+  const dailyVariantConfig = typeof getDailyVariantConfig === "function"
+    ? getDailyVariantConfig(activeDailyVariant)
+    : null;
+  const shouldIgnorePermanentCardEffects =
+    (state.runMode === "daily" || state.pendingRunMode === "daily") &&
+    dailyVariantConfig?.ignorePermanentCardEffects === true;
+  if (shouldIgnorePermanentCardEffects) {
+    return { ...status, tornCorner: false, enchanted: false };
+  }
   const shouldHideTornCards =
     (state.runMode === "daily" || state.pendingRunMode === "daily") &&
-    typeof getDailyVariantConfig === "function" &&
-    getDailyVariantConfig(activeDailyVariant)?.hideTornCards === true;
+    dailyVariantConfig?.hideTornCards === true;
   if (shouldHideTornCards) {
     return { ...status, tornCorner: false };
   }

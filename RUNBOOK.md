@@ -65,7 +65,7 @@
 6. Tied scores share rank.
 7. Crowns should be per-player, not per-viewer.
 8. For a completed local Daily attempt that failed to save online, opening that Daily board while connected should upload the missing row for the matching variant only.
-9. Hard should hide torn-card hints and should not score tears.
+9. Hard should ignore permanent card marks, including torn corners and enchantments, and should not score tears.
 10. After completing a Normal Daily, share text should say `I scored xx/52 on today's 52! Daily.`, omit `variant=hard` from the URL, and include suit rows for newly completed attempts.
 11. After completing a Hard Daily, share text should use the same variant-ambiguous wording, include `variant=hard` in the URL, and include suit rows for newly completed attempts.
 12. Older completed attempts without stored suit totals should still share cleanly without misleading zero-count suit rows.
@@ -90,6 +90,7 @@
 6. Arm Killer Queen and confirm it saves Lower on Queen into King at reveal time.
 7. Use Next Card Parity with Cheaters Prosper and confirm the parity result is shown clearly without being swallowed by the Prosper nudge text.
 8. Play Enchant, make a wrong guess that only an enchanted unseen card can save, and confirm it jumps to the top, reveals with the enchanted visual, then loses its enchantment. Also confirm Collection can clear an unused enchantment.
+9. In Hard Daily, confirm existing enchanted cards do not trigger or show, and playing Enchant reports no effect without adding a permanent mark.
 
 ## Collection Check
 1. Open Collection from the main menu.

@@ -13,6 +13,7 @@ const DAILY_VARIANTS = {
     deckKey: "blue",
     levelNumber: 1,
     hideTornCards: false,
+    ignorePermanentCardEffects: false,
     scoreTornCards: true,
   },
   hard: {
@@ -22,6 +23,7 @@ const DAILY_VARIANTS = {
     deckKey: "blue",
     levelNumber: 1,
     hideTornCards: true,
+    ignorePermanentCardEffects: true,
     scoreTornCards: false,
   },
 };

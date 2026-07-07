@@ -83,6 +83,12 @@ function dispatchEmergencyServices() {
 
 function enchantBottomFaceDownCard() {
   if (!Array.isArray(state.deck) || !state.current) return "Enchant needs an active deck.";
+  const dailyVariantConfig = state.runMode === "daily" && typeof getDailyVariantConfig === "function"
+    ? getDailyVariantConfig(state.dailyVariant)
+    : null;
+  if (dailyVariantConfig?.ignorePermanentCardEffects === true) {
+    return "Enchant has no effect in Hard Daily.";
+  }
   const faceDownStart = state.index + 1;
   if (faceDownStart >= state.deck.length) return "Enchant found no face-down cards.";
 

@@ -439,7 +439,7 @@ async function refreshDailyPageForDate(activeDateKey, activeVariant = "normal") 
   const variantNoteEl = document.getElementById("daily-variant-note");
   if (variantNoteEl) {
     variantNoteEl.innerText = activeVariant === "hard"
-      ? "Hard uses a different seed. Torn cards are hidden and do not affect score."
+      ? "Hard uses a different seed and ignores permanent card marks."
       : hardUnlocked
         ? "Normal complete. Hard is unlocked for this date."
         : "Finish Normal to unlock Hard for this date.";

@@ -1291,6 +1291,7 @@ function shortenEffectPayload(effectName, payload) {
   }
   if (name === "Enchant") {
     if (/marked/i.test(text)) return "Enchant set";
+    if (/no effect/i.test(text)) return "Enchant: off";
     if (/found no|needs/i.test(text)) return "Enchant: none";
   }
   if (name === "Ladies Night") {
@@ -1357,6 +1358,7 @@ function getShortPlayerMessage(message = "") {
   }
   if (/^Burned the next/i.test(cleaned)) return "Card burned";
   if (/^Enchant marked/i.test(cleaned)) return "Enchant set";
+  if (/^Enchant has no effect/i.test(cleaned)) return "Enchant: off";
   if (/^Enchant saved/i.test(cleaned)) return "Enchant saved";
   const splitMatch = cleaned.match(/^Split the Difference:\s*(?:the\s+)?gap\s+is\s+(\d+)/i);
   if (splitMatch) return `Gap: ${splitMatch[1]}`;

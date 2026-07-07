@@ -48,7 +48,7 @@ Mobile-first browser card game (higher/lower) with deck progression, powers, che
 - Yellow deck adds harmful Joker hazards from a level-gated pool: Tearless, RONG, Gridless, Nudgeless, Timeless, Cheatless, and Powerless. Jokers are safe/correct reveals and count toward Cheat cadence. Orange combines Blue nudge rewards, Green Energy costs, and Yellow Jokers. Black is the final pure run: no Powers, Cheats, or Nudges.
 - Unlock Decks in settings opens Level 1 of every visible deck for testing.
 - Players can choose Lower / Higher or Higher / Lower guess button order and Down / Up or Up / Down nudge order in Settings; the controls keep their existing styles.
-- Daily has separate Normal and Hard variants. Hard unlocks after Normal is attempted for the date, uses a different seed, hides torn-card hints, and does not score tears.
+- Daily has separate Normal and Hard variants. Hard unlocks after Normal is attempted for the date, uses a different seed, ignores permanent card marks such as tears and enchantments, and does not score tears.
 - Daily result sharing is enabled on the Daily board. Shares are spoiler-light text snippets: cards found, suit totals for newly completed attempts, and "You've one chance to tackle the same deck" with the Daily URL. The share copy does not name Normal/Hard; the URL still targets the matching variant.
 - Daily leaderboard loads retry-upload a completed local Daily attempt when that player's online row is missing for the matching `date_key` + `variant` + `player_id`.
 - Supabase `daily_52` rows require `variant`; uniqueness must include variant so Normal and Hard attempts do not block or leak into each other.
