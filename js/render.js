@@ -231,7 +231,7 @@ function finalizePendingReveal(pending) {
   if (pending.triggerGameOver && state.gameOver) {
     clearGameOverEffects();
     revealGameOverTimer = setTimeout(() => {
-      triggerGameOverEffect("");
+      triggerGameOverEffect(pending.gameOverDetail || "");
       revealGameOverTimer = null;
     }, 40);
   }
@@ -1985,6 +1985,11 @@ function renderRestartButton() {
     state.gameOver &&
     typeof getRunScoreFromCorrectAnswers === "function" &&
     getRunScoreFromCorrectAnswers(state.correctAnswers) >= 52;
+  if (state.saveScumPendingContinue && state.saveScumSnapshot) {
+    btn.innerText = "RELOAD SAVE";
+    btn.disabled = false;
+    return;
+  }
   if (state.runMode === "daily" && state.gameOver) {
     const variantLabel = typeof getDailyVariantConfig === "function"
       ? getDailyVariantConfig(state.dailyVariant).label || "Daily"
@@ -2120,6 +2125,7 @@ function renderCardFaceMarkup(card, displayValue, isTemporarilyModified, include
   }
   const showShieldBadge = !!options.showShieldBadge;
   const lifeBadgeCount = Math.max(0, Number(options.lifeBadgeCount) || 0);
+  const insuranceBadgeCount = Math.max(0, Number(options.insuranceBadgeCount) || 0);
   const shownRank = isTemporarilyModified ? valueToRank(displayValue) : card.rank;
   const nudgeFromRank = Number.isFinite(options.nudgeFromValue)
     ? valueToRank(options.nudgeFromValue)
@@ -2147,6 +2153,7 @@ function renderCardFaceMarkup(card, displayValue, isTemporarilyModified, include
     ${isTemporarilyModified ? '<span class="card-temp-chip">TEMP</span>' : ""}
     ${showShieldBadge ? '<span class="card-shield-badge" aria-label="Cursed Shield active" title="Cursed Shield active">🛡️</span>' : ""}
     ${lifeBadgeCount > 0 ? `<span class="card-life-badge" aria-label="${lifeBadgeCount} ${lifeBadgeCount === 1 ? "life" : "lives"} left" title="${lifeBadgeCount} ${lifeBadgeCount === 1 ? "life" : "lives"} left"><span aria-hidden="true">♥</span>${lifeBadgeCount > 1 ? `<span class="card-life-count">${lifeBadgeCount}</span>` : ""}</span>` : ""}
+    ${insuranceBadgeCount > 0 ? `<span class="card-insurance-badge" aria-label="${insuranceBadgeCount} insurance ${insuranceBadgeCount === 1 ? "save" : "saves"} left" title="${insuranceBadgeCount} insurance ${insuranceBadgeCount === 1 ? "save" : "saves"} left"><span aria-hidden="true">!</span>${insuranceBadgeCount > 1 ? `<span class="card-life-count">${insuranceBadgeCount}</span>` : ""}</span>` : ""}
     ${includeTornCorner ? '<span class="tear-mark-face"></span>' : ""}
   `;
 }
@@ -2291,6 +2298,7 @@ function renderCurrentCard() {
     {
       showShieldBadge: (Number(state.cursedShieldCharges) || 0) > 0 || !!state.cursedShieldArmed,
       lifeBadgeCount: state.oneLifeLeftLives || 0,
+      insuranceBadgeCount: state.insuranceLives || 0,
       nudgeFromValue: nudgeAnimation?.fromValue,
       isEnchanted: isEnchantedCard,
     }

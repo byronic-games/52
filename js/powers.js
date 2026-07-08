@@ -38,7 +38,7 @@ const POWERS = [
   {
     id: "erratic",
     name: "Erratic",
-    description: "Each Nudge charge randomly moves 0, 1, 2, or 3 per charge, with equal odds.",
+    description: "Each player-spent Nudge charge randomly moves 0, 1, 2, or 3 per charge, with equal odds.",
     rarity: "common",
     unlockAt: 0,
     weight: 1,

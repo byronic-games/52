@@ -745,6 +745,11 @@ document.getElementById("restart-btn").onclick = () => {
     typeof getRunScoreFromCorrectAnswers === "function" &&
     getRunScoreFromCorrectAnswers(state.correctAnswers) >= 52;
 
+  if (state.saveScumPendingContinue && state.saveScumSnapshot) {
+    restoreSaveScumCheckpoint("Save Scum reloaded the checkpoint.");
+    return;
+  }
+
   if (state.runMode === "daily") {
     const variantLabel = typeof getDailyVariantConfig === "function"
       ? getDailyVariantConfig(state.dailyVariant).label || "Daily"

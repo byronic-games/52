@@ -458,7 +458,7 @@ function triggerGameOverEffect(detailText = "") {
   if (!ENABLE_GAME_OVER_EFFECTS) {
     state.gameOverMessageReady = true;
     state.gameOverMessageJustReleased = true;
-    if (typeof scheduleExperienceBankingAfterGameOver === "function") {
+    if (!state.saveScumPendingContinue && typeof scheduleExperienceBankingAfterGameOver === "function") {
       scheduleExperienceBankingAfterGameOver();
     }
     return;
@@ -481,7 +481,7 @@ function triggerGameOverEffect(detailText = "") {
     state.gameOverMessageJustReleased = true;
     gameOverMessageTimer = null;
     if (state.gameOver && typeof render === "function") render();
-    if (typeof scheduleExperienceBankingAfterGameOver === "function") {
+    if (!state.saveScumPendingContinue && typeof scheduleExperienceBankingAfterGameOver === "function") {
       scheduleExperienceBankingAfterGameOver();
     }
   }, GAME_OVER_MESSAGE_REVEAL_DELAY_MS);
@@ -2279,6 +2279,12 @@ function restoreSaveScumCheckpoint(message = "Save Scum restored the checkpoint.
   return true;
 }
 
+function armSaveScumReload() {
+  if (!state.saveScumArmed || !state.saveScumSnapshot) return false;
+  state.saveScumPendingContinue = true;
+  return true;
+}
+
 function isEnergyDeckRun() {
   return isEnergyDeckKey(state.currentDeckKey || state.selectedDeckKey || "blue");
 }
@@ -2318,10 +2324,9 @@ function rollErraticNudgeAmount() {
 }
 
 function getActiveNudgeDelta(baseDelta, options = {}) {
+  if (baseDelta === 0) return 0;
   const direction = baseDelta < 0 ? -1 : 1;
-  const baseAmount = runHasPower("erratic")
-    ? Math.max(0, Math.min(3, Math.floor(Number(options.erraticAmount) || 0)))
-    : Math.abs(baseDelta);
+  const baseAmount = Math.abs(baseDelta);
   const powerMultiplier = runHasPower("double_bubble") ? 2 : 1;
   const nudgeNudgeStacks = Math.max(0, Math.floor(Number(state.nudgeNudgeStacks) || 0));
   const legacyCheatStacks = nudgeNudgeStacks > 0 ? nudgeNudgeStacks : (state.nudgeNudgeArmed ? 1 : 0);
@@ -2330,9 +2335,9 @@ function getActiveNudgeDelta(baseDelta, options = {}) {
 }
 
 function getPotentialNudgeDelta(baseDelta) {
-  return getActiveNudgeDelta(baseDelta, {
-    erraticAmount: runHasPower("erratic") ? 3 : Math.abs(baseDelta),
-  });
+  const direction = baseDelta < 0 ? -1 : 1;
+  const amount = runHasPower("erratic") ? 3 : Math.abs(baseDelta);
+  return getActiveNudgeDelta(direction * amount);
 }
 
 function isAceWildAutoCorrect(currentComparisonValue, nextCard) {
@@ -2470,8 +2475,8 @@ function useNudgeCharge(direction) {
   const doubleYourLuckActive = runHasPower("double_your_luck") && !blankSpaceActive;
   const nudgeChargeKept = doubleYourLuckActive && Math.random() < 0.5;
   const appliedDelta = direction === "up"
-    ? getActiveNudgeDelta(1, { erraticAmount })
-    : getActiveNudgeDelta(-1, { erraticAmount });
+    ? getActiveNudgeDelta(erraticAmount)
+    : getActiveNudgeDelta(-erraticAmount);
   const currentValue = blankSpaceActive
     ? getUpcomingCheatValue(1)
     : getCurrentEffectiveValue();
@@ -3122,7 +3127,7 @@ function makeGuess(type) {
   const konamiAutoCorrectWasActive = (Number(state.konamiAutoCorrectRemaining) || 0) > 0;
   const saveScumCanRestore = !!state.saveScumArmed && !!state.saveScumSnapshot;
   const saveScumText = saveScumCanRestore
-    ? " Save Scum will rewind to its checkpoint."
+    ? " Save Scum can reload."
     : "";
 
   if (state.forcedNextGuess && type !== state.forcedNextGuess && !isJokerCard(next) && !currentIsJoker) {
@@ -3410,15 +3415,16 @@ function makeGuess(type) {
         sixSevenWasArmed,
         message: lossMessage,
       });
-      if (state.saveScumArmed && restoreSaveScumCheckpoint("Save Scum restored the checkpoint.")) {
-        return;
-      }
+      const saveScumReloadReady = armSaveScumReload();
       if (state.pendingRevealAnimation) {
-        state.pendingRevealAnimation.gameOverDetail = lossMessage;
+        state.pendingRevealAnimation.gameOverDetail = saveScumReloadReady
+          ? `${lossMessage} Save Scum can reload.`
+          : lossMessage;
       }
       state.message = `💀 ${lossMessage}`;
+      state.message = `${lossMessage}${saveScumReloadReady ? " Save Scum can reload." : ""}`;
       state.gameOver = true;
-      updateBestScoreIfNeeded();
+      if (!saveScumReloadReady) updateBestScoreIfNeeded();
       render();
       return;
     }
@@ -3659,15 +3665,13 @@ function makeGuess(type) {
       message: lossDetail,
     });
 
-    if (state.saveScumArmed && restoreSaveScumCheckpoint("Save Scum restored the checkpoint.")) {
-      return;
-    }
+    const saveScumReloadReady = armSaveScumReload();
 
-    state.message = `${gameOverMessage}${allInText}${timedEffectText}${saveScumText}`;
+    state.message = `${gameOverMessage}${allInText}${timedEffectText}${saveScumReloadReady ? " Save Scum can reload." : saveScumText}`;
     state.gameOver = true;
-    updateBestScoreIfNeeded();
+    if (!saveScumReloadReady) updateBestScoreIfNeeded();
     render();
-    handleRunFinished(state.correctAnswers);
+    if (!saveScumReloadReady) handleRunFinished(state.correctAnswers);
     return;
   }
 
