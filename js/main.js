@@ -91,7 +91,11 @@ function initializeDailyModeFromUrl() {
     if (requestedDailyVariant !== "normal") {
       params.set("variant", requestedDailyVariant);
     }
-    window.location.replace(`daily.html?${params.toString()}`);
+    if (typeof window.appShellNavigate === "function") {
+      window.appShellNavigate("daily", Object.fromEntries(params.entries()), { replace: true });
+    } else {
+      window.location.replace(`daily.html?${params.toString()}`);
+    }
     return;
   }
 
@@ -171,3 +175,28 @@ render();
 if (!restoredFromSnapshot) {
   initializeDailyModeFromUrl();
 }
+
+window.appPrepareStandardRun = (deckKey = loadSelectedDeck(), levelNumber = loadSelectedLevel()) => {
+  const selectedDeckKey = normalizeDeckKey(deckKey);
+  const selectedLevelNumber = normalizeLevelNumber(levelNumber);
+  clearGameStateSnapshot();
+  state = createEmptyState();
+  state.selectedDeckKey = selectedDeckKey;
+  state.currentDeckKey = selectedDeckKey;
+  state.pendingDeckKey = selectedDeckKey;
+  state.selectedLevelNumber = selectedLevelNumber;
+  state.currentLevelNumber = selectedLevelNumber;
+  state.pendingLevelNumber = selectedLevelNumber;
+  state.bestScore = loadBestScore(selectedDeckKey, selectedLevelNumber);
+  saveSelectedDeck(selectedDeckKey);
+  saveSelectedLevel(selectedLevelNumber);
+  previewOpeningRunFromControls();
+  render();
+};
+
+window.appStartDailyRun = (dateKey = getCurrentDailyDateKey(), variant = "normal") => {
+  clearGameStateSnapshot();
+  state = createEmptyState();
+  render();
+  openDailyPowerChoice(dateKey, variant);
+};

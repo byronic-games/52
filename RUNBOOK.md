@@ -100,6 +100,10 @@
 5. Hold a discovered item and confirm the detail popover appears above the pressed item and text is not accidentally selected.
 
 ## Deploy Hygiene
+- Public live check: `https://byronicman.com/52/` is the currently verified live copy.
+- Deployment target: `https://onelifeleft.com/52/`.
+- Run `npm run deploy` from the repo root to rsync the static site to DreamHost.
+- Use `DRY_RUN=1 npm run deploy` to verify the file list without publishing.
 - After JS/CSS edits, bump query strings in:
   - `index.html`
   - `game.html`

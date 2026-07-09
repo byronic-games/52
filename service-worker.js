@@ -1,6 +1,6 @@
-const CACHE_VERSION = "20260708b";
+const CACHE_VERSION = "20260709bk";
 const CACHE_NAME = `byronic-52-${CACHE_VERSION}`;
-const GAME_ASSET_VERSION = "20260708b";
+const GAME_ASSET_VERSION = "20260709bk";
 
 const APP_SHELL = [
   "./",
@@ -19,6 +19,7 @@ const APP_SHELL = [
   "./images/icons/icon-192.png",
   "./images/icons/icon-512.png",
   "./images/icons/icon-maskable-512.png",
+  `./app-shell.css?v=${GAME_ASSET_VERSION}`,
   `./intro.css?v=${GAME_ASSET_VERSION}`,
   `./styles.css?v=${GAME_ASSET_VERSION}`,
   "./daily.css",
@@ -29,7 +30,10 @@ const APP_SHELL = [
   `./cheat-index.css?v=${GAME_ASSET_VERSION}`,
   "./cheat-catalog.csv",
   `./js/constants.js?v=${GAME_ASSET_VERSION}`,
+  `./js/app-strings.js?v=${GAME_ASSET_VERSION}`,
+  `./js/app-shell.js?v=${GAME_ASSET_VERSION}`,
   `./js/storage.js?v=${GAME_ASSET_VERSION}`,
+  `./js/item-stats.js?v=${GAME_ASSET_VERSION}`,
   `./js/cosmetics.js?v=${GAME_ASSET_VERSION}`,
   `./js/state.js?v=${GAME_ASSET_VERSION}`,
   `./js/powers.js?v=${GAME_ASSET_VERSION}`,

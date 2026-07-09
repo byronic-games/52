@@ -828,6 +828,9 @@ function offerRewardPowerChoice(reason = "bonus") {
     state.dailyPowerOfferCount = seededOfferIndex;
   }
 
+  if (typeof recordItemsOffered === "function") {
+    recordItemsOffered("power", powerOptions);
+  }
   state.pendingPowerOptions = powerOptions;
   state.powerChoiceLockedUntil = Date.now() + POWER_CHOICE_LOCK_MS;
   state.powerChoiceIntroToken = (state.powerChoiceIntroToken || 0) + 1;
@@ -1051,6 +1054,9 @@ function openDailyPowerChoice(dateKey = "", variant = "normal") {
   state.pendingRunSeed = chosenSeed;
   state.pendingRunDeck = deck;
   state.pendingPowerOptions = getRandomPowerOptions(2, chosenSeed, true);
+  if (typeof recordItemsOffered === "function") {
+    recordItemsOffered("power", state.pendingPowerOptions);
+  }
   state.pendingRunMode = "daily";
   state.pendingDailyDateKey = chosenDateKey;
   state.pendingDailyVariant = chosenVariant;
@@ -1226,6 +1232,9 @@ function startRunWithPower(powerId) {
     : ["nudge_engine"];
   if (selectedPowerId && typeof recordDiscoveredPowers === "function") {
     recordDiscoveredPowers(selectedPowerId);
+  }
+  if (selectedPowerId && typeof recordItemUsageStat === "function") {
+    recordItemUsageStat("power", selectedPowerId, "picked");
   }
   const openingDealAlreadyStarted =
     !blackRun &&
@@ -1554,7 +1563,11 @@ function handleRunFinished(finalScore) {
       if (dailyVariant !== "normal") {
         params.set("variant", dailyVariant);
       }
-      window.location.href = `daily.html?${params.toString()}`;
+      if (typeof window.appShellNavigate === "function") {
+        window.appShellNavigate("daily", Object.fromEntries(params.entries()), { replace: true });
+      } else {
+        window.location.href = `daily.html?${params.toString()}`;
+      }
     }, 900);
   });
 }
@@ -1573,6 +1586,9 @@ function pickPowerFromChoice(index) {
 
   const power = state.pendingPowerOptions[index];
   if (!power) return;
+  if (typeof recordItemUsageStat === "function") {
+    recordItemUsageStat("power", power.id, "picked");
+  }
 
   const isRewardChoice = !!state.activePowerAwardReason;
   if (typeof window.handleTutorialPowerPicked === "function") {
@@ -3179,6 +3195,10 @@ function makeGuess(type) {
     state.currentValueModifier = 0;
     if (typeof recordDiscoveredJokers === "function") {
       recordDiscoveredJokers(next.jokerId || next.id);
+    }
+    if (typeof recordItemUsageStat === "function") {
+      recordItemUsageStat("joker", next.jokerId || next.id, "used");
+      recordItemUsageStat("joker", next.jokerId || next.id, "success");
     }
     const jokerMessage = applyYellowJokerEffect(next);
     const jokerTriggeredCheatAward = advanceCheatRewardStreak();

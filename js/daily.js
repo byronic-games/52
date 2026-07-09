@@ -902,7 +902,7 @@ function buildDailyGameUrl(dateKey, variant = DAILY_VARIANT_NORMAL) {
   if (normalizedVariant !== DAILY_VARIANT_NORMAL) {
     params.set("variant", normalizedVariant);
   }
-  return `game.html?${params.toString()}`;
+  return `index.html?view=play&${params.toString()}`;
 }
 
 function getRequestedDailyDateKeyFromUrl() {

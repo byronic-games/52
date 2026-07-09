@@ -1,4 +1,4 @@
-const DAILY_SHARE_BASE_URL = "https://byronicman.com/52/daily.html";
+const DAILY_SHARE_BASE_URL = "https://onelifeleft.com/52/daily.html";
 const DAILY_SHARE_ENABLED = true;
 let dailyEntryPopoversEnabled = false;
 

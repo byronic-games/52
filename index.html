@@ -3,1131 +3,165 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#120b1a">
+  <meta name="theme-color" content="#141218">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="52!">
-  <title>52! - The Impossible Deck</title>
+  <title>52!</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="images/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="intro.css?v=20260621a">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800;900&family=Space+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="app-shell.css?v=20260709bk">
 </head>
-<body class="intro-page">
-  <main class="intro-shell">
-    <div class="glow glow-a"></div>
-    <div class="glow glow-b"></div>
-    <div class="glow glow-c"></div>
-    <div class="scanline-overlay"></div>
-
-    <section class="intro-card">
-      <section class="intro-main">
-        <img class="intro-logo" src="images/52logo.png" alt="52!" width="1222" height="1222">
-        <div class="black-leader-strip" aria-live="polite">
-          <span id="leader-strip-label">Yesterday's Daily Winner:</span>
-          <strong id="black-leader-value">--/52...</strong>
+<body>
+  <div id="app-root" class="app-shell">
+    <header class="app-topbar">
+      <button id="top-home-btn" class="app-mark" type="button" aria-label="Home">52!</button>
+      <div id="top-crowns" class="top-crowns" aria-label="Collected crowns" hidden></div>
+      <div class="app-xp" aria-live="polite"><span id="top-experience-value">0</span><span>XP</span></div>
+      <div class="app-top-actions">
+        <button id="top-shop-btn" class="icon-btn" type="button" aria-label="Shop">
+          <svg class="sf-icon" viewBox="0 0 28 28" aria-hidden="true" focusable="false">
+            <path d="M4.5 6.25h2.7l2.1 10.35a2.2 2.2 0 0 0 2.16 1.77h8.42a2.2 2.2 0 0 0 2.08-1.5l2-6.08H8.14" />
+            <path d="M11.35 22.15h.05M20.75 22.15h.05" />
+            <circle cx="11.38" cy="22.15" r="1.05" />
+            <circle cx="20.78" cy="22.15" r="1.05" />
+          </svg>
+        </button>
+        <button id="top-profile-btn" class="icon-btn" type="button" aria-label="Profile">
+          <svg class="sf-icon" viewBox="0 0 28 28" aria-hidden="true" focusable="false">
+            <circle cx="14" cy="14" r="10.25" />
+            <circle cx="14" cy="10.8" r="3.15" />
+            <path d="M7.4 21.55c1.1-3.1 3.42-4.78 6.6-4.78s5.5 1.68 6.6 4.78" />
+          </svg>
+        </button>
+        <div class="app-menu-wrap">
+          <button id="top-menu-btn" class="icon-btn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="shell-menu"><span class="hamburger-glyph" aria-hidden="true">☰</span></button>
+          <div id="shell-menu" class="shell-menu hidden" aria-hidden="true">
+            <button class="shell-menu-action" id="menu-help-btn" type="button">How To Play</button>
+            <button class="shell-menu-action" id="menu-scores-btn" type="button">High Scores</button>
+            <button class="shell-menu-action" id="menu-settings-btn" type="button">Settings</button>
+            <button class="shell-menu-action shell-menu-exit" id="menu-exit-btn" type="button" hidden>Exit</button>
+          </div>
         </div>
+      </div>
+    </header>
 
-        <div class="intro-copy">
-          <p class="premise emphasis">
-            The number of ways to thoroughly shuffle a pack of playing cards is so large it is almost certain the resulting deck has never existed before.
-          </p>
-          <p class="premise">
-            52 cards sit before you. No-one in human history has ever correctly predicted whether each is higher or lower than the one before it.
-          </p>
-          <p class="premise emphasis">
-            Can you?
-          </p>
+    <main class="app-views">
+      <section class="app-view home-view" data-view="home" aria-hidden="false">
+        <div class="home-logo">
+          <img src="images/52logo.png" alt="52!" width="1222" height="1222">
         </div>
-
-        <div class="card-action-fan">
-          <button class="action-card action-card-play" id="play-open-btn" type="button">
-            <span class="action-card-face card-face black" aria-hidden="true"></span>
-            <span class="action-card-title">Play</span>
-            <span class="action-card-sub">Start Run</span>
+        <div class="home-actions">
+          <button id="home-play-btn" class="tile-btn play" type="button">
+            <span class="tile-symbol">♠</span>
+            <span class="tile-title">Play</span>
           </button>
-          <a class="action-card action-card-daily" id="daily-launch-card" href="daily.html">
-            <span class="action-card-face card-face red" aria-hidden="true"></span>
-            <span class="action-card-title">Daily</span>
-            <span class="action-card-sub" id="daily-launch-sub">Shared Run</span>
-          </a>
-          <button class="action-card action-card-howto" id="howto-open-btn" type="button">
-            <span class="action-card-face card-face red" aria-hidden="true"></span>
-            <span class="action-card-title">How To</span>
-            <span class="action-card-sub">Learn The Rules</span>
+          <button id="home-daily-btn" class="tile-btn daily" type="button">
+            <span class="tile-symbol">♦</span>
+            <span class="tile-title">Daily</span>
           </button>
-          <a class="action-card action-card-shop" href="shop.html?v=20260618d">
-            <span class="action-card-face card-face black" aria-hidden="true"></span>
-            <span class="action-card-title">Collection</span>
-            <span class="action-card-sub">Cards & Finds</span>
-          </a>
-        </div>
-
-        <div class="intro-footer-row">
-          <div class="intro-name intro-name-card">
-            <label for="intro-name-input">Player Name</label>
-            <input id="intro-name-input" type="text" maxlength="24" autocomplete="name" placeholder="Your name">
-          </div>
-          <a class="profile-launch" href="profile.html">
-            <span class="profile-launch-label">Profile</span>
-            <span class="profile-launch-sub">Stats & Stamps</span>
-          </a>
+          <button id="home-collection-btn" class="tile-btn collection" type="button">
+            <span class="tile-symbol">★</span>
+            <span class="tile-title">Collection</span>
+          </button>
         </div>
       </section>
 
-
-        <section id="deck-modal" class="deck-modal hidden" aria-hidden="true">
-          <div class="deck-backdrop" id="deck-close-backdrop"></div>
-          <article class="deck-dialog" role="dialog" aria-modal="true" aria-labelledby="deck-title">
-          <h2 id="deck-title">Choose Your Deck</h2>
-          <p class="deck-copy">Pick a deck; locked decks show their unlock requirement.</p>
-          <div class="deck-choice-grid">
-            <button class="deck-choice-card deck-choice-blue" id="deck-pick-blue" type="button">
-              <span class="deck-choice-visual deck-back-visual" aria-hidden="true"></span>
-              <span class="deck-choice-label">Blue Deck</span>
-              <span class="deck-choice-desc">Classic 52 with nudge rewards.</span>
-            </button>
-            <button class="deck-choice-card deck-choice-green locked" id="deck-pick-green" type="button">
-              <span class="deck-choice-visual deck-back-visual" aria-hidden="true"></span>
-              <span class="deck-choice-label">Green Deck</span>
-              <span class="deck-choice-desc" id="deck-green-desc">Unlock: clear Blue L1.</span>
-            </button>
-            <button class="deck-choice-card deck-choice-yellow locked" id="deck-pick-yellow" type="button">
-              <span class="deck-choice-visual deck-back-visual" aria-hidden="true"></span>
-              <span class="deck-choice-label">Yellow Deck</span>
-              <span class="deck-choice-desc" id="deck-yellow-desc">Unlock: clear Green L1.</span>
-            </button>
-            <button class="deck-choice-card deck-choice-orange locked" id="deck-pick-red" type="button">
-              <span class="deck-choice-visual deck-back-visual" aria-hidden="true"></span>
-              <span class="deck-choice-label">Orange Deck</span>
-              <span class="deck-choice-desc" id="deck-red-desc">Unlock: clear Yellow L1.</span>
-            </button>
-            <button class="deck-choice-card deck-choice-black locked" id="deck-pick-black" type="button">
-              <span class="deck-choice-visual deck-back-visual" aria-hidden="true"></span>
-              <span class="deck-choice-label">Black Deck</span>
-              <span class="deck-choice-desc" id="deck-black-desc">Unlock: clear every deck level.</span>
-            </button>
-          </div>
-          <button id="deck-close-btn" class="deck-close-btn" type="button">Close</button>
-        </article>
+      <section class="app-view panel-view setup-view" data-view="setup" aria-hidden="true">
+        <div id="setup-body" class="panel-body"></div>
       </section>
 
-      <section id="level-modal" class="deck-modal hidden" aria-hidden="true">
-        <div class="deck-backdrop" id="level-close-backdrop"></div>
-        <article class="deck-dialog" role="dialog" aria-modal="true" aria-labelledby="level-title">
-          <h2 id="level-title">Choose Your Level</h2>
-          <p class="deck-copy" id="level-copy">Pick the difficulty level for this deck.</p>
-          <div class="deck-choice-grid">
-            <button class="deck-choice-card level-choice-card level-choice-1" id="level-pick-1" type="button">
-              <span class="deck-choice-visual level-card-visual" data-level="1" aria-hidden="true"></span>
-              <span class="deck-choice-label">Level 1</span>
-              <span class="deck-choice-desc" id="level-1-desc">Classic pacing. Cheats appear every 3 correct guesses, or every 2 with Quick Fingers.</span>
-            </button>
-            <button class="deck-choice-card level-choice-card level-choice-2 locked" id="level-pick-2" type="button">
-              <span class="deck-choice-visual level-card-visual" data-level="2" aria-hidden="true"></span>
-              <span class="deck-choice-label">Level 2</span>
-              <span class="deck-choice-desc" id="level-2-desc">Unlock by clearing Level 1.</span>
-            </button>
-            <button class="deck-choice-card level-choice-card level-choice-3 locked" id="level-pick-3" type="button" disabled>
-              <span class="deck-choice-visual level-card-visual" data-level="3" aria-hidden="true"></span>
-              <span class="deck-choice-label">Level 3</span>
-              <span class="deck-choice-desc" id="level-3-desc">Unlock by clearing Level 2.</span>
-            </button>
-            <button class="deck-choice-card level-choice-card level-choice-4 locked" id="level-pick-4" type="button" disabled>
-              <span class="deck-choice-visual level-card-visual" data-level="4" aria-hidden="true"></span>
-              <span class="deck-choice-label">Level 4</span>
-              <span class="deck-choice-desc" id="level-4-desc">Unlock by clearing Level 3.</span>
-            </button>
-          </div>
-          <button id="level-close-btn" class="deck-close-btn" type="button">Back</button>
-        </article>
+      <section class="app-view play-view" data-view="play" aria-hidden="true">
+        <div id="app-play-host"></div>
       </section>
-    </section>
 
-    <section id="howto-modal" class="howto-modal hidden" aria-hidden="true">
-      <div class="howto-backdrop" id="howto-close-backdrop"></div>
-      <article class="howto-dialog" role="dialog" aria-modal="true" aria-labelledby="howto-title">
-        <h2 id="howto-title">How To Play</h2>
+      <section class="app-view panel-view" data-view="daily" aria-hidden="true">
+        <header class="panel-head daily-head">
+          <span class="panel-head-spacer" aria-hidden="true"></span>
+          <div class="segment-row daily-top-tabs" id="daily-variant-tabs"></div>
+          <span class="panel-head-spacer" aria-hidden="true"></span>
+        </header>
+        <div id="daily-body" class="panel-body"></div>
+      </section>
 
-        <div class="howto-block">
-          <h3>The Goal</h3>
-          <p>
-            Every run starts from a 52-card deck. Decide whether the next face-down card is higher or lower than the current card, then keep surviving until the deck is cleared.
-          </p>
-        </div>
+      <section class="app-view panel-view collection-view" data-view="collection" aria-hidden="true">
+        <div id="collection-body" class="panel-body collection-layout"></div>
+      </section>
 
-        <div class="howto-block">
-          <h3>The Rules</h3>
-          <ul>
-            <li>Pick <strong>Higher</strong> or <strong>Lower</strong> for the next face-down card.</li>
-            <li>Equal values are safe, so your run continues on a match. Aces are usually low unless a power changes that. Jacks count as 11, Queens as 12, and Kings as 13.</li>
-            <li>A wrong guess ends the run immediately.</li>
-            <li><strong>Blue Deck</strong> can award Nudges on correct guesses. <strong>Green Deck</strong> makes Nudges cost Energy. <strong>Yellow Deck</strong> adds level-gated Jokers that trigger harmful effects and then the run continues. <strong>Orange Deck</strong> combines all three rules.</li>
-            <li>After choosing a deck, choose that deck's level. Blue Level 1 is the standard pacing, Blue Levels 2 and 3 slow cheat rewards, and Blue Level 4 slows them further.</li>
-            <li>Unlock path: clear Blue 1 to open Green 1, Green 1 to open Yellow 1, and Yellow 1 to open Orange 1. Higher levels unlock by clearing the previous level in that same deck.</li>
-            <li>Clear the full deck to record a winning run on the heroes board.</li>
-          </ul>
-        </div>
+      <section class="app-view panel-view" data-view="shop" aria-hidden="true">
+        <header class="panel-head">
+          <span class="panel-head-spacer" aria-hidden="true"></span>
+          <h1 class="panel-title">Shop</h1>
+          <span class="panel-head-spacer" aria-hidden="true"></span>
+        </header>
+        <div id="shop-body" class="panel-body shop-layout"></div>
+      </section>
 
-        <div class="howto-block">
-          <h3>Powers, Nudges, And Cheats</h3>
-          <ul>
-            <li><strong>Start Power:</strong> Before each run, pick 1 Power from a choice of 2.</li>
-            <li><strong>Blue Deck Nudges:</strong> In Blue, every correct <strong>Higher</strong> guess adds an up nudge and every correct <strong>Lower</strong> guess adds a down nudge.</li>
-            <li><strong>Energy Decks:</strong> Green and Orange Level 1 start at 10 Energy, Level 2 starts at 8, Level 3 starts at 6, and Level 4 starts at 5. Each nudge costs 1 Energy, and a <strong>+5 Energy</strong> cheat appears frequently in offers.</li>
-            <li><strong>Nudges:</strong> Use the up/down buttons beside the current card to temporarily change its judged value before your next guess.</li>
-            <li><strong>Cheats:</strong> Build streaks to earn Cheats. Some cheats act instantly, while others arm protection or a delayed reward for the next card or next few correct guesses.</li>
-            <li><strong>Quick Fingers:</strong> This power speeds up Cheat rewards for the level you are playing.</li>
-            <li><strong>Power Reminder:</strong> Hold the deck / level / starting power text in the top bar during a run to reread your active power.</li>
-            <li><strong>On mobile:</strong> Swipe the cheat row sideways if your cheats run off the screen.</li>
-          </ul>
-        </div>
+      <section class="app-view panel-view" data-view="profile" aria-hidden="true">
+        <header class="panel-head">
+          <span class="panel-head-spacer" aria-hidden="true"></span>
+          <h1 class="panel-title">Profile</h1>
+          <span class="panel-head-spacer" aria-hidden="true"></span>
+        </header>
+        <div id="profile-body" class="panel-body"></div>
+      </section>
 
-        <div class="howto-block">
-          <h3>Daily Scoring</h3>
-          <ul>
-            <li><strong>Daily:</strong> The Daily unlocks after your first run, gives everyone the same seeded deck and offers for the date, and currently plays as Blue Deck Level 1.</li>
-            <li>Your Daily leaderboard total is <strong>cards cleared x 100</strong>, plus a resource bonus.</li>
-            <li>Unused Nudge charges are worth <strong>+5</strong> each, unused Cheats are worth <strong>+10</strong> each, and each Power in play is worth <strong>+25</strong>.</li>
-            <li>Each torn card seen during the run is worth <strong>-10</strong>, but the Daily bonus can never go below <strong>0</strong>.</li>
-            <li>Hold a player name on the Daily leaderboard to see their deck clears and score breakdown.</li>
-          </ul>
-        </div>
+      <section class="app-view panel-view" data-view="settings" aria-hidden="true">
+        <header class="panel-head">
+          <span class="panel-head-spacer" aria-hidden="true"></span>
+          <h1 class="panel-title">Settings</h1>
+          <span class="panel-head-spacer" aria-hidden="true"></span>
+        </header>
+        <div id="settings-body" class="panel-body"></div>
+      </section>
 
-        <div class="howto-block">
-          <h3>What You See</h3>
-          <ul>
-            <li>The top HUD shows your current deck and level, your starting power, best run for that deck and level, cards cleared, and cards remaining.</li>
-            <li>The center play area shows the current card, your nudge counts, and the next face-down card.</li>
-            <li>The tracked grid records which cards you have already seen this run.</li>
-          </ul>
-        </div>
+      <section class="app-view panel-view" data-view="deck" aria-hidden="true">
+        <header class="panel-head">
+          <span class="panel-head-spacer" aria-hidden="true"></span>
+          <h1 class="panel-title">Deck</h1>
+          <span class="panel-head-spacer" aria-hidden="true"></span>
+        </header>
+        <div id="deck-body" class="panel-body"></div>
+      </section>
 
-        <button id="howto-close-btn" class="howto-close-btn" type="button">Close</button>
+      <section class="app-view panel-view" data-view="help" aria-hidden="true">
+        <header class="panel-head">
+          <span class="panel-head-spacer" aria-hidden="true"></span>
+          <h1 class="panel-title">Help</h1>
+          <span class="panel-head-spacer" aria-hidden="true"></span>
+        </header>
+        <div id="help-body" class="panel-body"></div>
+      </section>
+    </main>
+
+    <div id="shell-modal" class="shell-modal hidden" aria-hidden="true">
+      <div id="shell-modal-backdrop" class="shell-modal-backdrop"></div>
+      <article class="shell-dialog" role="dialog" aria-modal="true" aria-labelledby="shell-modal-title">
+        <button id="shell-modal-close" class="shell-close-btn" type="button" aria-label="Close">×</button>
+        <h2 id="shell-modal-title" class="shell-modal-title"></h2>
+        <div id="shell-modal-body" class="shell-modal-body"></div>
       </article>
-    </section>
-  </main>
-
-  <script src="js/fullscreen.js?v=20260427a"></script>
-  <script src="js/leaderboard.js?v=20260618a"></script>
-  <script src="js/pwa-update.js?v=20260613a"></script>
-  <script>
-    (function () {
-      const modal = document.getElementById("howto-modal");
-      const openBtn = document.getElementById("howto-open-btn");
-      const closeBtn = document.getElementById("howto-close-btn");
-      const closeBackdrop = document.getElementById("howto-close-backdrop");
-      const nameInput = document.getElementById("intro-name-input");
-      const dailyLaunchCard = document.getElementById("daily-launch-card");
-      const dailyLaunchSub = document.getElementById("daily-launch-sub");
-      const leaderStrip = document.querySelector(".black-leader-strip");
-      const leaderStripLabel = document.getElementById("leader-strip-label");
-      const blackLeaderValue = document.getElementById("black-leader-value");
-      const playBtn = document.getElementById("play-open-btn");
-      const deckModal = document.getElementById("deck-modal");
-      const deckCloseBtn = document.getElementById("deck-close-btn");
-      const deckCloseBackdrop = document.getElementById("deck-close-backdrop");
-      const levelModal = document.getElementById("level-modal");
-      const levelCloseBtn = document.getElementById("level-close-btn");
-      const levelCloseBackdrop = document.getElementById("level-close-backdrop");
-      const blueDeckBtn = document.getElementById("deck-pick-blue");
-      const redDeckBtn = document.getElementById("deck-pick-red");
-      const redDeckDesc = document.getElementById("deck-red-desc");
-      const greenDeckBtn = document.getElementById("deck-pick-green");
-      const greenDeckDesc = document.getElementById("deck-green-desc");
-      const yellowDeckBtn = document.getElementById("deck-pick-yellow");
-      const yellowDeckDesc = document.getElementById("deck-yellow-desc");
-      const blackDeckBtn = document.getElementById("deck-pick-black");
-      const blackDeckDesc = document.getElementById("deck-black-desc");
-      const levelCopy = document.getElementById("level-copy");
-      const levelOneBtn = document.getElementById("level-pick-1");
-      const levelTwoBtn = document.getElementById("level-pick-2");
-      const levelThreeBtn = document.getElementById("level-pick-3");
-      const levelFourBtn = document.getElementById("level-pick-4");
-      const levelOneDesc = document.getElementById("level-1-desc");
-      const levelTwoDesc = document.getElementById("level-2-desc");
-      const levelThreeDesc = document.getElementById("level-3-desc");
-      const levelFourDesc = document.getElementById("level-4-desc");
-      const nameKey = "hl_prototype_hero_name";
-      const selectedDeckKey = "hl_prototype_selected_deck";
-      const selectedLevelKey = "hl_prototype_selected_level";
-      const deckWinsKey = "hl_prototype_deck_wins";
-      const deckLevelClearsKey = "hl_prototype_deck_level_clears";
-      const bestScoreKey = "hl_prototype_best_score";
-      const bestScoresByModeKey = "hl_prototype_best_scores_by_mode";
-      const manualLevelOneUnlocksKey = "hl_prototype_manual_level1_unlocks";
-      const unlockDecksKey = "hl_prototype_unlock_decks";
-      const unlockAllKey = "hl_prototype_unlock_all";
-      const redDeckDebugUnlockKey = "hl_prototype_red_deck_debug_unlock";
-      const profileStatsKey = "hl_prototype_profile_stats";
-      const debugUnlockEnabled = new URLSearchParams(window.location.search).get("debugUnlock") === "1";
-      let pendingDeckSelection = "blue";
-
-      const sharedDailyDate = String(new URLSearchParams(window.location.search).get("date") || "").trim();
-      if (sharedDailyDate) {
-        window.location.replace(`daily.html?date=${encodeURIComponent(sharedDailyDate)}`);
-        return;
-      }
-
-      if (!modal || !openBtn || !closeBtn || !closeBackdrop || !playBtn || !deckModal || !deckCloseBtn || !deckCloseBackdrop || !levelModal || !levelCloseBtn || !levelCloseBackdrop || !blueDeckBtn || !redDeckBtn || !redDeckDesc || !greenDeckBtn || !greenDeckDesc || !yellowDeckBtn || !yellowDeckDesc || !blackDeckBtn || !blackDeckDesc || !levelCopy || !levelOneBtn || !levelTwoBtn || !levelThreeBtn || !levelFourBtn || !levelOneDesc || !levelTwoDesc || !levelThreeDesc || !levelFourDesc || !nameInput) {
-        return;
-      }
-
-      function normalizeIntroDeckKey(deckKey) {
-        const normalized = String(deckKey || "").trim().toLowerCase();
-        if (normalized === "black") return "black";
-        if (normalized === "red") return "red";
-        if (normalized === "orange") return "orange";
-        if (normalized === "green") return "green";
-        if (normalized === "yellow") return "yellow";
-        return "blue";
-      }
-
-      let playHoldTimer = null;
-      let playHoldTriggered = false;
-      let suppressNextPlayClick = false;
-
-      function normalizeLevelNumber(level) {
-        const value = Number(level);
-        return Number.isFinite(value) && value >= 1 ? Math.floor(value) : 1;
-      }
-
-      function loadProfileStatsSummary() {
-        try {
-          const parsed = JSON.parse(localStorage.getItem(profileStatsKey) || "{}");
-          return parsed && typeof parsed === "object" ? parsed : {};
-        } catch {
-          return {};
-        }
-      }
-
-      function isDailyUnlocked() {
-        const stats = loadProfileStatsSummary();
-        return Number(stats.runsStarted || 0) >= 1;
-      }
-
-      function refreshDailyLaunchState() {
-        if (!dailyLaunchCard) return;
-        const unlocked = isDailyUnlocked();
-        dailyLaunchCard.classList.toggle("locked", !unlocked);
-        dailyLaunchCard.setAttribute("aria-disabled", unlocked ? "false" : "true");
-        if (dailyLaunchSub) {
-          dailyLaunchSub.innerText = unlocked ? "Shared Run" : "Play 1 Run To Unlock";
-        }
-      }
-
-      function getUtcDateKey(date = new Date()) {
-        const year = date.getUTCFullYear();
-        const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-        const day = String(date.getUTCDate()).padStart(2, "0");
-        return `${year}-${month}-${day}`;
-      }
-
-      function getYesterdayDateKey() {
-        const date = new Date();
-        date.setUTCDate(date.getUTCDate() - 1);
-        return getUtcDateKey(date);
-      }
-
-      function introMulberry32(a) {
-        return function () {
-          let t = a += 0x6D2B79F5;
-          t = Math.imul(t ^ (t >>> 15), t | 1);
-          t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-        };
-      }
-
-      function introStringToSeedNumber(str) {
-        let h = 1779033703 ^ str.length;
-        for (let i = 0; i < str.length; i += 1) {
-          h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
-          h = (h << 13) | (h >>> 19);
-        }
-        return h >>> 0;
-      }
-
-      function introSeededShuffle(array, seedString) {
-        const rng = introMulberry32(introStringToSeedNumber(seedString));
-        for (let i = array.length - 1; i > 0; i -= 1) {
-          const j = Math.floor(rng() * (i + 1));
-          [array[i], array[j]] = [array[j], array[i]];
-        }
-      }
-
-      function buildIntroDailyDeck(seedString) {
-        const suits = [
-          { symbol: "\u2660", red: false },
-          { symbol: "\u2665", red: true },
-          { symbol: "\u2666", red: true },
-          { symbol: "\u2663", red: false },
-        ];
-        const ranks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
-        const deck = [];
-        suits.forEach((suit) => {
-          ranks.forEach((rank, index) => deck.push({
-            rank,
-            value: index + 1,
-            suit: suit.symbol,
-            red: suit.red,
-          }));
-        });
-        introSeededShuffle(deck, seedString);
-        return deck;
-      }
-
-      function isIntroFaceRank(rank) {
-        return rank === "J" || rank === "Q" || rank === "K";
-      }
-
-      function getIntroFaceCardImagePath(card) {
-        const rankName = {
-          J: "jack",
-          Q: "queen",
-          K: "king",
-        }[String(card?.rank || "").toUpperCase()];
-        const suitName = {
-          "\u2663": "clubs",
-          "\u2666": "diamonds",
-          "\u2665": "hearts",
-          "\u2660": "spades",
-        }[card?.suit || ""];
-        return rankName && suitName ? `images/face_cards/${rankName}_${suitName}.png` : "";
-      }
-
-      function buildIntroCardFaceMarkup(card) {
-        const faceArt = isIntroFaceRank(card.rank) ? getIntroFaceCardImagePath(card) : "";
-        const centerMarkup = faceArt
-          ? `<img class="card-court-art" src="${faceArt}" alt="" aria-hidden="true" draggable="false">`
-          : `<div class="card-center-suit" aria-hidden="true">${card.suit}</div>`;
-        return `
-          <div class="card-corner card-corner-tl">
-            <span class="card-rank">${card.rank}</span><span class="card-suit" aria-hidden="true">${card.suit}</span>
-          </div>
-          ${centerMarkup}
-          <div class="card-corner card-corner-br" aria-hidden="true">
-            <span class="card-rank">${card.rank}</span><span class="card-suit" aria-hidden="true">${card.suit}</span>
-          </div>
-        `;
-      }
-
-      function renderIntroActionFace(faceEl, card) {
-        if (!faceEl || !card) return;
-        faceEl.classList.toggle("red", card.red);
-        faceEl.classList.toggle("black", !card.red);
-        faceEl.innerHTML = buildIntroCardFaceMarkup(card);
-      }
-
-      function refreshIntroActionCards() {
-        const gameVersion = "v0.1";
-        const rulesetVersion = "daily-v1";
-        const dateKey = getUtcDateKey();
-        const normalDeck = buildIntroDailyDeck(`DAILY|${gameVersion}|${rulesetVersion}|${dateKey}`);
-        const hardDeck = buildIntroDailyDeck(`DAILY|${gameVersion}|${rulesetVersion}|hard-v1|${dateKey}`);
-        const dailyCards = [
-          normalDeck[0],
-          normalDeck[normalDeck.length - 1],
-          hardDeck[0],
-          hardDeck[hardDeck.length - 1],
-        ];
-        document.querySelectorAll(".card-action-fan .action-card-face").forEach((faceEl, index) => {
-          renderIntroActionFace(faceEl, dailyCards[index]);
-        });
-      }
-
-      function setLeaderStrip(label, value, animate = true) {
-        if (!leaderStripLabel || !blackLeaderValue) return;
-        const applyText = () => {
-          leaderStripLabel.innerText = label;
-          blackLeaderValue.innerText = value;
-          leaderStrip?.classList.remove("is-swapping");
-        };
-        if (!animate || !leaderStrip) {
-          applyText();
-          return;
-        }
-        leaderStrip.classList.add("is-swapping");
-        window.setTimeout(applyText, 220);
-      }
-
-      async function fetchYesterdayDailyWinner() {
-        if (!leaderboardRemoteEnabled()) return null;
-        const dateKey = getYesterdayDateKey();
-        const query = [
-          "select=player_name,score,cards_cleared,created_at",
-          `date_key=eq.${encodeURIComponent(dateKey)}`,
-          "order=score.desc,created_at.asc",
-          "limit=1",
-        ].join("&");
-        const url = `${LEADERBOARD_CONFIG.supabaseUrl}/rest/v1/daily_52?${query}`;
-        const response = await fetch(url, {
-          headers: {
-            apikey: LEADERBOARD_CONFIG.supabaseAnonKey,
-            Authorization: `Bearer ${LEADERBOARD_CONFIG.supabaseAnonKey}`,
-          },
-        });
-        if (!response.ok) return null;
-        const rows = await response.json();
-        return Array.isArray(rows) && rows[0] ? rows[0] : null;
-      }
-
-      async function buildLeaderStripItems() {
-        const items = [];
-        try {
-          const dailyWinner = await fetchYesterdayDailyWinner();
-          items.push({
-            label: "Yesterday's Daily Winner:",
-            value: dailyWinner?.player_name ? dailyWinner.player_name : "--",
-          });
-        } catch {
-          items.push({ label: "Yesterday's Daily Winner:", value: "--" });
-        }
-
-        try {
-          if (typeof fetchBlackDeckLeader !== "function") return items;
-          const leader = await fetchBlackDeckLeader();
-          items.push({
-            label: "Current Black Deck High Score:",
-            value: leader ? `${leader.score}/52... ${leader.playerName}` : "--/52...",
-          });
-        } catch {
-          items.push({ label: "Current Black Deck High Score:", value: "--/52..." });
-        }
-
-        return items;
-      }
-
-      async function startLeaderStripRotation() {
-        if (!blackLeaderValue || !leaderStripLabel) return;
-        const items = await buildLeaderStripItems();
-        if (!items.length) return;
-        let index = 0;
-        setLeaderStrip(items[index].label, items[index].value, false);
-        if (items.length < 2) return;
-        window.setInterval(() => {
-          index = (index + 1) % items.length;
-          setLeaderStrip(items[index].label, items[index].value, true);
-        }, 10000);
-      }
-
-      function getDeckLevelKey(deckKey, levelNumber) {
-        const normalizedDeck = normalizeIntroDeckKey(deckKey);
-        return `${normalizedDeck}|${normalizeLevelNumber(levelNumber)}`;
-      }
-
-      function normalizeDeckLevelClears(clears) {
-        const normalized = {};
-        if (!clears || typeof clears !== "object") return normalized;
-
-        Object.entries(clears).forEach(([bucketKey, clearCount]) => {
-          const numericClearCount = Number(clearCount);
-          normalized[String(bucketKey)] = Number.isFinite(numericClearCount) && numericClearCount > 0
-            ? Math.floor(numericClearCount)
-            : 0;
-        });
-
-        return normalized;
-      }
-
-      function loadDeckLevelClears() {
-        let clears = {};
-
-        try {
-          clears = normalizeDeckLevelClears(JSON.parse(localStorage.getItem(deckLevelClearsKey) || "{}"));
-        } catch {
-          clears = normalizeDeckLevelClears({});
-        }
-
-        try {
-          const legacyDeckWins = JSON.parse(localStorage.getItem(deckWinsKey) || "{}");
-          const blueWins = Number(legacyDeckWins?.blue) || 0;
-          const redWins = Number(legacyDeckWins?.red) || 0;
-          const blueLevelOneKey = getDeckLevelKey("blue", 1);
-          const redLevelOneKey = getDeckLevelKey("red", 1);
-          let migrated = false;
-
-          if (!(blueLevelOneKey in clears) && blueWins > 0) {
-            clears[blueLevelOneKey] = blueWins;
-            migrated = true;
-          }
-
-          if (!(redLevelOneKey in clears) && redWins > 0) {
-            clears[redLevelOneKey] = redWins;
-            migrated = true;
-          }
-
-          if (migrated) {
-            localStorage.setItem(deckLevelClearsKey, JSON.stringify(clears));
-          }
-        } catch {
-          // ignore legacy migration issues on the intro page
-        }
-
-        return clears;
-      }
-
-      function hasClearedDeckLevel(deckKey, levelNumber) {
-        const clears = loadDeckLevelClears();
-        return (clears[getDeckLevelKey(deckKey, levelNumber)] || 0) > 0;
-      }
-
-      function normalizeManualLevelOneUnlocks(unlocks) {
-        return {
-          red: !!(unlocks && unlocks.red),
-          orange: !!(unlocks && unlocks.orange),
-          green: !!(unlocks && unlocks.green),
-          yellow: !!(unlocks && unlocks.yellow),
-          black: !!(unlocks && unlocks.black),
-        };
-      }
-
-      function loadManualLevelOneUnlocks() {
-        try {
-          return normalizeManualLevelOneUnlocks(JSON.parse(localStorage.getItem(manualLevelOneUnlocksKey) || "{}"));
-        } catch {
-          return normalizeManualLevelOneUnlocks({});
-        }
-      }
-
-      function saveManualLevelOneUnlocks(unlocks) {
-        localStorage.setItem(
-          manualLevelOneUnlocksKey,
-          JSON.stringify(normalizeManualLevelOneUnlocks(unlocks))
-        );
-      }
-
-      function isDeckManuallyLevelOneUnlocked(deckKey) {
-        const normalizedDeck = normalizeIntroDeckKey(deckKey);
-        if (normalizedDeck === "blue") return true;
-        const unlocks = loadManualLevelOneUnlocks();
-        return !!unlocks[normalizedDeck];
-      }
-
-      function unlockDeckLevelOneForTesting(deckKey) {
-        const normalizedDeck = normalizeIntroDeckKey(deckKey);
-        if (normalizedDeck === "blue") return;
-        const unlocks = loadManualLevelOneUnlocks();
-        unlocks[normalizedDeck] = true;
-        saveManualLevelOneUnlocks(unlocks);
-      }
-
-      function loadBestScoresByMode() {
-        try {
-          const parsed = JSON.parse(localStorage.getItem(bestScoresByModeKey) || "{}");
-          return parsed && typeof parsed === "object" ? parsed : {};
-        } catch {
-          return {};
-        }
-      }
-
-      function getBestScoreLabel(deckKey, levelNumber) {
-        const normalizedLevel = normalizeLevelNumber(levelNumber);
-        const bucketKey = getDeckLevelKey(deckKey, normalizedLevel);
-        const bestScores = loadBestScoresByMode();
-        const hasStoredScore = Object.prototype.hasOwnProperty.call(bestScores, bucketKey);
-        let score = hasStoredScore ? Number(bestScores[bucketKey]) : NaN;
-
-        if (!hasStoredScore && bucketKey === getDeckLevelKey("blue", 1)) {
-          const legacyScore = Number(localStorage.getItem(bestScoreKey));
-          if (Number.isFinite(legacyScore) && legacyScore > 0) score = legacyScore;
-        }
-
-        if (!Number.isFinite(score)) return "--";
-        return String(Math.max(0, Math.min(52, score)));
-      }
-
-      function setLevelDescription(descEl, description, deckKey, levelNumber, unlocked) {
-        if (!descEl) return;
-        descEl.textContent = description;
-        if (!unlocked) return;
-
-        const bestEl = document.createElement("strong");
-        bestEl.textContent = ` Best: ${getBestScoreLabel(deckKey, levelNumber)}/52`;
-        descEl.appendChild(bestEl);
-      }
-
-      function hasVerifiedDeckLevelClear(deckKey, levelNumber) {
-        const normalizedLevel = normalizeLevelNumber(levelNumber);
-        const bucketKey = getDeckLevelKey(deckKey, normalizedLevel);
-        const clears = loadDeckLevelClears();
-        if ((clears[bucketKey] || 0) <= 0) return false;
-
-        // Full deck clear should also have recorded a best score at 51+ for that deck/level.
-        const bestScores = loadBestScoresByMode();
-        const bestScore = Number(bestScores[bucketKey] || 0);
-        return Number.isFinite(bestScore) && bestScore >= 51;
-      }
-
-      function hasLegacyRedDeckClear() {
-        try {
-          const wins = JSON.parse(localStorage.getItem(deckWinsKey) || "{}");
-          if ((Number(wins?.red) || 0) > 0) return true;
-        } catch {
-          // ignore malformed legacy deck wins
-        }
-
-        return [1, 2, 3, 4].some((levelNumber) => hasVerifiedDeckLevelClear("red", levelNumber));
-      }
-
-      function hasDebugUnlock() {
-        return localStorage.getItem(unlockAllKey) === "1" || (debugUnlockEnabled && sessionStorage.getItem(redDeckDebugUnlockKey) === "1");
-      }
-
-      function hasDeckUnlock() {
-        return hasDebugUnlock() || localStorage.getItem(unlockDecksKey) === "1";
-      }
-
-      function unlockAllDecksAndLevelsForDebug() {
-        if (!debugUnlockEnabled) return;
-        sessionStorage.setItem(redDeckDebugUnlockKey, "1");
-      }
-
-      function isOrangeDeckUnlocked() {
-        return hasDeckUnlock() || isDeckManuallyLevelOneUnlocked("orange") || hasVerifiedDeckLevelClear("yellow", 1);
-      }
-
-      function isGreenDeckPrereqMet() {
-        return hasDeckUnlock() || isDeckManuallyLevelOneUnlocked("green") || hasVerifiedDeckLevelClear("blue", 1);
-      }
-
-      function isYellowDeckUnlocked() {
-        return hasDeckUnlock() || isDeckManuallyLevelOneUnlocked("yellow") || hasVerifiedDeckLevelClear("green", 1);
-      }
-
-      function isBlackDeckUnlocked() {
-        if (hasDeckUnlock() || isDeckManuallyLevelOneUnlocked("black")) return true;
-        return ["blue", "green", "yellow", "orange"].every((deckKey) =>
-          [1, 2, 3, 4].every((levelNumber) => hasVerifiedDeckLevelClear(deckKey, levelNumber))
-        );
-      }
-
-      function isDeckLevelUnlocked(deckKey, levelNumber) {
-        const normalizedDeck = normalizeIntroDeckKey(deckKey);
-        const normalizedLevel = normalizeLevelNumber(levelNumber);
-
-        if (hasDebugUnlock()) return true;
-        if (normalizedDeck === "black") {
-          return normalizedLevel === 1 && isBlackDeckUnlocked();
-        }
-        if (normalizedDeck === "blue") {
-          if (normalizedLevel === 1) return true;
-          return hasVerifiedDeckLevelClear("blue", normalizedLevel - 1);
-        }
-
-        if (normalizedDeck === "green") {
-          if (!isGreenDeckPrereqMet()) return false;
-          if (normalizedLevel === 1) return true;
-          if (normalizedLevel >= 2 && normalizedLevel <= 4) {
-            return hasVerifiedDeckLevelClear("green", normalizedLevel - 1);
-          }
-          return false;
-        }
-
-        if (normalizedDeck === "yellow") {
-          if (!isYellowDeckUnlocked()) return false;
-          if (normalizedLevel === 1) return true;
-          if (normalizedLevel >= 2 && normalizedLevel <= 4) {
-            return hasVerifiedDeckLevelClear("yellow", normalizedLevel - 1);
-          }
-          return false;
-        }
-
-        if (normalizedDeck === "orange") {
-          if (!isOrangeDeckUnlocked()) return false;
-          if (normalizedLevel === 1) return true;
-          if (normalizedLevel >= 2 && normalizedLevel <= 4) {
-            return hasVerifiedDeckLevelClear("orange", normalizedLevel - 1);
-          }
-          return false;
-        }
-
-        if (!hasDeckUnlock() && !isDeckManuallyLevelOneUnlocked("red") && !hasVerifiedDeckLevelClear("blue", 2)) return false;
-        if (normalizedLevel === 1) return true;
-        if (normalizedLevel >= 2 && normalizedLevel <= 4) {
-          return hasVerifiedDeckLevelClear("red", normalizedLevel - 1);
-        }
-        return false;
-      }
-
-      function getLevelDescription(deckKey, levelNumber) {
-        const normalizedDeck = normalizeIntroDeckKey(deckKey);
-        const normalizedLevel = normalizeLevelNumber(levelNumber);
-
-        if (normalizedDeck === "black") {
-          return "Pure 52. No Powers, no Cheats, no Nudges. Just higher or lower.";
-        }
-
-        if (normalizedDeck === "blue") {
-          if (normalizedLevel === 1) return "Classic pacing. Cheats appear every 3 correct guesses, or every 2 with Quick Fingers.";
-          if (normalizedLevel === 2) return "Cheats appear every 4 correct guesses, or every 3 with Quick Fingers.";
-          if (normalizedLevel === 3) return "Cheats appear every 4 correct guesses, or every 3 with Quick Fingers. Offers always give at least 2 choices.";
-          return "Cheats appear every 5 correct guesses, or every 4 with Quick Fingers. Offers always give at least 2 choices.";
-        }
-
-        if (normalizedDeck === "green") {
-          if (normalizedLevel === 1) return "Hard mode. Start with 10 Energy, each nudge costs 1 Energy, correct guesses still award nudges, and wrong guesses end the run.";
-          if (normalizedLevel === 2) return "Hard mode. Start with 8 Energy. Same Green rules with tighter resource pressure.";
-          if (normalizedLevel === 3) return "Hard mode. Start with 6 Energy. Green's toughest resource run before Level 4.";
-          return "Hard mode. Start with 5 Energy. Green's peak resource pressure.";
-        }
-
-        if (normalizedDeck === "yellow") {
-          if (normalizedLevel === 1) return "Hazard run. Adds 1 Joker to the deck. Jokers count as both high and low when encountered.";
-          if (normalizedLevel === 2) return "Hazard run. Adds 2 Jokers to the deck. Jokers count as both high and low when encountered.";
-          if (normalizedLevel === 3) return "Hazard run. Adds 3 Jokers to the deck. Jokers count as both high and low when encountered.";
-          return "Hazard run. Adds 4 Jokers to the deck. Jokers count as both high and low when encountered.";
-        }
-
-        if (normalizedDeck === "orange") {
-          if (normalizedLevel === 1) return "Hybrid run. Start with 10 Energy, correct guesses award Nudges, Nudges cost Energy, and 1 Joker is added.";
-          if (normalizedLevel === 2) return "Hybrid run. Start with 8 Energy and 2 Jokers are added.";
-          if (normalizedLevel === 3) return "Hybrid run. Start with 6 Energy and 3 Jokers are added. Cheat offers tighten like higher Blue levels.";
-          return "Hybrid run. Start with 5 Energy and 4 Jokers are added. Orange's toughest combined challenge.";
-        }
-
-        if (normalizedLevel === 1) return "Stats-driven run. No Nudge rewards, and the next card back shows live face-up card history.";
-        if (normalizedLevel === 2) return "Stats-driven run. Unlock by clearing Red Deck Level 1.";
-        if (normalizedLevel === 3) return "Stats-driven run. Unlock by clearing Red Deck Level 2.";
-        return "Stats-driven run. Cheats slow to every 4 correct guesses, or every 3 with Quick Fingers.";
-      }
-
-      function getLevelUnlockText(deckKey, levelNumber) {
-        const normalizedDeck = normalizeIntroDeckKey(deckKey);
-        const normalizedLevel = normalizeLevelNumber(levelNumber);
-
-        if (normalizedDeck === "black") return "Unlock by clearing every level on every deck.";
-
-        if (normalizedDeck === "blue") {
-          if (normalizedLevel === 1) return getLevelDescription("blue", 1);
-          return `Unlock by clearing Blue Deck Level ${normalizedLevel - 1}.`;
-        }
-
-        if (normalizedDeck === "green") {
-          if (normalizedLevel === 1) return "Unlock by clearing Blue Deck Level 1.";
-          if (normalizedLevel === 2) return "Unlock by clearing Green Deck Level 1.";
-          if (normalizedLevel === 3) return "Unlock by clearing Green Deck Level 2.";
-          if (normalizedLevel === 4) return "Unlock by clearing Green Deck Level 3.";
-          return "Unlock requirements not available.";
-        }
-
-        if (normalizedDeck === "yellow") {
-          if (normalizedLevel === 1) return "Unlock by clearing Green Deck Level 1.";
-          if (normalizedLevel === 2) return "Unlock by clearing Yellow Deck Level 1.";
-          if (normalizedLevel === 3) return "Unlock by clearing Yellow Deck Level 2.";
-          if (normalizedLevel === 4) return "Unlock by clearing Yellow Deck Level 3.";
-          return "Unlock requirements not available.";
-        }
-
-        if (normalizedDeck === "orange") {
-          if (normalizedLevel === 1) return "Unlock by clearing Yellow Deck Level 1.";
-          if (normalizedLevel === 2) return "Unlock by clearing Orange Deck Level 1.";
-          if (normalizedLevel === 3) return "Unlock by clearing Orange Deck Level 2.";
-          if (normalizedLevel === 4) return "Unlock by clearing Orange Deck Level 3.";
-          return "Unlock requirements not available.";
-        }
-
-        if (normalizedLevel === 1) return "Unlock by clearing Blue Deck Level 2.";
-        if (normalizedLevel === 2) return "Unlock by clearing Red Deck Level 1.";
-        if (normalizedLevel === 3) return "Unlock by clearing Red Deck Level 2.";
-        if (normalizedLevel === 4) return "Unlock by clearing Red Deck Level 3.";
-        return "Unlock requirements not available.";
-      }
-
-      function setChoiceCardState(cardEl, unlocked, options = {}) {
-        if (!cardEl) return;
-        const disableLocked = options.disableLocked !== false;
-        cardEl.disabled = disableLocked && !unlocked;
-        cardEl.setAttribute("aria-disabled", unlocked ? "false" : "true");
-        cardEl.classList.toggle("locked", !unlocked);
-        cardEl.classList.toggle("unlocked", !!unlocked);
-      }
-
-      function setSelectedDeck(deckKey) {
-        const normalizedDeck = normalizeIntroDeckKey(deckKey);
-        localStorage.setItem(selectedDeckKey, normalizedDeck);
-      }
-
-      function setSelectedLevel(levelNumber) {
-        localStorage.setItem(selectedLevelKey, String(normalizeLevelNumber(levelNumber)));
-      }
-
-      function openModal() {
-        modal.classList.remove("hidden");
-        modal.setAttribute("aria-hidden", "false");
-      }
-
-      function closeModal() {
-        modal.classList.add("hidden");
-        modal.setAttribute("aria-hidden", "true");
-      }
-
-      function refreshDeckOptions() {
-        const redUnlocked = isOrangeDeckUnlocked();
-        const greenUnlocked = isGreenDeckPrereqMet();
-        const yellowUnlocked = isYellowDeckUnlocked();
-        const blackUnlocked = isBlackDeckUnlocked();
-        const redManual = isDeckManuallyLevelOneUnlocked("orange");
-        const greenManual = isDeckManuallyLevelOneUnlocked("green");
-        const yellowManual = isDeckManuallyLevelOneUnlocked("yellow");
-        const blackManual = isDeckManuallyLevelOneUnlocked("black");
-        setChoiceCardState(blueDeckBtn, true, { disableLocked: false });
-        setChoiceCardState(greenDeckBtn, greenUnlocked, { disableLocked: false });
-        setChoiceCardState(yellowDeckBtn, yellowUnlocked, { disableLocked: false });
-        setChoiceCardState(redDeckBtn, redUnlocked, { disableLocked: false });
-        setChoiceCardState(blackDeckBtn, blackUnlocked, { disableLocked: false });
-        redDeckDesc.textContent = redUnlocked
-          ? (redManual
-            ? "Testing unlock active."
-            : "Hybrid run: Nudges, Energy, and Jokers.")
-          : "Unlock: clear Yellow L1.";
-        greenDeckDesc.textContent = greenUnlocked
-          ? (greenManual
-            ? "Testing unlock active."
-            : "Energy run: nudges spend Energy.")
-          : "Unlock: clear Blue L1.";
-        yellowDeckDesc.textContent = yellowUnlocked
-          ? (yellowManual
-            ? "Testing unlock active."
-            : "Hazard run with harmful Jokers.")
-          : "Unlock: clear Green L1.";
-        blackDeckDesc.textContent = blackUnlocked
-          ? (blackManual
-            ? "Testing unlock active."
-            : "Pure 52: no Powers, Cheats, or Nudges.")
-          : "Unlock: clear every deck level.";
-      }
-
-      function openDeckModal() {
-        refreshDeckOptions();
-        deckModal.classList.remove("hidden");
-        deckModal.setAttribute("aria-hidden", "false");
-      }
-
-      function closeDeckModal() {
-        deckModal.classList.add("hidden");
-        deckModal.setAttribute("aria-hidden", "true");
-      }
-
-      function openLevelModal(deckKey) {
-        pendingDeckSelection = normalizeIntroDeckKey(deckKey);
-        const isBlueDeck = pendingDeckSelection === "blue";
-        const isGreenDeck = pendingDeckSelection === "green";
-        const isYellowDeck = pendingDeckSelection === "yellow";
-        const isOrangeDeck = pendingDeckSelection === "orange";
-        const levelOneUnlocked = isDeckLevelUnlocked(pendingDeckSelection, 1);
-        const levelTwoUnlocked = isDeckLevelUnlocked(pendingDeckSelection, 2);
-        const levelThreeUnlocked = isDeckLevelUnlocked(pendingDeckSelection, 3);
-        const levelFourUnlocked = isDeckLevelUnlocked(pendingDeckSelection, 4);
-
-        levelCopy.textContent = isBlueDeck
-          ? "Blue progression starts at Level 1 and opens one rung at a time as you clear each level."
-          : (isGreenDeck
-            ? "Green progression unlocks from Blue Level 1, then advances by clearing each Green level in order (10 → 8 → 6 → 5 starting Energy)."
-            : (isYellowDeck
-              ? "Yellow progression unlocks from Green Level 1. Each level adds another Joker hazard to the run."
-              : (isOrangeDeck
-                ? "Orange progression unlocks from Yellow Level 1. It combines Blue nudge rewards, Green Energy costs, and Yellow Joker hazards."
-                : (pendingDeckSelection === "black"
-                  ? "Black Deck is the final pure test: no Powers, no Cheats, no Nudges."
-                  : "Red Deck is hidden for now."))));
-
-        setLevelDescription(
-          levelOneDesc,
-          levelOneUnlocked ? getLevelDescription(pendingDeckSelection, 1) : getLevelUnlockText(pendingDeckSelection, 1),
-          pendingDeckSelection,
-          1,
-          levelOneUnlocked,
-        );
-        setLevelDescription(
-          levelTwoDesc,
-          levelTwoUnlocked ? getLevelDescription(pendingDeckSelection, 2) : getLevelUnlockText(pendingDeckSelection, 2),
-          pendingDeckSelection,
-          2,
-          levelTwoUnlocked,
-        );
-        setLevelDescription(
-          levelThreeDesc,
-          levelThreeUnlocked ? getLevelDescription(pendingDeckSelection, 3) : getLevelUnlockText(pendingDeckSelection, 3),
-          pendingDeckSelection,
-          3,
-          levelThreeUnlocked,
-        );
-        setLevelDescription(
-          levelFourDesc,
-          levelFourUnlocked ? getLevelDescription(pendingDeckSelection, 4) : getLevelUnlockText(pendingDeckSelection, 4),
-          pendingDeckSelection,
-          4,
-          levelFourUnlocked,
-        );
-
-        setChoiceCardState(levelOneBtn, levelOneUnlocked);
-        setChoiceCardState(levelTwoBtn, levelTwoUnlocked);
-        setChoiceCardState(levelThreeBtn, levelThreeUnlocked);
-        setChoiceCardState(levelFourBtn, levelFourUnlocked);
-
-        deckModal.classList.add("hidden");
-        deckModal.setAttribute("aria-hidden", "true");
-        levelModal.classList.remove("hidden");
-        levelModal.setAttribute("aria-hidden", "false");
-      }
-
-      function closeLevelModal(reopenDeck = false) {
-        levelModal.classList.add("hidden");
-        levelModal.setAttribute("aria-hidden", "true");
-        if (reopenDeck) {
-          openDeckModal();
-        }
-      }
-
-      function chooseDeck(deckKey) {
-        if (deckKey === "red") return;
-        if (deckKey === "orange" && !isOrangeDeckUnlocked()) return;
-        if (deckKey === "green" && !isGreenDeckPrereqMet()) return;
-        if (deckKey === "yellow" && !isYellowDeckUnlocked()) return;
-        if (deckKey === "black" && !isBlackDeckUnlocked()) return;
-        if (deckKey === "black") {
-          setSelectedDeck("black");
-          setSelectedLevel(1);
-          sessionStorage.removeItem("hl_prototype_game_state_snapshot");
-          const params = new URLSearchParams({ deck: "black", level: "1" });
-          window.location.href = `game.html?${params.toString()}`;
-          return;
-        }
-        openLevelModal(deckKey);
-      }
-
-      function attachDeckHoldUnlock(buttonEl, deckKey) {
-        if (!buttonEl || (deckKey !== "orange" && deckKey !== "green" && deckKey !== "yellow" && deckKey !== "black")) return;
-
-        let holdTimer = null;
-        let holdTriggered = false;
-
-        function clearHoldTimer() {
-          if (holdTimer) {
-            clearTimeout(holdTimer);
-            holdTimer = null;
-          }
-        }
-
-        buttonEl.addEventListener("pointerdown", (event) => {
-          if (event.button !== undefined && event.button !== 0) return;
-          event.preventDefault();
-          holdTriggered = false;
-          clearHoldTimer();
-          holdTimer = window.setTimeout(() => {
-            unlockDeckLevelOneForTesting(deckKey);
-            holdTriggered = true;
-            refreshDeckOptions();
-          }, 10000);
-        });
-
-        buttonEl.addEventListener("contextmenu", (event) => {
-          if (!holdTriggered) event.preventDefault();
-        });
-
-        ["pointerup", "pointercancel", "pointerleave"].forEach((eventName) => {
-          buttonEl.addEventListener(eventName, clearHoldTimer);
-        });
-
-        buttonEl.addEventListener("click", (event) => {
-          if (!holdTriggered) return;
-          holdTriggered = false;
-          event.preventDefault();
-          event.stopPropagation();
-        });
-      }
-
-      function chooseLevel(levelNumber) {
-        if (!isDeckLevelUnlocked(pendingDeckSelection, levelNumber)) return;
-        if (levelNumber > 4) return;
-        setSelectedDeck(pendingDeckSelection);
-        setSelectedLevel(levelNumber);
-        sessionStorage.removeItem("hl_prototype_game_state_snapshot");
-        const params = new URLSearchParams({
-          deck: pendingDeckSelection,
-          level: String(normalizeLevelNumber(levelNumber)),
-        });
-        window.location.href = `game.html?${params.toString()}`;
-      }
-
-      function clearPlayHoldTimer() {
-        if (playHoldTimer) {
-          clearTimeout(playHoldTimer);
-          playHoldTimer = null;
-        }
-      }
-
-      dailyLaunchCard?.addEventListener("click", (event) => {
-        if (isDailyUnlocked()) return;
-        event.preventDefault();
-      });
-
-      openBtn.addEventListener("click", openModal);
-      closeBtn.addEventListener("click", closeModal);
-      closeBackdrop.addEventListener("click", closeModal);
-
-      deckCloseBtn.addEventListener("click", closeDeckModal);
-      deckCloseBackdrop.addEventListener("click", closeDeckModal);
-      levelCloseBtn.addEventListener("click", () => closeLevelModal(true));
-      levelCloseBackdrop.addEventListener("click", () => closeLevelModal(true));
-      blueDeckBtn.addEventListener("click", () => chooseDeck("blue"));
-      redDeckBtn.addEventListener("click", () => chooseDeck("orange"));
-      greenDeckBtn.addEventListener("click", () => chooseDeck("green"));
-      yellowDeckBtn.addEventListener("click", () => chooseDeck("yellow"));
-      blackDeckBtn.addEventListener("click", () => chooseDeck("black"));
-      attachDeckHoldUnlock(redDeckBtn, "orange");
-      attachDeckHoldUnlock(greenDeckBtn, "green");
-      attachDeckHoldUnlock(yellowDeckBtn, "yellow");
-      attachDeckHoldUnlock(blackDeckBtn, "black");
-      levelOneBtn.addEventListener("click", () => chooseLevel(1));
-      levelTwoBtn.addEventListener("click", () => chooseLevel(2));
-      levelThreeBtn.addEventListener("click", () => chooseLevel(3));
-      levelFourBtn.addEventListener("click", () => chooseLevel(4));
-
-      playBtn.addEventListener("pointerdown", () => {
-        if (!debugUnlockEnabled) return;
-        playHoldTriggered = false;
-        clearPlayHoldTimer();
-        playHoldTimer = window.setTimeout(() => {
-          unlockAllDecksAndLevelsForDebug();
-          playHoldTriggered = true;
-          suppressNextPlayClick = true;
-          openDeckModal();
-        }, 10000);
-      });
-
-      ["pointerup", "pointercancel", "pointerleave"].forEach((eventName) => {
-        playBtn.addEventListener(eventName, clearPlayHoldTimer);
-      });
-
-      playBtn.addEventListener("click", (event) => {
-        event.preventDefault();
-        if (suppressNextPlayClick || playHoldTriggered) {
-          suppressNextPlayClick = false;
-          playHoldTriggered = false;
-          return;
-        }
-        openDeckModal();
-      });
-
-      nameInput.value = String(localStorage.getItem(nameKey) || "").trim();
-      nameInput.addEventListener("input", () => {
-        localStorage.setItem(nameKey, String(nameInput.value || "").trim().replace(/\s+/g, " ").slice(0, 24));
-      });
-
-      refreshIntroActionCards();
-      refreshDailyLaunchState();
-      startLeaderStripRotation();
-
-      window.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") {
-          closeModal();
-          closeDeckModal();
-          closeLevelModal();
-        }
-      });
-    })();
-  </script>
+    </div>
+  </div>
+
+  <script src="js/fullscreen.js?v=20260709bk"></script>
+  <script src="js/constants.js?v=20260709bk"></script>
+  <script src="js/storage.js?v=20260709bk"></script>
+  <script src="js/cosmetics.js?v=20260709bk"></script>
+  <script src="js/powers.js?v=20260709bk"></script>
+  <script src="js/cheats.js?v=20260709bk"></script>
+  <script src="js/cheat-balance-overrides.js?v=20260709bk"></script>
+  <script src="js/apply-cheat-balance-overrides.js?v=20260709bk"></script>
+  <script src="js/leaderboard.js?v=20260709bk"></script>
+  <script src="js/daily.js?v=20260709bk"></script>
+  <script src="js/item-stats.js?v=20260709bk"></script>
+  <script src="js/app-strings.js?v=20260709bk"></script>
+  <script src="js/app-shell.js?v=20260709bk"></script>
+  <script src="js/pwa-update.js?v=20260709bk"></script>
 </body>
 </html>

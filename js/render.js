@@ -14,6 +14,10 @@ let messageExpiryTimer = null;
 let messageFadeTimer = null;
 let cheatChoiceAnimationTimer = null;
 let powerChoiceAnimationTimer = null;
+let powerChoiceAnimationFrame = 0;
+let preservePowerChoiceFlyoutUntilShellSync = false;
+let powerChoiceFlyoutHomeParent = null;
+let powerChoiceFlyoutHomeNextSibling = null;
 let experienceBankingStartTimer = null;
 let experienceBankingAnimationFrame = null;
 let experiencePreviewResetTimer = null;
@@ -71,6 +75,10 @@ function clearPendingPowerChoiceTimer() {
   if (powerChoiceAnimationTimer) {
     clearTimeout(powerChoiceAnimationTimer);
     powerChoiceAnimationTimer = null;
+  }
+  if (powerChoiceAnimationFrame) {
+    cancelAnimationFrame(powerChoiceAnimationFrame);
+    powerChoiceAnimationFrame = 0;
   }
 }
 
@@ -369,14 +377,33 @@ function getDisplayedExperienceValue() {
   return getStoredExperienceValue();
 }
 
-function renderExperienceCounter(pop = false) {
+function getExperienceCounterTarget() {
+  const shellEl = document.getElementById("top-experience-value");
+  if (shellEl) {
+    return {
+      el: shellEl,
+      wrap: shellEl.closest(".app-xp") || shellEl,
+      hideWhenDisabled: false,
+    };
+  }
+
   const xpEl = document.getElementById("experience-value");
-  const xpWrap = document.getElementById("header-experience");
+  return {
+    el: xpEl,
+    wrap: document.getElementById("header-experience"),
+    hideWhenDisabled: true,
+  };
+}
+
+function renderExperienceCounter(pop = false) {
+  const { el: xpEl, wrap: xpWrap, hideWhenDisabled } = getExperienceCounterTarget();
   if (!xpEl || !xpWrap) return;
 
   const enabled = typeof loadExperienceDisplayEnabled !== "function" || loadExperienceDisplayEnabled();
-  xpWrap.hidden = !enabled;
-  xpWrap.setAttribute("aria-hidden", enabled ? "false" : "true");
+  if (hideWhenDisabled) {
+    xpWrap.hidden = !enabled;
+    xpWrap.setAttribute("aria-hidden", enabled ? "false" : "true");
+  }
   state.experience = typeof loadExperience === "function" ? loadExperience() : getStoredExperienceValue();
   if (!enabled) {
     xpWrap.classList.remove("xp-pop");
@@ -908,7 +935,7 @@ function startUnusedCheatExperienceAnimation(banking, targetX, targetY) {
 
 function startExperienceBankingAnimation() {
   const banking = state.experienceBanking;
-  const targetEl = document.getElementById("experience-value");
+  const { el: targetEl } = getExperienceCounterTarget();
   if (!banking || !targetEl) {
     completeExperienceBankingAnimation({ fade: false });
     return;
@@ -2750,6 +2777,9 @@ function hidePowerChoiceFlyout() {
   flyoutEl.setAttribute("aria-hidden", "true");
   flyoutEl.innerHTML = "";
   flyoutEl.removeAttribute("style");
+  if (powerChoiceFlyoutHomeParent && flyoutEl.parentNode !== powerChoiceFlyoutHomeParent) {
+    powerChoiceFlyoutHomeParent.insertBefore(flyoutEl, powerChoiceFlyoutHomeNextSibling);
+  }
 }
 
 function buildPowerChoiceShieldMarkup(power) {
@@ -2914,22 +2944,109 @@ function getChoiceFlyoutHostRect(flyoutEl) {
 
 function completePowerChoiceSelectionAnimation() {
   const selectedIndex = state.powerChoiceAnimating?.selectedIndex;
-  hidePowerChoiceFlyout();
   clearPendingPowerChoiceTimer();
+  const shouldHandOffToShellShield = Number.isInteger(selectedIndex) &&
+    document.getElementById("top-crowns")?.classList.contains("is-power-stack");
+  preservePowerChoiceFlyoutUntilShellSync = shouldHandOffToShellShield;
   state.powerChoiceAnimating = null;
   if (Number.isInteger(selectedIndex)) {
     pickPowerFromChoice(selectedIndex);
+    if (typeof window.appShellRefreshTopBar === "function") {
+      window.appShellRefreshTopBar();
+    }
+    if (shouldHandOffToShellShield) {
+      requestAnimationFrame(() => {
+        if (typeof window.appShellRefreshTopBar === "function") {
+          window.appShellRefreshTopBar();
+        }
+        requestAnimationFrame(() => {
+          preservePowerChoiceFlyoutUntilShellSync = false;
+          hidePowerChoiceFlyout();
+        });
+      });
+    } else {
+      hidePowerChoiceFlyout();
+    }
     window.setTimeout(flushPendingExperienceBonusesIfReady, 80);
     return;
   }
+  preservePowerChoiceFlyoutUntilShellSync = false;
+  hidePowerChoiceFlyout();
   render();
   window.setTimeout(flushPendingExperienceBonusesIfReady, 80);
+}
+
+function getPowerChoiceFlightTargetRect(targetEl, targetShieldEl) {
+  const shellSlotEl = document.getElementById("top-crowns");
+  if (shellSlotEl && shellSlotEl.classList.contains("is-power-stack")) {
+    const wasHidden = shellSlotEl.hidden;
+    if (wasHidden) shellSlotEl.hidden = false;
+    const shellTargetEl =
+      shellSlotEl.querySelector(".top-power-stack-item.pending-power-target") ||
+      shellSlotEl.querySelector(".top-power-stack-item:last-child") ||
+      shellSlotEl.querySelector(".top-power-stack");
+    const shellRect = shellTargetEl?.getBoundingClientRect();
+    if (wasHidden) shellSlotEl.hidden = true;
+    if (shellRect?.width > 0 && shellRect?.height > 0) {
+      return shellRect;
+    }
+  }
+
+  return (targetShieldEl || targetEl)?.getBoundingClientRect() || null;
+}
+
+function easeOutCubic(t) {
+  return 1 - Math.pow(1 - t, 3);
+}
+
+function lerp(start, end, t) {
+  return start + ((end - start) * t);
+}
+
+function animatePowerChoiceFlyoutToTarget(flyoutEl, animation, sourceRect, targetRect) {
+  const startCenterX = sourceRect.left + (sourceRect.width / 2);
+  const startCenterY = sourceRect.top + (sourceRect.height / 2);
+  const endCenterX = targetRect.left + (targetRect.width / 2);
+  const endCenterY = targetRect.top + (targetRect.height / 2);
+  const startWidth = Math.max(1, sourceRect.width);
+  const startHeight = Math.max(1, sourceRect.height);
+  const endWidth = Math.max(1, targetRect.width);
+  const endHeight = Math.max(1, targetRect.height);
+  const startedAt = performance.now();
+
+  function applyFrame(progress) {
+    const eased = easeOutCubic(Math.max(0, Math.min(1, progress)));
+    const width = lerp(startWidth, endWidth, eased);
+    const height = lerp(startHeight, endHeight, eased);
+    const centerX = lerp(startCenterX, endCenterX, eased);
+    const centerY = lerp(startCenterY, endCenterY, eased);
+    flyoutEl.style.left = `${centerX - (width / 2)}px`;
+    flyoutEl.style.top = `${centerY - (height / 2)}px`;
+    flyoutEl.style.setProperty("--flyout-width", `${width}px`);
+    flyoutEl.style.setProperty("--flyout-height", `${height}px`);
+    flyoutEl.style.setProperty("--flight-glyph-size", `${Math.max(10, height * 0.26)}px`);
+  }
+
+  applyFrame(0);
+  function step(now) {
+    if (!state.powerChoiceAnimating || state.powerChoiceAnimating !== animation) return;
+    const progress = (now - startedAt) / POWER_CHOICE_FLY_MS;
+    applyFrame(progress);
+    if (progress >= 1) {
+      powerChoiceAnimationFrame = 0;
+      completePowerChoiceSelectionAnimation();
+      return;
+    }
+    powerChoiceAnimationFrame = requestAnimationFrame(step);
+  }
+
+  powerChoiceAnimationFrame = requestAnimationFrame(step);
 }
 
 function playPendingPowerChoiceAnimation() {
   const animation = state.powerChoiceAnimating;
   if (!animation) {
-    hidePowerChoiceFlyout();
+    if (!preservePowerChoiceFlyoutUntilShellSync) hidePowerChoiceFlyout();
     return;
   }
 
@@ -2952,49 +3069,40 @@ function playPendingPowerChoiceAnimation() {
   const flyoutEl = document.getElementById("power-choice-flyout");
   const targetEl = document.getElementById("header-power-chip");
   const targetShieldEl = targetEl?.querySelector(".header-power-stack") || targetEl?.querySelector(".power-shield-svg");
-  if (!flyoutEl || !targetEl || !animation.power) return;
+  if (typeof window.appShellRefreshTopBar === "function") {
+    window.appShellRefreshTopBar();
+  }
+  const targetRect = getPowerChoiceFlightTargetRect(targetEl, targetShieldEl);
+  if (!flyoutEl || !targetRect || !animation.power) return;
 
   animation.started = true;
   clearPendingPowerChoiceTimer();
 
+  if (flyoutEl.parentNode && flyoutEl.parentNode !== document.body) {
+    powerChoiceFlyoutHomeParent = flyoutEl.parentNode;
+    powerChoiceFlyoutHomeNextSibling = flyoutEl.nextSibling;
+    document.body.appendChild(flyoutEl);
+  }
+
   const rarity = animation.power.rarity || "common";
-  flyoutEl.className = `power-choice-flyout choice-card power-choice-card ${rarity}`;
-  flyoutEl.innerHTML = buildPowerChoiceShieldMarkup(animation.power);
+  flyoutEl.className = `power-choice-flyout power-shield-flight ${rarity}`;
+  flyoutEl.innerHTML = `
+    ${POWER_SHIELD_SVG}
+    <span class="header-power-stack-glyph">${getPowerIcon(animation.power.id)}</span>
+  `;
   flyoutEl.setAttribute("aria-hidden", "true");
 
   const source = animation.sourceRect;
-  const hostRect = getChoiceFlyoutHostRect(flyoutEl);
-  flyoutEl.style.left = `${source.left - hostRect.left}px`;
-  flyoutEl.style.top = `${source.top - hostRect.top}px`;
+  flyoutEl.style.left = `${source.left}px`;
+  flyoutEl.style.top = `${source.top}px`;
   flyoutEl.style.setProperty("--flyout-width", `${source.width}px`);
   flyoutEl.style.setProperty("--flyout-height", `${source.height}px`);
+  flyoutEl.style.setProperty("--flight-glyph-size", `${Math.max(10, source.height * 0.26)}px`);
   flyoutEl.style.opacity = "1";
   flyoutEl.style.transform = "none";
   flyoutEl.classList.remove("is-moving");
-
-  const targetRect = (targetShieldEl || targetEl).getBoundingClientRect();
-  const targetScale = Math.min(
-    targetRect.width / Math.max(1, source.width),
-    targetRect.height / Math.max(1, source.height)
-  );
-  const targetLeft = targetRect.left + (targetRect.width / 2) - (source.width / 2);
-  const targetTop = targetRect.top + (targetRect.height / 2) - (source.height / 2);
   void flyoutEl.offsetWidth;
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      if (!state.powerChoiceAnimating || state.powerChoiceAnimating !== animation) return;
-      flyoutEl.classList.add("is-moving");
-      flyoutEl.style.opacity = "0.94";
-      flyoutEl.style.left = `${targetLeft - hostRect.left}px`;
-      flyoutEl.style.top = `${targetTop - hostRect.top}px`;
-      flyoutEl.style.transform = `scale(${targetScale})`;
-
-      powerChoiceAnimationTimer = setTimeout(() => {
-        completePowerChoiceSelectionAnimation();
-      }, POWER_CHOICE_FLY_MS + 20);
-    });
-  });
+  animatePowerChoiceFlyoutToTarget(flyoutEl, animation, source, targetRect);
 }
 
 function playPendingCheatChoiceAnimation() {
@@ -3271,6 +3379,12 @@ function renderCheats() {
 
       const useCheat = () => {
         const result = entry.cheat.use();
+        if (typeof recordItemUsageStat === "function") {
+          recordItemUsageStat("cheat", entry.cheat.id, "used");
+          if (result && !/^No effect/i.test(String(result))) {
+            recordItemUsageStat("cheat", entry.cheat.id, "success");
+          }
+        }
         const didConsume = shouldConsumeCheatAfterUse(entry.cheat, result);
         const cheatersProsperText = typeof awardCheatersProsperCheatUse === "function"
           ? awardCheatersProsperCheatUse(didConsume)

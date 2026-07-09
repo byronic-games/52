@@ -340,12 +340,11 @@ function saveMetaProgression(value) {
 
 
 function loadVisualTheme() {
-  const raw = localStorage.getItem(VISUAL_THEME_KEY);
-  return raw === "neon" ? "neon" : "new";
+  return "new";
 }
 
 function saveVisualTheme(theme) {
-  localStorage.setItem(VISUAL_THEME_KEY, theme === "new" ? "new" : "neon");
+  localStorage.setItem(VISUAL_THEME_KEY, "new");
 }
 
 function loadUnlockDecks() {
@@ -607,6 +606,9 @@ function recordDiscoveredCheats(ids) {
   (Array.isArray(ids) ? ids : [ids]).forEach((id) => {
     if (id) discovered.add(String(id));
   });
+  if (typeof recordItemDiscovered === "function") {
+    recordItemDiscovered("cheat", ids);
+  }
   return saveDiscoveredCheats(Array.from(discovered));
 }
 
@@ -623,6 +625,9 @@ function recordDiscoveredPowers(ids) {
   (Array.isArray(ids) ? ids : [ids]).forEach((id) => {
     if (id) discovered.add(String(id));
   });
+  if (typeof recordItemDiscovered === "function") {
+    recordItemDiscovered("power", ids);
+  }
   return saveDiscoveredPowers(Array.from(discovered));
 }
 
@@ -639,6 +644,9 @@ function recordDiscoveredJokers(ids) {
   (Array.isArray(ids) ? ids : [ids]).forEach((id) => {
     if (id) discovered.add(String(id));
   });
+  if (typeof recordItemDiscovered === "function") {
+    recordItemDiscovered("joker", ids);
+  }
   return saveDiscoveredJokers(Array.from(discovered));
 }
 

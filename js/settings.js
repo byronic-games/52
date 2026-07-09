@@ -175,13 +175,9 @@ function closeSettings() {
 }
 
 function replayTutorialFromSettings() {
-  const tutorialCompletedKey = typeof TUTORIAL_COMPLETED_KEY === "string"
-    ? TUTORIAL_COMPLETED_KEY
-    : "hl_prototype_tutorial_completed_v1";
   const tutorialForceReplayKey = typeof TUTORIAL_FORCE_REPLAY_KEY === "string"
     ? TUTORIAL_FORCE_REPLAY_KEY
     : "hl_prototype_tutorial_force_replay_v1";
-  localStorage.removeItem(tutorialCompletedKey);
   sessionStorage.setItem(tutorialForceReplayKey, "1");
   if (tutorialReplayStatus) {
     tutorialReplayStatus.innerText = "Tutorial queued. Returning to game...";

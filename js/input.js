@@ -351,7 +351,17 @@ function createTutorialController() {
 
   function setTutorialCompleted() {
     localStorage.setItem(tutorialCompletedKey, "1");
+    sessionStorage.removeItem(tutorialForceReplayKey);
     tutorialEnabled = false;
+    const shellToggle = document.getElementById("shell-settings-tutorial");
+    const modalToggle = document.getElementById("settings-tutorial-toggle");
+    if (shellToggle) shellToggle.checked = false;
+    if (modalToggle) modalToggle.checked = false;
+    const dailyBtn = document.getElementById("home-daily-btn");
+    if (dailyBtn) {
+      dailyBtn.disabled = false;
+      dailyBtn.setAttribute("aria-disabled", "false");
+    }
   }
 
   function closeOverlay({ complete = false } = {}) {
@@ -763,7 +773,11 @@ document.getElementById("restart-btn").onclick = () => {
 
   if (!runIsActive) {
     if (runWasCompletelyCleared) {
-      window.location.href = "index.html";
+      if (typeof window.appShellNavigate === "function") {
+        window.appShellNavigate("home");
+      } else {
+        window.location.href = "index.html";
+      }
       return;
     }
     startRun(!state.openingPreview);
@@ -888,6 +902,10 @@ function getTutorialForceReplayKey() {
     : "hl_prototype_tutorial_force_replay_v1";
 }
 
+function isTutorialToggleOn() {
+  return sessionStorage.getItem(getTutorialForceReplayKey()) === "1" || localStorage.getItem(getTutorialCompletedKey()) !== "1";
+}
+
 function getLatestRunLogEntriesForModal() {
   const entries = loadRunDebugLog();
   return Array.isArray(entries) ? entries : [];
@@ -947,7 +965,7 @@ function refreshSettingsModalState() {
   const hasLog = getLatestRunLogEntriesForModal().length > 0;
 
   if (tutorialToggle) {
-    tutorialToggle.checked = localStorage.getItem(getTutorialCompletedKey()) !== "1";
+    tutorialToggle.checked = isTutorialToggleOn();
   }
   if (visualsSelect) {
     visualsSelect.value = loadVisualTheme();
@@ -1180,7 +1198,6 @@ document.getElementById("settings-visuals-select")?.addEventListener("change", (
 
 document.getElementById("settings-tutorial-toggle")?.addEventListener("change", (event) => {
   if (event.target.checked) {
-    localStorage.removeItem(getTutorialCompletedKey());
     sessionStorage.setItem(getTutorialForceReplayKey(), "1");
     window.tutorialController = createTutorialController();
     setSettingsModalStatus("Tutorial enabled for the next run.");
@@ -1190,6 +1207,11 @@ document.getElementById("settings-tutorial-toggle")?.addEventListener("change", 
   localStorage.setItem(getTutorialCompletedKey(), "1");
   sessionStorage.removeItem(getTutorialForceReplayKey());
   window.tutorialController?.closeAndComplete?.();
+  const dailyBtn = document.getElementById("home-daily-btn");
+  if (dailyBtn) {
+    dailyBtn.disabled = false;
+    dailyBtn.setAttribute("aria-disabled", "false");
+  }
   setSettingsModalStatus("Tutorial disabled.");
 });
 
@@ -1238,7 +1260,11 @@ document.getElementById("exit-btn")?.addEventListener("click", () => {
   setHeaderMenuOpen(false);
   window.skipAutoSnapshot = true;
   clearGameStateSnapshot();
-  window.location.href = "index.html?v=20260405d";
+  if (typeof window.appShellNavigate === "function") {
+    window.appShellNavigate("home");
+  } else {
+    window.location.href = "index.html?v=20260405d";
+  }
 });
 
 function handleNudgeControlPress(direction) {

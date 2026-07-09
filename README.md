@@ -6,6 +6,12 @@ Mobile-first browser card game (higher/lower) with deck progression, powers, che
 - Serve repo root with a static server.
 - Open `index.html`.
 
+## Live / Deploy
+- Current public version: `https://byronicman.com/52/`.
+- Target deployment URL: `https://onelifeleft.com/52/`.
+- Deploy command: `npm run deploy`.
+- The deploy script syncs this static site to `/home/onelifeleft/onelifeleft.comejversion/52` using the same DreamHost account/key pattern as OLL Chuckie. Override with `FIFTYTWO_DEPLOY_USER`, `FIFTYTWO_DEPLOY_HOST`, `FIFTYTWO_DEPLOY_PATH`, or `FIFTYTWO_DEPLOY_KEY` if needed.
+
 ## Core Pages
 - `index.html` - menu/hub
 - `game.html` - gameplay

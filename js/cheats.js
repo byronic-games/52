@@ -2689,6 +2689,10 @@ function offerCheatChoice(reason = "") {
     state.pendingCheatOptions = getRandomCheatOptions(optionCount);
   }
 
+  if (typeof recordItemsOffered === "function") {
+    recordItemsOffered("cheat", state.pendingCheatOptions);
+  }
+
   state.cheatChoiceLockedUntil = Date.now() + CHEAT_CHOICE_LOCK_MS;
   state.cheatChoiceIntroToken = (state.cheatChoiceIntroToken || 0) + 1;
   state.cheatChoicePreviewIndex = -1;
@@ -2835,6 +2839,10 @@ function pickCheatFromChoice(index, options = {}) {
     legendaryCheatOfferArmed: !!state.legendaryCheatOfferArmed,
     message: state.message,
   });
+
+  if (typeof recordItemUsageStat === "function") {
+    recordItemUsageStat("cheat", cheat.id, "picked");
+  }
 
   state.pendingCheatOptions = [];
   state.justUnlockedCheatIds = [];

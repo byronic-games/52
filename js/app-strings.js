@@ -1,0 +1,36 @@
+const APP_STRINGS = Object.freeze({
+  appTitle: "52!",
+  nav: {
+    home: "Home",
+    play: "Play",
+    daily: "Daily",
+    collection: "Collection",
+    shop: "Shop",
+    profile: "Profile",
+    settings: "Settings",
+    deckState: "Deck State",
+    help: "Help",
+  },
+  home: {
+    play: "Play",
+    daily: "Daily",
+    collection: "Collection",
+  },
+  daily: {
+    title: "Daily",
+    play: "Play",
+    resume: "Resume",
+    complete: "Complete",
+    locked: "Locked",
+    normal: "Normal",
+    hard: "Hard",
+  },
+  collection: {
+    found: "Found",
+    locked: "Locked",
+    all: "All",
+    cheats: "Cheats",
+    powers: "Powers",
+    jokers: "Jokers",
+  },
+});
