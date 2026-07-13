@@ -171,7 +171,7 @@ function closeSettings() {
     window.history.back();
     return;
   }
-  window.location.href = "game.html";
+  window.location.href = "index.html?view=play";
 }
 
 function replayTutorialFromSettings() {

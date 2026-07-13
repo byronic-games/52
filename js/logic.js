@@ -363,6 +363,7 @@ function clearVictoryEffects(options = {}) {
 }
 
 function spawnVictoryConfetti() {
+  if (typeof shouldUseReducedEffects === "function" && shouldUseReducedEffects()) return;
   const confettiEl = document.getElementById("victory-confetti");
   if (!confettiEl) return;
 
@@ -434,6 +435,7 @@ function triggerVictoryEffect(titleText = "CONGRATULATIONS!") {
 
   clearGameOverEffects();
   clearVictoryEffects();
+  if (typeof triggerInteractionFeedback === "function") triggerInteractionFeedback("victory");
   state.victoryMessageActive = true;
   state.victoryMessageJustReleased = true;
   state.message = titleText;
@@ -469,6 +471,7 @@ function triggerGameOverEffect(detailText = "") {
   if (!gameEl) return;
 
   clearGameOverEffects();
+  if (typeof triggerInteractionFeedback === "function") triggerInteractionFeedback("wrong");
   state.gameOverMessageReady = false;
   state.gameOverMessageJustReleased = false;
   void gameEl.offsetWidth;
@@ -484,7 +487,7 @@ function triggerGameOverEffect(detailText = "") {
     if (!state.saveScumPendingContinue && typeof scheduleExperienceBankingAfterGameOver === "function") {
       scheduleExperienceBankingAfterGameOver();
     }
-  }, GAME_OVER_MESSAGE_REVEAL_DELAY_MS);
+  }, typeof shouldUseReducedEffects === "function" && shouldUseReducedEffects() ? 1 : GAME_OVER_MESSAGE_REVEAL_DELAY_MS);
 }
 
 function flashGameShell(effect) {
@@ -537,7 +540,7 @@ function setCurrentCardFeedback(effect) {
     state.currentCardFeedback = "";
     currentCardFeedbackTimer = null;
     render();
-  }, 520);
+  }, typeof shouldUseReducedEffects === "function" && shouldUseReducedEffects() ? 1 : 520);
 }
 
 function setCurrentCardNudgeAnimation(direction, fromValue, toValue) {
@@ -869,6 +872,10 @@ function resolvePendingRewardQueues() {
     return offerRewardPowerChoice(nextReason);
   }
   return false;
+}
+
+function getRewardChoiceDelay() {
+  return 250;
 }
 
 function previewPendingRunBehindPowerChoice(deck, runMode = "standard", deckKey = "blue", levelNumber = DEFAULT_LEVEL_NUMBER) {
@@ -2569,6 +2576,7 @@ function useNudgeCharge(direction) {
     nudgeDownCharges: state.nudgeDownCharges || 0,
     message: state.message,
   });
+  if (typeof triggerInteractionFeedback === "function") triggerInteractionFeedback("nudge");
   render();
 }
 
@@ -3271,7 +3279,7 @@ function makeGuess(type) {
         state.pauseForCheat = false;
         offerCheatChoice("streak");
         render();
-      }, 1000);
+      }, getRewardChoiceDelay());
       return;
     }
 
@@ -4018,7 +4026,7 @@ function makeGuess(type) {
       const nextReason = state.pendingPowerAwardQueue.shift() || "blank_space";
       offerRewardPowerChoice(nextReason);
       render();
-    }, 1000);
+    }, getRewardChoiceDelay());
     return;
   }
 
@@ -4035,7 +4043,7 @@ function makeGuess(type) {
       const nextReason = state.pendingPowerAwardQueue.shift() || "find_the_lady";
       offerRewardPowerChoice(nextReason);
       render();
-    }, 1000);
+    }, getRewardChoiceDelay());
     return;
   }
 
@@ -4052,7 +4060,7 @@ function makeGuess(type) {
       state.pauseForCheat = false;
       offerCheatChoice();
       render();
-    }, 1000);
+    }, getRewardChoiceDelay());
     return;
   }
 
@@ -4065,7 +4073,7 @@ function makeGuess(type) {
       const nextReason = state.pendingCheatAwardQueue.shift() || "wl";
       offerCheatChoice(nextReason);
       render();
-    }, 1000);
+    }, getRewardChoiceDelay());
     return;
   }
 
@@ -4078,7 +4086,7 @@ function makeGuess(type) {
       const nextReason = state.pendingPowerAwardQueue.shift() || "higher_higher_higher";
       offerRewardPowerChoice(nextReason);
       render();
-    }, 1000);
+    }, getRewardChoiceDelay());
     return;
   }
 
@@ -4091,7 +4099,7 @@ function makeGuess(type) {
       const nextReason = state.pendingPowerAwardQueue.shift() || "catch_22";
       offerRewardPowerChoice(nextReason);
       render();
-    }, 1000);
+    }, getRewardChoiceDelay());
     return;
   }
 
@@ -4108,7 +4116,7 @@ function makeGuess(type) {
       const nextReason = state.pendingPowerAwardQueue.shift() || "blackjack";
       offerRewardPowerChoice(nextReason);
       render();
-    }, 1000);
+    }, getRewardChoiceDelay());
     return;
   }
 
@@ -4121,7 +4129,7 @@ function makeGuess(type) {
       const nextReason = state.pendingPowerAwardQueue.shift() || "psycho";
       offerRewardPowerChoice(nextReason);
       render();
-    }, 1000);
+    }, getRewardChoiceDelay());
     return;
   }
 
@@ -4138,7 +4146,7 @@ function makeGuess(type) {
       const nextReason = state.pendingCheatAwardQueue.shift() || "diamond_geezer";
       offerCheatChoice(nextReason);
       render();
-    }, 1000);
+    }, getRewardChoiceDelay());
     return;
   }
 
@@ -4161,7 +4169,7 @@ function makeGuess(type) {
       const nextReason = state.pendingCheatAwardQueue.shift() || "equals_11";
       offerCheatChoice(nextReason);
       render();
-    }, 1000);
+    }, getRewardChoiceDelay());
     return;
   }
 
@@ -4212,7 +4220,7 @@ function makeGuess(type) {
       state.pauseForCheat = false;
       offerCheatChoice("streak");
       render();
-    }, 1000);
+    }, getRewardChoiceDelay());
     return;
   }
 
@@ -4225,7 +4233,7 @@ function makeGuess(type) {
       const nextReason = state.pendingPowerAwardQueue.shift() || "brucie_bonus";
       offerRewardPowerChoice(nextReason);
       render();
-    }, 1000);
+    }, getRewardChoiceDelay());
     return;
   }
 
@@ -4238,7 +4246,7 @@ function makeGuess(type) {
       const nextReason = state.pendingCheatAwardQueue.shift() || "cheat_a_cheater";
       offerCheatChoice(nextReason);
       render();
-    }, 1000);
+    }, getRewardChoiceDelay());
     return;
   }
 
@@ -4251,7 +4259,7 @@ function makeGuess(type) {
       const nextReason = state.pendingCheatAwardQueue.shift() || "new_suits";
       offerCheatChoice(nextReason);
       render();
-    }, 1000);
+    }, getRewardChoiceDelay());
     return;
   }
 

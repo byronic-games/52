@@ -164,6 +164,7 @@ function restoreGameStateFromUrlIfNeeded() {
 
 runSelfTests();
 applyDebugActionsFromUrl();
+applyEffectsPreference();
 const restoredFromSnapshot = restoreGameStateFromUrlIfNeeded();
 if (!restoredFromSnapshot) {
   applyDeckLevelSelectionFromUrl();

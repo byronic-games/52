@@ -2257,6 +2257,15 @@ body.choice-modal-open #controls,
   text-transform: uppercase;
   letter-spacing: 0.02em;
   box-shadow: 0 10px 22px rgba(0,0,0,0.3);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 90ms ease-out, filter 90ms ease-out, box-shadow 90ms ease-out;
+}
+
+#higher-btn:active:not(:disabled),
+#lower-btn:active:not(:disabled) {
+  transform: translateY(2px) scale(0.975);
+  filter: brightness(1.1);
 }
 
 #higher-btn {
@@ -2269,6 +2278,27 @@ body.choice-modal-open #controls,
   background: linear-gradient(180deg, #ef426f, #d52a58);
   color: #fff4f7;
   box-shadow: 0 0 22px rgba(239,66,111,0.28), 0 10px 22px rgba(0,0,0,0.24);
+}
+
+body[data-fast-reveal="true"] #face-down-deck.reveal-flip-out,
+body[data-fast-reveal="true"] #reveal-overlay.reveal-flip-out,
+body[data-fast-reveal="true"] #face-down-deck.reveal-flip-in,
+body[data-fast-reveal="true"] #reveal-overlay.reveal-flip-in {
+  animation-duration: 105ms;
+}
+
+body[data-fast-reveal="true"] #face-down-deck.reveal-slide-over,
+body[data-fast-reveal="true"] #reveal-overlay.reveal-slide-over {
+  animation-duration: 170ms;
+}
+
+body[data-effects="reduced"] *,
+body[data-effects="reduced"] *::before,
+body[data-effects="reduced"] *::after {
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important;
+  scroll-behavior: auto !important;
 }
 
 #higher-btn:disabled,
@@ -3062,7 +3092,7 @@ body.choice-modal-open #controls,
 #game-log-modal:not(.hidden):not(.is-closing) .help-dialog,
 #game-settings-modal:not(.hidden):not(.is-closing) .help-dialog {
   transform-origin: center center;
-  animation: choice-modal-pop 432ms linear both;
+  animation: choice-modal-pop 210ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 #cheat-choice-container:not(.hidden):not(.is-closing):not(.is-flying) .choice-backdrop,
@@ -3553,8 +3583,8 @@ body.choice-modal-open #controls,
 }
 
 .choice-card.choice-intro {
-  animation: choice-card-pop 387ms linear both;
-  animation-delay: calc(81ms + (var(--choice-index, 0) * 50ms));
+  animation: choice-card-pop 210ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(30ms + (var(--choice-index, 0) * 30ms));
 }
 
 @keyframes choice-card-pop {

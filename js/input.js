@@ -53,6 +53,10 @@ function handleGuessButtonPress(type) {
     gameOver: !!state.gameOver,
   };
 
+  if (state.pendingRevealAnimation || after.index !== before.index || (after.gameOver && !before.gameOver)) {
+    triggerInteractionFeedback("guess");
+  }
+
   if (typeof window.handleTutorialGuessResolved === "function") {
     window.handleTutorialGuessResolved(type, before, after);
   }
@@ -159,9 +163,9 @@ function createTutorialController() {
       placement: "upper",
     },
     {
-      target: "#header-power-chip",
+      target: "#top-crowns",
       title: "Powers",
-      copy: "Your shield shows your starting Power. Hold Powers for details. Extra Power choices can appear during a run.",
+      copy: "Your shield in the top bar shows your starting Power. Hold Powers for details. Extra Power choices can appear during a run.",
       clearView: true,
       placement: "lower",
     },
@@ -173,7 +177,7 @@ function createTutorialController() {
       placement: "lower",
     },
     {
-      target: "#menu-btn",
+      target: "#top-menu-btn",
       title: "More Modes",
       copy: "From the main menu you will unlock Green Energy runs, Yellow Joker runs, Orange hybrid runs, Daily challenges, the Collection, Profiles, Heroes, and the final Black Deck.",
       clearView: true,
@@ -954,6 +958,10 @@ function applyVisualTheme(theme) {
 }
 
 function refreshSettingsModalState() {
+  const soundToggle = document.getElementById("settings-sound-toggle");
+  const hapticsToggle = document.getElementById("settings-haptics-toggle");
+  const fastRevealToggle = document.getElementById("settings-fast-reveal-toggle");
+  const effectsSelect = document.getElementById("settings-effects-select");
   const tutorialToggle = document.getElementById("settings-tutorial-toggle");
   const visualsSelect = document.getElementById("settings-visuals-select");
   const buttonOrderSelect = document.getElementById("settings-button-order-select");
@@ -964,6 +972,10 @@ function refreshSettingsModalState() {
   const downloadLogBtn = document.getElementById("settings-download-log-btn");
   const hasLog = getLatestRunLogEntriesForModal().length > 0;
 
+  if (soundToggle) soundToggle.checked = loadSoundEnabled();
+  if (hapticsToggle) hapticsToggle.checked = loadHapticsEnabled();
+  if (fastRevealToggle) fastRevealToggle.checked = loadFastRevealEnabled();
+  if (effectsSelect) effectsSelect.value = loadEffectsPreference();
   if (tutorialToggle) {
     tutorialToggle.checked = isTutorialToggleOn();
   }
@@ -1188,6 +1200,29 @@ document.getElementById("settings-close-icon-btn")?.addEventListener("click", cl
 document.getElementById("settings-close-backdrop")?.addEventListener("click", closeSettingsModal);
 document.getElementById("settings-download-log-btn")?.addEventListener("click", downloadLatestRunLogFromModal);
 document.getElementById("settings-share-log-btn")?.addEventListener("click", shareLatestRunLogFromModal);
+
+document.getElementById("settings-sound-toggle")?.addEventListener("change", (event) => {
+  saveSoundEnabled(!!event.target.checked);
+  setSettingsModalStatus(event.target.checked ? "Sound enabled." : "Sound disabled.");
+});
+
+document.getElementById("settings-haptics-toggle")?.addEventListener("change", (event) => {
+  saveHapticsEnabled(!!event.target.checked);
+  setSettingsModalStatus(event.target.checked ? "Haptics enabled." : "Haptics disabled.");
+});
+
+document.getElementById("settings-fast-reveal-toggle")?.addEventListener("change", (event) => {
+  saveFastRevealEnabled(!!event.target.checked);
+  applyEffectsPreference();
+  setSettingsModalStatus(event.target.checked ? "Fast reveal enabled." : "Standard reveal enabled.");
+});
+
+document.getElementById("settings-effects-select")?.addEventListener("change", (event) => {
+  saveEffectsPreference(event.target.value);
+  applyEffectsPreference();
+  render();
+  setSettingsModalStatus(event.target.value === "reduced" ? "Reduced effects enabled." : "Full effects enabled.");
+});
 
 document.getElementById("settings-visuals-select")?.addEventListener("change", (event) => {
   const theme = event.target.value === "new" ? "new" : "neon";

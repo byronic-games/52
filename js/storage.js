@@ -347,6 +347,47 @@ function saveVisualTheme(theme) {
   localStorage.setItem(VISUAL_THEME_KEY, "new");
 }
 
+function loadSoundEnabled() {
+  return localStorage.getItem(SOUND_ENABLED_KEY) !== "0";
+}
+
+function saveSoundEnabled(enabled) {
+  if (enabled) localStorage.removeItem(SOUND_ENABLED_KEY);
+  else localStorage.setItem(SOUND_ENABLED_KEY, "0");
+  return !!enabled;
+}
+
+function loadHapticsEnabled() {
+  return localStorage.getItem(HAPTICS_ENABLED_KEY) !== "0";
+}
+
+function saveHapticsEnabled(enabled) {
+  if (enabled) localStorage.removeItem(HAPTICS_ENABLED_KEY);
+  else localStorage.setItem(HAPTICS_ENABLED_KEY, "0");
+  return !!enabled;
+}
+
+function loadFastRevealEnabled() {
+  return localStorage.getItem(FAST_REVEAL_ENABLED_KEY) === "1";
+}
+
+function saveFastRevealEnabled(enabled) {
+  if (enabled) localStorage.setItem(FAST_REVEAL_ENABLED_KEY, "1");
+  else localStorage.removeItem(FAST_REVEAL_ENABLED_KEY);
+  return !!enabled;
+}
+
+function loadEffectsPreference() {
+  return localStorage.getItem(EFFECTS_PREFERENCE_KEY) === "reduced" ? "reduced" : "full";
+}
+
+function saveEffectsPreference(preference) {
+  const normalized = preference === "reduced" ? "reduced" : "full";
+  if (normalized === "reduced") localStorage.setItem(EFFECTS_PREFERENCE_KEY, normalized);
+  else localStorage.removeItem(EFFECTS_PREFERENCE_KEY);
+  return normalized;
+}
+
 function loadUnlockDecks() {
   return localStorage.getItem(UNLOCK_DECKS_KEY) === "1" || loadUnlockAll();
 }

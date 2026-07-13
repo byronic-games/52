@@ -1,5 +1,5 @@
 (function () {
-  const ASSET_VERSION = "20260709bk";
+  const ASSET_VERSION = "20260713f";
   const VIEW_TITLES = {
     home: APP_STRINGS.nav.home,
     setup: APP_STRINGS.nav.play,
@@ -29,7 +29,6 @@
   `;
   const DAILY_WEEKDAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
   const DAILY_MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const SHELL_SOUND_ENABLED_KEY = "oll_52_sound_enabled_v1";
 
   const app = {
     view: "home",
@@ -67,10 +66,12 @@
   const xpEl = document.getElementById("top-experience-value");
   const menuBtn = document.getElementById("top-menu-btn");
   const shellMenu = document.getElementById("shell-menu");
+  const shellMenuBackdrop = document.getElementById("shell-menu-backdrop");
   const modal = document.getElementById("shell-modal");
   const modalTitle = document.getElementById("shell-modal-title");
   const modalBody = document.getElementById("shell-modal-body");
   const views = new Map(Array.from(document.querySelectorAll(".app-view")).map((el) => [el.dataset.view, el]));
+  let overlayReturnFocus = null;
 
   function getTodayKey() {
     return typeof getCurrentDailyDateKey === "function" ? getCurrentDailyDateKey() : new Date().toISOString().slice(0, 10);
@@ -263,8 +264,8 @@
       await renderViewContents("home", options);
       if (routeToken !== app.routeToken) return;
       activateView("home");
-      if (view === "deck") openOverlay("profile", { tab: "deck" });
-      else openOverlay(view, options);
+      if (view === "deck") openOverlay("profile", { tab: "deck" }, { useHistory: false });
+      else openOverlay(view, options, { useHistory: false });
       app.routeReady = true;
       if (shouldTransition) {
         await waitForFrame();
@@ -272,7 +273,7 @@
       }
       return;
     }
-    closeOverlay(false);
+    closeOverlay(false, { useHistory: false });
     await renderViewContents(view, options);
     if (routeToken !== app.routeToken) return;
     activateView(view);
@@ -1013,6 +1014,8 @@
     if (!shellMenu) return;
     shellMenu.classList.remove("hidden");
     shellMenu.setAttribute("aria-hidden", "false");
+    shellMenuBackdrop?.classList.add("is-visible");
+    shellMenuBackdrop?.setAttribute("aria-hidden", "false");
     menuBtn?.setAttribute("aria-expanded", "true");
   }
 
@@ -1020,6 +1023,8 @@
     if (!shellMenu) return;
     shellMenu.classList.add("hidden");
     shellMenu.setAttribute("aria-hidden", "true");
+    shellMenuBackdrop?.classList.remove("is-visible");
+    shellMenuBackdrop?.setAttribute("aria-hidden", "true");
     menuBtn?.setAttribute("aria-expanded", "false");
   }
 
@@ -1035,19 +1040,48 @@
     return VIEW_TITLES[type] || APP_STRINGS.appTitle;
   }
 
-  function openOverlay(type, options = {}) {
+  function hasOverlayHistoryEntry() {
+    return !!history.state?.overlay;
+  }
+
+  function pushOverlayHistory(type) {
+    if (hasOverlayHistoryEntry()) return;
+    const route = routeFromLocation();
+    history.pushState({ view: route.view, options: route.options, overlay: type }, "", window.location.href);
+  }
+
+  function discardOverlayHistoryEntry() {
+    if (!hasOverlayHistoryEntry()) return;
+    const route = routeFromLocation();
+    history.replaceState({ view: route.view, options: route.options }, "", window.location.href);
+  }
+
+  function focusOverlay() {
+    const preferredTarget = modal?.querySelector("#confirm-exit-cancel") || document.getElementById("shell-modal-close");
+    preferredTarget?.focus?.({ preventScroll: true });
+  }
+
+  function openOverlay(type, options = {}, { useHistory = true } = {}) {
     if (!modal || !modalBody) return;
+    const activeElement = document.activeElement;
+    overlayReturnFocus = shellMenu?.contains(activeElement) ? menuBtn : activeElement;
     closeShellMenu();
+    if (useHistory) pushOverlayHistory(type);
     modal.dataset.overlay = type;
     if (modalTitle) modalTitle.textContent = overlayTitle(type);
     renderOverlay(type, options);
     modal.classList.remove("hidden", "is-closing");
     modal.setAttribute("aria-hidden", "false");
     document.body.classList.add("shell-modal-open");
+    window.requestAnimationFrame(focusOverlay);
   }
 
-  function closeOverlay(animated = true) {
+  function closeOverlay(animated = true, { useHistory = true } = {}) {
     if (!modal || modal.classList.contains("hidden")) return;
+    if (useHistory && hasOverlayHistoryEntry()) {
+      history.back();
+      return;
+    }
     stopSettingsResetHold();
     stopDeckCardResetHold();
     resetSettingsResetHoldVisuals();
@@ -1058,6 +1092,9 @@
       modal.setAttribute("aria-hidden", "true");
       document.body.classList.remove("shell-modal-open");
       if (modalBody) modalBody.innerHTML = "";
+      const returnTarget = overlayReturnFocus;
+      overlayReturnFocus = null;
+      if (returnTarget?.isConnected) returnTarget.focus?.({ preventScroll: true });
     };
     if (!animated) {
       finish();
@@ -1423,15 +1460,6 @@
     if (status) status.textContent = message;
   }
 
-  function loadShellSoundEnabled() {
-    return localStorage.getItem(SHELL_SOUND_ENABLED_KEY) !== "0";
-  }
-
-  function saveShellSoundEnabled(enabled) {
-    if (enabled) localStorage.removeItem(SHELL_SOUND_ENABLED_KEY);
-    else localStorage.setItem(SHELL_SOUND_ENABLED_KEY, "0");
-  }
-
   function renderGameIfLoaded() {
     if (typeof render === "function") render();
   }
@@ -1663,7 +1691,10 @@
     host.innerHTML = `
       <div class="shell-settings-form">
         <div class="shell-settings-rows">
-          <label class="shell-settings-row" for="shell-settings-sound"><span>Sound</span><input class="shell-toggle-input" id="shell-settings-sound" type="checkbox" ${loadShellSoundEnabled() ? "checked" : ""}><span class="shell-toggle" aria-hidden="true"></span></label>
+          <label class="shell-settings-row" for="shell-settings-sound"><span>Sound</span><input class="shell-toggle-input" id="shell-settings-sound" type="checkbox" ${loadSoundEnabled() ? "checked" : ""}><span class="shell-toggle" aria-hidden="true"></span></label>
+          <label class="shell-settings-row" for="shell-settings-haptics"><span>Haptics</span><input class="shell-toggle-input" id="shell-settings-haptics" type="checkbox" ${loadHapticsEnabled() ? "checked" : ""}><span class="shell-toggle" aria-hidden="true"></span></label>
+          <label class="shell-settings-row" for="shell-settings-fast-reveal"><span>Fast Reveal</span><input class="shell-toggle-input" id="shell-settings-fast-reveal" type="checkbox" ${loadFastRevealEnabled() ? "checked" : ""}><span class="shell-toggle" aria-hidden="true"></span></label>
+          <label class="shell-settings-row" for="shell-settings-reduced-effects"><span>Reduced Effects</span><input class="shell-toggle-input" id="shell-settings-reduced-effects" type="checkbox" ${loadEffectsPreference() === "reduced" ? "checked" : ""}><span class="shell-toggle" aria-hidden="true"></span></label>
           <label class="shell-settings-row" for="shell-settings-tutorial"><span>Tutorial</span><input class="shell-toggle-input" id="shell-settings-tutorial" type="checkbox" ${isTutorialToggleOn() ? "checked" : ""}><span class="shell-toggle" aria-hidden="true"></span></label>
           <label class="shell-settings-row" for="shell-settings-buttons"><span>Flip Buttons</span><input class="shell-toggle-input" id="shell-settings-buttons" type="checkbox" ${loadGuessButtonOrder() === "higher-lower" ? "checked" : ""}><span class="shell-toggle" aria-hidden="true"></span></label>
           <label class="shell-settings-row" for="shell-settings-nudges"><span>Flip Nudges</span><input class="shell-toggle-input" id="shell-settings-nudges" type="checkbox" ${loadNudgeButtonOrder() === "up-down" ? "checked" : ""}><span class="shell-toggle" aria-hidden="true"></span></label>
@@ -1680,8 +1711,23 @@
     const buttonOrder = document.getElementById("shell-settings-buttons");
     const nudgeOrder = document.getElementById("shell-settings-nudges");
     document.getElementById("shell-settings-sound")?.addEventListener("change", (event) => {
-      saveShellSoundEnabled(!!event.target.checked);
+      saveSoundEnabled(!!event.target.checked);
       setSettingsStatus(event.target.checked ? "Sound enabled." : "Sound disabled.");
+    });
+    document.getElementById("shell-settings-haptics")?.addEventListener("change", (event) => {
+      saveHapticsEnabled(!!event.target.checked);
+      setSettingsStatus(event.target.checked ? "Haptics enabled." : "Haptics disabled.");
+    });
+    document.getElementById("shell-settings-fast-reveal")?.addEventListener("change", (event) => {
+      saveFastRevealEnabled(!!event.target.checked);
+      if (typeof applyEffectsPreference === "function") applyEffectsPreference();
+      setSettingsStatus(event.target.checked ? "Fast reveal enabled." : "Standard reveal enabled.");
+    });
+    document.getElementById("shell-settings-reduced-effects")?.addEventListener("change", (event) => {
+      saveEffectsPreference(event.target.checked ? "reduced" : "full");
+      if (typeof applyEffectsPreference === "function") applyEffectsPreference();
+      renderGameIfLoaded();
+      setSettingsStatus(event.target.checked ? "Reduced effects enabled." : "Full effects enabled.");
     });
     document.getElementById("shell-settings-tutorial")?.addEventListener("change", (event) => {
       if (event.target.checked) {
@@ -1786,7 +1832,8 @@
 
   function exitRunToHome() {
     closeShellMenu();
-    closeOverlay(false);
+    discardOverlayHistoryEntry();
+    closeOverlay(false, { useHistory: false });
     window.skipAutoSnapshot = true;
     if (typeof clearGameStateSnapshot === "function") clearGameStateSnapshot();
     navigate("home");
@@ -1799,7 +1846,8 @@
       openOverlay("confirm-exit");
       return;
     }
-    closeOverlay(false);
+    discardOverlayHistoryEntry();
+    closeOverlay(false, { useHistory: false });
     navigate("home");
   }
 
@@ -1826,12 +1874,31 @@
   document.getElementById("menu-scores-btn")?.addEventListener("click", () => openOverlay("scores"));
   document.getElementById("menu-settings-btn")?.addEventListener("click", () => openOverlay("settings"));
   document.getElementById("menu-exit-btn")?.addEventListener("click", requestRunExit);
+  shellMenuBackdrop?.addEventListener("click", closeShellMenu);
   document.getElementById("shell-modal-backdrop")?.addEventListener("click", () => closeOverlay());
   document.getElementById("shell-modal-close")?.addEventListener("click", () => closeOverlay());
   document.addEventListener("click", (event) => {
     if (!event.target.closest(".app-menu-wrap")) closeShellMenu();
   });
   document.addEventListener("keydown", (event) => {
+    if (event.key === "Tab" && modal && !modal.classList.contains("hidden")) {
+      const focusable = Array.from(modal.querySelectorAll("button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])"))
+        .filter((el) => el.getClientRects().length > 0);
+      if (focusable.length) {
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+          return;
+        }
+        if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+          return;
+        }
+      }
+    }
     const target = event.target;
     const isTyping = target?.matches?.("input, textarea, select, [contenteditable='true']");
     if (!isTyping && event.shiftKey) {
@@ -1857,6 +1924,11 @@
     closeOverlay();
   });
   window.addEventListener("popstate", () => {
+    if (hasOverlayHistoryEntry()) {
+      openOverlay(history.state.overlay, {}, { useHistory: false });
+      return;
+    }
+    closeOverlay(false, { useHistory: false });
     const route = routeFromLocation();
     renderRoute(route.view, route.options);
   });

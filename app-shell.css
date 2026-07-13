@@ -61,7 +61,7 @@ button {
   gap: 6px;
   background: #18151b;
   border-bottom: 2px solid #2d2932;
-  z-index: 20;
+  z-index: 60;
 }
 
 .app-mark {
@@ -297,6 +297,36 @@ button {
   display: block;
   line-height: 1;
   transform: translateY(-1px);
+  transition: transform 180ms ease-out, opacity 120ms ease-out;
+}
+
+.icon-btn[aria-expanded="true"] .hamburger-glyph {
+  font-size: 0;
+  position: relative;
+  width: 18px;
+  height: 18px;
+  transform: none;
+}
+
+.icon-btn[aria-expanded="true"] .hamburger-glyph::before,
+.icon-btn[aria-expanded="true"] .hamburger-glyph::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  transform-origin: center;
+}
+
+.icon-btn[aria-expanded="true"] .hamburger-glyph::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.icon-btn[aria-expanded="true"] .hamburger-glyph::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
 }
 
 .icon-btn:disabled {
@@ -324,6 +354,42 @@ button {
   display: grid;
   gap: 6px;
   z-index: 60;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-8px) scale(0.98);
+  transform-origin: top right;
+  transition: opacity 180ms ease-out, transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s linear 180ms;
+}
+
+.shell-menu:not(.hidden) {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+  transition-delay: 0s;
+}
+
+.shell-menu.hidden {
+  display: grid !important;
+}
+
+.shell-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  background: rgba(5, 4, 10, 0.18);
+  transition: opacity 180ms ease-out, visibility 0s linear 180ms;
+}
+
+.shell-menu-backdrop.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
 }
 
 .shell-menu-action {
@@ -1697,11 +1763,11 @@ button.board-row {
 
 .shell-modal:not(.hidden):not(.is-closing) .shell-dialog {
   transform-origin: center center;
-  animation: choice-modal-pop 432ms linear both;
+  animation: shell-modal-enter 210ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .shell-modal:not(.hidden):not(.is-closing) .shell-modal-backdrop {
-  animation: choice-backdrop-pop 234ms ease-out both;
+  animation: shell-backdrop-enter 160ms ease-out both;
 }
 
 .shell-modal.is-closing {
@@ -2025,6 +2091,22 @@ button.board-row {
     opacity: 0;
     transform: scale(0.86);
   }
+}
+
+@keyframes shell-modal-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes shell-backdrop-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes shell-backdrop-close {

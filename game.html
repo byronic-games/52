@@ -9,13 +9,22 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="52!">
   <title>52! - Higher / Lower</title>
+  <script>
+    // game.html is an internal fragment loaded by the app shell. Send direct visits
+    // through the shell so players only ever use the shell navigation.
+    if (!window.appShellNavigate) {
+      const params = new URLSearchParams(window.location.search);
+      params.set("view", "play");
+      window.location.replace(`index.html?${params.toString()}`);
+    }
+  </script>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="images/icons/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Space+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260709q">
+  <link rel="stylesheet" href="styles.css?v=20260713e">
 </head>
 <body class="game-page">
   <div id="orientation-overlay" aria-hidden="true">
@@ -45,21 +54,6 @@
               <div class="header-metric-label">Energy</div>
               <div id="energy-value" class="header-metric-value">0</div>
             </div>
-          </div>
-        </div>
-
-        <div class="header-menu-wrap">
-          <div id="header-experience" class="header-experience" aria-label="Experience">
-            <span id="experience-value">0</span>
-          </div>
-          <button id="menu-btn" class="icon-button menu-button" type="button" aria-label="Open menu" aria-expanded="false">
-            <span class="menu-icon" aria-hidden="true">&#9776;</span>
-          </button>
-          <div id="header-menu" class="header-menu hidden" aria-hidden="true">
-            <button id="howto-open-btn" class="header-menu-action" type="button">How To Play</button>
-            <a class="header-menu-action" href="heroes.html?v=20260419a">High Scores</a>
-            <button id="settings-menu-btn" class="header-menu-action" type="button">Settings</button>
-            <button id="exit-btn" class="header-menu-action" type="button">Exit</button>
           </div>
         </div>
       </header>
@@ -204,6 +198,24 @@
               <input id="settings-sound-toggle" type="checkbox" checked>
             </label>
 
+            <label class="settings-row" for="settings-haptics-toggle">
+              <span>Haptics</span>
+              <input id="settings-haptics-toggle" type="checkbox" checked>
+            </label>
+
+            <label class="settings-row" for="settings-fast-reveal-toggle">
+              <span>Fast Reveal</span>
+              <input id="settings-fast-reveal-toggle" type="checkbox">
+            </label>
+
+            <label class="settings-row" for="settings-effects-select">
+              <span>Effects</span>
+              <select id="settings-effects-select">
+                <option value="full" selected>FULL</option>
+                <option value="reduced">REDUCED</option>
+              </select>
+            </label>
+
             <label class="settings-row" for="settings-tutorial-toggle">
               <span>Tutorial</span>
               <input id="settings-tutorial-toggle" type="checkbox">
@@ -346,20 +358,20 @@
   </div>
 
   <script src="js/fullscreen.js?v=20260709q"></script>
-  <script src="js/constants.js?v=20260709q"></script>
-  <script src="js/storage.js?v=20260709q"></script>
+  <script src="js/constants.js?v=20260713c"></script>
+  <script src="js/storage.js?v=20260713c"></script>
   <script src="js/cosmetics.js?v=20260709q"></script>
   <script src="js/state.js?v=20260709q"></script>
   <script src="js/powers.js?v=20260709q"></script>
-  <script src="js/cheats.js?v=20260709q"></script>
-  <script src="js/cheat-balance-overrides.js?v=20260709q"></script>
-  <script src="js/apply-cheat-balance-overrides.js?v=20260709q"></script>
+  <script src="js/cheats.js?v=20260713c"></script>
+  <script src="js/cheat-balance-overrides.js?v=20260713c"></script>
+  <script src="js/apply-cheat-balance-overrides.js?v=20260713c"></script>
   <script src="js/leaderboard.js?v=20260709q"></script>
   <script src="js/daily.js?v=20260709q"></script>
-  <script src="js/logic.js?v=20260709q"></script>
-  <script src="js/render.js?v=20260709q"></script>
-  <script src="js/input.js?v=20260709q"></script>
-  <script src="js/main.js?v=20260709q"></script>
+  <script src="js/logic.js?v=20260713f"></script>
+  <script src="js/render.js?v=20260713f"></script>
+  <script src="js/input.js?v=20260713f"></script>
+  <script src="js/main.js?v=20260713f"></script>
   <script src="js/pwa-update.js?v=20260709q"></script>
 </body>
 </html>

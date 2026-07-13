@@ -63,6 +63,10 @@ const CHEAT_UNLOCKS_KEY = "hl_prototype_cheat_unlocks";;
 const TUTORIAL_COMPLETED_KEY = "hl_prototype_tutorial_completed_v1";
 const TUTORIAL_FORCE_REPLAY_KEY = "hl_prototype_tutorial_force_replay_v1";
 const VISUAL_THEME_KEY = "hl_prototype_visual_theme";
+const SOUND_ENABLED_KEY = "oll_52_sound_enabled_v1";
+const HAPTICS_ENABLED_KEY = "hl_prototype_haptics_enabled_v1";
+const FAST_REVEAL_ENABLED_KEY = "hl_prototype_fast_reveal_enabled_v1";
+const EFFECTS_PREFERENCE_KEY = "hl_prototype_effects_preference_v1";
 
 const YELLOW_JOKERS = [
   {

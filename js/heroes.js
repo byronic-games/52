@@ -65,7 +65,7 @@ document.getElementById("heroes-back-btn")?.addEventListener("click", () => {
     return;
   }
 
-  window.location.href = "game.html";
+  window.location.href = "index.html?view=play";
 });
 
 renderHeroesBoard();

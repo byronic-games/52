@@ -23,6 +23,9 @@ let experienceBankingAnimationFrame = null;
 let experiencePreviewResetTimer = null;
 let suppressNextCheatEntryIntroId = "";
 let lastRenderedCheatCounts = new Map();
+let seenGridRenderedElement = null;
+let seenGridRenderedVisuals = "";
+let seenGridCells = new Map();
 let cheatChoiceConfirmIndex = -1;
 let cheatChoiceConfirmAfter = 0;
 let cheatUseLockedUntil = 0;
@@ -36,6 +39,10 @@ const REVEAL_FLIP_MS = 378;
 const REVEAL_HOLD_MS = 144;
 const REVEAL_SLIDE_MS = 360;
 const REVEAL_FAILURE_HOLD_MS = 162;
+const FAST_REVEAL_FLIP_MS = 210;
+const FAST_REVEAL_HOLD_MS = 48;
+const FAST_REVEAL_SLIDE_MS = 170;
+const FAST_REVEAL_FAILURE_HOLD_MS = 96;
 const EXPERIENCE_BANKING_BEAT_MS = 430;
 const EXPERIENCE_CARD_STAGGER_MS = 82;
 const EXPERIENCE_CARD_FLIGHT_MS = 560;
@@ -52,6 +59,93 @@ const POWER_SHIELD_SVG = `
     <path class="power-shield-fill" d="M50 121 C24 110 10 82 9 41 L9 18 C31 13 69 13 91 18 L91 41 C90 82 76 110 50 121 Z"></path>
   </svg>
 `;
+
+let feedbackAudioContext = null;
+
+function shouldUseReducedEffects() {
+  return loadEffectsPreference() === "reduced" || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
+}
+
+function applyEffectsPreference() {
+  document.body.dataset.effects = shouldUseReducedEffects() ? "reduced" : "full";
+  document.body.dataset.fastReveal = loadFastRevealEnabled() ? "true" : "false";
+}
+
+function getRevealTiming() {
+  if (shouldUseReducedEffects()) {
+    return { flip: 1, hold: 1, slide: 1, failureHold: 1 };
+  }
+  if (loadFastRevealEnabled()) {
+    return {
+      flip: FAST_REVEAL_FLIP_MS,
+      hold: FAST_REVEAL_HOLD_MS,
+      slide: FAST_REVEAL_SLIDE_MS,
+      failureHold: FAST_REVEAL_FAILURE_HOLD_MS,
+    };
+  }
+  return {
+    flip: REVEAL_FLIP_MS,
+    hold: REVEAL_HOLD_MS,
+    slide: REVEAL_SLIDE_MS,
+    failureHold: REVEAL_FAILURE_HOLD_MS,
+  };
+}
+
+function getFeedbackAudioContext() {
+  if (feedbackAudioContext) return feedbackAudioContext;
+  const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextCtor) return null;
+  try {
+    feedbackAudioContext = new AudioContextCtor();
+  } catch (_) {
+    return null;
+  }
+  return feedbackAudioContext;
+}
+
+function playFeedbackSound(kind) {
+  if (!loadSoundEnabled()) return;
+  const context = getFeedbackAudioContext();
+  if (!context) return;
+  if (context.state === "suspended") context.resume().catch(() => {});
+
+  const tones = {
+    guess: [[420, 0.045, "sine"]],
+    nudge: [[560, 0.055, "triangle"]],
+    correct: [[620, 0.06, "sine"], [820, 0.08, "sine", 0.055]],
+    wrong: [[170, 0.12, "sawtooth"]],
+    victory: [[523, 0.07, "sine"], [659, 0.07, "sine", 0.075], [784, 0.11, "sine", 0.15]],
+  };
+  const sequence = tones[kind] || [];
+  const startAt = context.currentTime;
+  sequence.forEach(([frequency, duration, type, delay = 0]) => {
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    const at = startAt + delay;
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(frequency, at);
+    gain.gain.setValueAtTime(0.0001, at);
+    gain.gain.exponentialRampToValueAtTime(0.045, at + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.0001, at + duration);
+    oscillator.connect(gain).connect(context.destination);
+    oscillator.start(at);
+    oscillator.stop(at + duration + 0.015);
+  });
+}
+
+function triggerInteractionFeedback(kind) {
+  playFeedbackSound(kind);
+  if (!loadHapticsEnabled() || typeof navigator.vibrate !== "function") return;
+  const patterns = {
+    guess: 8,
+    nudge: 10,
+    correct: [10, 28, 12],
+    wrong: [28, 32, 44],
+    victory: [12, 34, 12, 34, 24],
+  };
+  const pattern = patterns[kind];
+  if (pattern) navigator.vibrate(pattern);
+}
 
 function clearPendingRevealTimers() {
   if (revealAnimationResetTimer) {
@@ -268,6 +362,7 @@ function playPendingCardRevealAnimation() {
   const overlayEl = document.getElementById("reveal-overlay");
   if (!currentCardEl || !faceDownDeckEl || !overlayEl) return;
   const effectClass = getRevealEffectClass(pending.effectId);
+  const timing = getRevealTiming();
 
   if (pending.phase === "revealing") {
     if (pending.started) return;
@@ -279,7 +374,7 @@ function playPendingCardRevealAnimation() {
     removeRevealStateClasses(currentCardEl);
     removeRevealStateClasses(faceDownDeckEl);
     removeRevealStateClasses(overlayEl);
-    const halfFlipMs = Math.max(1, Math.floor(REVEAL_FLIP_MS / 2));
+    const halfFlipMs = Math.max(1, Math.floor(timing.flip / 2));
     const revealingOverlayEl = renderRevealOverlayCard(pending, false);
     if (!revealingOverlayEl) return;
     revealingOverlayEl.style.animation = "none";
@@ -310,7 +405,7 @@ function playPendingCardRevealAnimation() {
         state.pendingRevealAnimation.messageJustReleased = true;
         state.pendingRevealAnimation.started = false;
         render();
-      }, halfFlipMs + REVEAL_HOLD_MS);
+      }, halfFlipMs + timing.hold);
     }, halfFlipMs);
     return;
   }
@@ -335,7 +430,7 @@ function playPendingCardRevealAnimation() {
       revealAnimationResetTimer = null;
       if (!state.pendingRevealAnimation || state.pendingRevealAnimation.id !== pending.id) return;
       finalizePendingReveal(pending);
-    }, REVEAL_SLIDE_MS + 30);
+    }, timing.slide + 30);
     return;
   }
 
@@ -353,7 +448,7 @@ function playPendingCardRevealAnimation() {
     revealAnimationResetTimer = null;
     if (!state.pendingRevealAnimation || state.pendingRevealAnimation.id !== pending.id) return;
     finalizePendingReveal(pending);
-  }, REVEAL_FAILURE_HOLD_MS);
+  }, getRevealTiming().failureHold);
 }
 
 function getStoredExperienceValue() {
@@ -3841,10 +3936,37 @@ function renderSeenGrid() {
   if (!grid || !gridWrapEl) return;
 
   gridWrapEl.hidden = false;
-
-  grid.innerHTML = "";
   const foundCount = state.seenCardIds instanceof Set ? state.seenCardIds.size : 0;
   const gridCardIds = state.gridCardIds instanceof Set ? state.gridCardIds : state.seenCardIds;
+  const visuals = document.body.dataset.visuals || "new";
+
+  if (seenGridRenderedElement !== grid || seenGridRenderedVisuals !== visuals || seenGridCells.size !== 52) {
+    seenGridRenderedElement = grid;
+    seenGridRenderedVisuals = visuals;
+    seenGridCells = new Map();
+    grid.innerHTML = "";
+    const fragment = document.createDocumentFragment();
+
+    for (const suit of SUITS) {
+      for (const rank of RANKS) {
+        const card = {
+          id: getCardId(suit, rank.r),
+          suit,
+          rank: rank.r,
+          value: rank.v,
+        };
+        const cell = document.createElement("div");
+        cell.dataset.cardId = card.id;
+        cell.dataset.suit = suit;
+        cell.dataset.rank = rank.r;
+        cell.dataset.red = isRed(card) ? "true" : "false";
+        seenGridCells.set(card.id, cell);
+        fragment.appendChild(cell);
+      }
+    }
+
+    grid.appendChild(fragment);
+  }
 
   if (labelEl) {
     const deckSize = typeof getCurrentDeckTargetCount === "function" ? getCurrentDeckTargetCount() : 52;
@@ -3853,40 +3975,39 @@ function renderSeenGrid() {
 
   for (const suit of SUITS) {
     for (const rank of RANKS) {
-      const card = {
-        id: getCardId(suit, rank.r),
-        suit,
-        rank: rank.r,
-        value: rank.v,
-      };
       const cardId = getCardId(suit, rank.r);
+      const cell = seenGridCells.get(cardId);
+      if (!cell) continue;
+      const card = { id: cardId, suit, rank: rank.r, value: rank.v };
       const seen = gridCardIds.has(cardId);
       const isFresh = state.recentlySeenCardId === cardId;
       const isBanked = state.experienceBankedCardIds instanceof Set && state.experienceBankedCardIds.has(cardId);
-      const cell = document.createElement("div");
-      cell.className = `grid-cell ${seen ? "seen" : ""} ${isFresh ? "fresh" : ""} ${isBanked ? "xp-banked-source" : ""} ${isRed(card) ? "red" : "black"}`.trim();
-      cell.dataset.cardId = cardId;
+      const className = `grid-cell ${seen ? "seen" : ""} ${isFresh ? "fresh" : ""} ${isBanked ? "xp-banked-source" : ""} ${isRed(card) ? "red" : "black"}`.trim();
+      if (cell.className !== className) cell.className = className;
       cell.dataset.seen = seen ? "true" : "false";
       cell.setAttribute("aria-label", `${describeCard(card)} ${seen ? "found" : "not found"}`);
-      if (seen) {
-        if (document.body.dataset.visuals === "new") {
-          const rank = document.createElement("span");
-          rank.className = "memory-card-rank";
-          rank.innerText = card.rank;
-          const suit = document.createElement("span");
-          suit.className = "memory-card-suit";
-          suit.dataset.suit = card.suit;
-          suit.setAttribute("aria-hidden", "true");
-          cell.appendChild(rank);
-          cell.appendChild(suit);
-        } else {
-          const label = document.createElement("span");
-          label.className = "memory-card-label";
-          label.innerText = `${card.rank}${card.suit}`;
-          cell.appendChild(label);
-        }
+
+      if (!seen) {
+        if (cell.childElementCount) cell.replaceChildren();
+        continue;
       }
-      grid.appendChild(cell);
+
+      if (visuals === "new") {
+        if (cell.children.length === 2 && cell.children[0].textContent === rank.r && cell.children[1].dataset.suit === suit) continue;
+        const rankEl = document.createElement("span");
+        rankEl.className = "memory-card-rank";
+        rankEl.innerText = rank.r;
+        const suitEl = document.createElement("span");
+        suitEl.className = "memory-card-suit";
+        suitEl.dataset.suit = suit;
+        suitEl.setAttribute("aria-hidden", "true");
+        cell.replaceChildren(rankEl, suitEl);
+      } else if (cell.children.length !== 1 || cell.textContent !== `${rank.r}${suit}`) {
+        const label = document.createElement("span");
+        label.className = "memory-card-label";
+        label.innerText = `${rank.r}${suit}`;
+        cell.replaceChildren(label);
+      }
     }
   }
 

@@ -1227,7 +1227,6 @@ const CHEATS = [
       state.fiveAliveArmed = true;
       state.fiveAliveNudgeLocked = true;
       return "Five Alive armed - this 5 is locked against nudges, and a wrong next guess will still continue the run.";
-      return "Five Alive armed — a wrong next guess will still continue the run.";
     },
   },
   {

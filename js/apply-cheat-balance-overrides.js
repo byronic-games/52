@@ -126,21 +126,6 @@
     return overrides;
   }
 
-  function loadCatalogOverridesSync() {
-    const path = window.CHEAT_CATALOG_CSV_PATH || "cheat-catalog.csv";
-    try {
-      const request = new XMLHttpRequest();
-      request.open("GET", path, false);
-      request.send(null);
-
-      const loaded = request.status === 0 || (request.status >= 200 && request.status < 300);
-      if (!loaded || !request.responseText) return null;
-      return csvToOverrides(request.responseText);
-    } catch (error) {
-      return null;
-    }
-  }
-
   function applyOverrides(overrides) {
     if (!overrides) return;
 
@@ -176,11 +161,7 @@
     applyOverrides(CHEAT_BALANCE_OVERRIDES);
   }
 
-  const catalogOverrides = loadCatalogOverridesSync();
-  if (catalogOverrides) {
-    applyOverrides(catalogOverrides);
-    window.CHEAT_CATALOG_SOURCE = "cheat-catalog.csv";
-  } else {
-    window.CHEAT_CATALOG_SOURCE = "js/cheat-balance-overrides.js";
-  }
+  // The CSV is an authoring source. Its generated JavaScript companion is loaded
+  // above, so gameplay never blocks on a synchronous network request.
+  window.CHEAT_CATALOG_SOURCE = "js/cheat-balance-overrides.js";
 })();
