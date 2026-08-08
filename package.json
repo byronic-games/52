@@ -3,6 +3,15 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
-    "deploy": "./scripts/deploy.sh"
+    "deploy": "./scripts/deploy.sh",
+    "ios:sync": "rsync -a --delete app-shell.css cheat-index.css cheat-index.html daily.css daily.html game.html heroes.css heroes.html icon.svg images index.html intro.css js manifest.webmanifest profile.css profile.html service-worker.js settings.css settings.html shop.css shop.html styles.css www/ && npx cap sync ios",
+    "ios:open": "npx cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "^8.5.0",
+    "@capacitor/ios": "^8.5.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.0"
   }
 }

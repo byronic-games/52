@@ -24,7 +24,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Space+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260713e">
+  <link rel="stylesheet" href="styles.css?v=20260713q">
 </head>
 <body class="game-page">
   <div id="orientation-overlay" aria-hidden="true">
@@ -48,13 +48,6 @@
             </svg>
             <span id="header-power-glyph">·</span>
           </button>
-
-          <div class="header-metrics" aria-live="polite">
-            <div id="header-energy-metric" class="header-metric" hidden>
-              <div class="header-metric-label">Energy</div>
-              <div id="energy-value" class="header-metric-value">0</div>
-            </div>
-          </div>
         </div>
       </header>
 
@@ -62,6 +55,10 @@
         <div class="layout-spacer layout-spacer-cards-top" aria-hidden="true"></div>
         <div id="run-message-row">
           <div id="message-bar"></div>
+          <div id="header-energy-metric" class="run-energy-chip" hidden aria-live="polite">
+            <span class="run-energy-chip-label">Energy</span>
+            <span id="energy-value" class="run-energy-chip-value">0</span>
+          </div>
           <button id="run-log-btn" class="run-log-button" type="button" aria-label="Open run log">Log</button>
         </div>
         <div class="layout-gap layout-gap-message-cards" aria-hidden="true"></div>
@@ -127,6 +124,7 @@
             <div id="seen-grid"></div>
           </div>
         </section>
+        <div class="layout-spacer layout-spacer-grid-bottom" aria-hidden="true"></div>
       </main>
 
       <div id="game-howto-modal" class="hidden" aria-hidden="true">
@@ -357,21 +355,21 @@
     </div>
   </div>
 
-  <script src="js/fullscreen.js?v=20260709q"></script>
+  <script src="js/fullscreen.js?v=20260713l"></script>
   <script src="js/constants.js?v=20260713c"></script>
   <script src="js/storage.js?v=20260713c"></script>
   <script src="js/cosmetics.js?v=20260709q"></script>
   <script src="js/state.js?v=20260709q"></script>
   <script src="js/powers.js?v=20260709q"></script>
-  <script src="js/cheats.js?v=20260713c"></script>
+  <script src="js/cheats.js?v=20260713g"></script>
   <script src="js/cheat-balance-overrides.js?v=20260713c"></script>
   <script src="js/apply-cheat-balance-overrides.js?v=20260713c"></script>
   <script src="js/leaderboard.js?v=20260709q"></script>
   <script src="js/daily.js?v=20260709q"></script>
-  <script src="js/logic.js?v=20260713f"></script>
-  <script src="js/render.js?v=20260713f"></script>
+  <script src="js/logic.js?v=20260713j"></script>
+  <script src="js/render.js?v=20260713m"></script>
   <script src="js/input.js?v=20260713f"></script>
-  <script src="js/main.js?v=20260713f"></script>
+  <script src="js/main.js?v=20260713g"></script>
   <script src="js/pwa-update.js?v=20260709q"></script>
 </body>
 </html>

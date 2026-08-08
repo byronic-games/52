@@ -1456,8 +1456,11 @@ function getEffectMessageParts(cleaned = "") {
 }
 
 function getShortPlayerMessage(message = "") {
-  const cleaned = cleanPlayerLogMessage(message);
+  let cleaned = cleanPlayerLogMessage(message);
   if (!cleaned) return "";
+  if (!/^Cheaters Prosper/i.test(cleaned)) {
+    cleaned = cleaned.replace(/\s+Cheaters Prosper:\s*gained.+$/i, "").trim() || cleaned;
+  }
   const playedMatch = cleaned.match(/^Played\s+([^:]+):/i);
   if (playedMatch) {
     const resultText = cleaned.slice(playedMatch[0].length).trim();
@@ -1552,7 +1555,7 @@ function getShortPlayerMessage(message = "") {
 }
 
 function getMessageBarText(message = "") {
-  return truncateMessage(getShortPlayerMessage(message), 22);
+  return cleanPlayerLogMessage(message);
 }
 
 function addPlayerLogEntry(message = "", options = {}) {
@@ -3779,7 +3782,6 @@ function renderPowerChoice() {
 
   if (!container || !list) return;
 
-  list.innerHTML = "";
   container.classList.remove("is-closing", "is-flying");
   const animation = state.powerChoiceAnimating;
   const choiceOptions = state.pendingPowerOptions.length
@@ -3793,6 +3795,8 @@ function renderPowerChoice() {
     document.body.classList.remove("choice-modal-open", "power-choice-open");
     container.classList.add("hidden");
     container.setAttribute("aria-hidden", "true");
+    list.innerHTML = "";
+    delete list.dataset.optionsSignature;
     if (currentCardEl) {
       currentCardEl.innerText = "";
       currentCardEl.classList.add("hidden");
@@ -3804,6 +3808,8 @@ function renderPowerChoice() {
     document.body.classList.remove("choice-modal-open", "power-choice-open");
     container.classList.add("hidden");
     container.setAttribute("aria-hidden", "true");
+    list.innerHTML = "";
+    delete list.dataset.optionsSignature;
     if (currentCardEl) {
       currentCardEl.innerText = "";
       currentCardEl.classList.add("hidden");
@@ -3835,10 +3841,25 @@ function renderPowerChoice() {
   const tutorialChoiceLocked = typeof window.isTutorialBlockingPowerPick === "function"
     ? window.isTutorialBlockingPowerPick()
     : false;
-  const choiceLocked = Date.now() < (state.powerChoiceLockedUntil || 0) || tutorialChoiceLocked;
+  const timeChoiceLocked = Date.now() < (state.powerChoiceLockedUntil || 0);
+  const choiceLocked = timeChoiceLocked || tutorialChoiceLocked;
   const introToken = String(state.powerChoiceIntroToken || 0);
   const introFresh = list.dataset.introToken !== introToken;
   list.dataset.introToken = introToken;
+
+  const optionsSignature = JSON.stringify({
+    ids: choiceOptions.map((power) => power.id),
+    locked: choiceLocked,
+    hasAnimation: !!animation,
+    animStage: animation?.stage || "",
+    animSelected: animation?.selectedIndex ?? -1,
+    introFresh,
+  });
+  if (list.dataset.optionsSignature === optionsSignature && list.childElementCount === choiceOptions.length) {
+    return;
+  }
+  list.dataset.optionsSignature = optionsSignature;
+  list.innerHTML = "";
 
   choiceOptions.forEach((power, i) => {
     const option = document.createElement("div");
@@ -3921,7 +3942,7 @@ function renderPowerChoice() {
     list.appendChild(option);
   });
 
-  if (choiceLocked) {
+  if (timeChoiceLocked) {
     window.setTimeout(render, Math.max(0, (state.powerChoiceLockedUntil || 0) - Date.now()));
   }
   if (!state.activePowerAwardReason && state.pendingRunMode !== "daily" && typeof window.maybeStartPowerChoiceTutorial === "function") {

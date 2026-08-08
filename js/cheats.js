@@ -275,7 +275,9 @@ function buildLuckyDipFacts(card) {
     `Its suit is ${suitName}.`,
     value > 7 ? "It is higher than 7." : value < 7 ? "It is lower than 7." : "It is exactly 7.",
     value >= 11 ? "It is a face card." : "It is not a face card.",
-    `There ${remainingRankCount === 1 ? "is" : "are"} ${remainingRankCount} ${rank}${remainingRankCount === 1 ? "" : "s"} left face down, including it.`,
+    remainingRankCount > 1
+      ? `There are ${remainingRankCount} ${rank}s left face down, including it.`
+      : "",
     value % 2 === 0 ? "Its value is even." : "Its value is odd.",
     value >= 8 ? "It sits in the top half of the deck values." : "It sits in the bottom half of the deck values.",
     relationToCurrent ? `It is ${relationToCurrent}.` : "",
@@ -425,7 +427,7 @@ const CHEAT_DESCRIPTIONS = {
   "Roll the Dice": "Seeded roll: gain 1-6 Nudge +1 and the same number of Nudge -1.",
   "Club Sandwich": "Reveal the value of the next face-down Club in the deck.",
   "Diamond Geezer": "Arm this card. If the next revealed card is a Diamond, choose two extra Cheats.",
-  "Red Herring": "Play on a Heart or Diamond. Shows false colour and parity facts for the next three cards.",
+  "Red Herring": "Shows false colour and parity facts for the next three cards.",
   "Grave Digger": "Swap the current face-up card with the lowest face-down Spade.",
   "Equals 11": "Arm this card. If it and the next revealed card total 11, choose 3 extra cheats.",
   "WL": "Win your next guess, then lose the one after. If you do, the run survives and you choose 3 extra cheats.",
@@ -1729,9 +1731,6 @@ const CHEATS = [
     shouldConsumeResult: (result) => typeof result === "string" && result.startsWith("Red Herring:"),
     use: () => {
       if (!state.current) return "Red Herring needs a current card.";
-      if (state.current.suit !== "♥" && state.current.suit !== "♦") {
-        return "Red Herring can only be played on a Heart or Diamond.";
-      }
       const upcoming = [1, 2, 3].map((offset) => ({ card: getNextCardAt(offset), offset })).filter((entry) => entry.card);
       if (!upcoming.length) return "No face-down cards left.";
       const lies = upcoming.map(({ card, offset }) =>

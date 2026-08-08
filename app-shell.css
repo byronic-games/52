@@ -93,8 +93,8 @@ button {
   justify-self: start;
   align-self: center;
   min-width: 0;
-  max-width: min(24vw, 92px);
-  height: 42px;
+  max-width: min(32vw, 132px);
+  height: 46px;
   display: flex;
   align-items: center;
   overflow: hidden;
@@ -107,11 +107,11 @@ button {
 }
 
 .top-crowns .crown-badges {
-  gap: 3px;
+  gap: 5px;
 }
 
 .top-crowns .crown-icon {
-  font-size: clamp(0.78rem, 3.3vw, 1.05rem);
+  font-size: clamp(1.05rem, 4.4vw, 1.4rem);
 }
 
 .top-crowns.is-power-stack {
@@ -839,6 +839,104 @@ button {
 .daily-play-btn {
   min-height: 48px;
   font-size: 0.95rem;
+}
+
+.daily-complete-note {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  text-align: center;
+}
+
+.daily-complete-note p {
+  margin: 0;
+  color: var(--shell-muted);
+  font-size: 0.78rem;
+  font-weight: 750;
+  line-height: 1.3;
+}
+
+.daily-share-btn {
+  min-height: 38px;
+  font-size: 0.82rem;
+}
+
+.daily-share-status {
+  min-height: 1em;
+  color: var(--shell-text) !important;
+  font-size: 0.72rem !important;
+}
+
+.daily-entry-popover {
+  position: fixed;
+  z-index: 1300;
+  width: min(290px, calc(100vw - 16px));
+  padding: 12px;
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 20%),
+    rgba(17, 14, 23, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 20px 42px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+.daily-entry-popover.hidden {
+  display: none;
+}
+
+.daily-popover-name {
+  color: var(--shell-text);
+  font-size: 0.94rem;
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 8px;
+  overflow-wrap: anywhere;
+}
+
+.daily-popover-section + .daily-popover-section {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.daily-popover-title {
+  margin-bottom: 6px;
+  color: #9ff0ff;
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.daily-score-breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--shell-muted);
+  font-size: 0.74rem;
+  line-height: 1.32;
+}
+
+.daily-score-breakdown-row strong {
+  color: var(--shell-text);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.daily-score-breakdown-total {
+  margin-top: 4px;
+  color: var(--shell-text);
+}
+
+.daily-score-breakdown-total strong {
+  color: #d8aa35;
+}
+
+.board-row[data-daily-holdable="true"] {
+  cursor: pointer;
 }
 
 .daily-board-card {
@@ -2143,16 +2241,17 @@ button.board-row {
 
 .play-view #main-layout {
   grid-template-rows:
-    0
+    minmax(var(--expanding-section-min), 1fr)
     var(--message-height)
     max(2px, calc(var(--section-gap) * 0.5))
     minmax(0, var(--card-row-max-height))
-    max(2px, calc(var(--section-gap) * 0.5))
+    minmax(var(--expanding-section-min), 1fr)
     max(2px, calc(var(--section-gap) * 0.5))
     var(--cheats-height)
     var(--buttons-height)
-    max(2px, calc(var(--section-gap) * 0.5))
-    auto !important;
+    minmax(var(--expanding-section-min), 1fr)
+    minmax(0, var(--grid-height))
+    minmax(calc(var(--expanding-section-min) / 2), 0.5fr) !important;
 }
 
 .app-loading {

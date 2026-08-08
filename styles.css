@@ -557,7 +557,7 @@ a {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  white-space: nowrap;
+  white-space: normal;
   word-break: break-word;
   overflow-wrap: anywhere;
   text-wrap: pretty;
@@ -638,12 +638,17 @@ a {
 #message-bar[data-message-density="scroll"] {
   align-items: flex-start !important;
   justify-content: center !important;
-  overflow: visible !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
   font-size: clamp(0.78rem, 2.45cqw, 0.94rem) !important;
-  line-height: 1 !important;
+  line-height: 1.15 !important;
   text-align: center !important;
+  white-space: normal !important;
 }
 
 @keyframes message-result-pop {
@@ -2536,7 +2541,6 @@ body[data-effects="reduced"] *::after {
   flex: 0 0 auto;
   display: block;
   min-height: 186px;
-  order: 5;
 }
 
 #seen-grid-stats {
@@ -3092,7 +3096,7 @@ body[data-effects="reduced"] *::after {
 #game-log-modal:not(.hidden):not(.is-closing) .help-dialog,
 #game-settings-modal:not(.hidden):not(.is-closing) .help-dialog {
   transform-origin: center center;
-  animation: choice-modal-pop 210ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: choice-modal-pop 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 #cheat-choice-container:not(.hidden):not(.is-closing):not(.is-flying) .choice-backdrop,
@@ -3100,7 +3104,7 @@ body[data-effects="reduced"] *::after {
 #game-howto-modal:not(.hidden):not(.is-closing) .help-backdrop,
 #game-log-modal:not(.hidden):not(.is-closing) .help-backdrop,
 #game-settings-modal:not(.hidden):not(.is-closing) .help-backdrop {
-  animation: choice-backdrop-pop 234ms ease-out both;
+  animation: choice-backdrop-pop 300ms ease-out both;
 }
 
 #game-howto-modal.is-closing,
@@ -3510,12 +3514,8 @@ body[data-effects="reduced"] *::after {
 
 #cheat-choice-container .choice-modal {
   width: min(96vw, 540px);
-  min-height: calc(100dvh - 14px);
-  max-height: calc(100dvh - 14px);
   padding: 12px 12px 10px;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
 #cheat-choice-container .choice-title {
@@ -4071,7 +4071,6 @@ body[data-effects="reduced"] *::after {
 
   #cheat-choice-container .choice-modal {
     padding: 10px 10px 8px;
-    min-height: calc(100dvh - 10px);
     max-height: calc(100dvh - 10px);
   }
 
@@ -4545,7 +4544,8 @@ body[data-effects="reduced"] *::after {
   flex: 1 1 auto !important;
   min-height: 0 !important;
   display: grid !important;
-  grid-template-rows: auto minmax(0, 1fr) !important;
+  align-content: center;
+  grid-template-rows: minmax(0, 1fr) !important;
   padding: 0 !important;
 }
 
@@ -4831,9 +4831,10 @@ body[data-effects="reduced"] *::after {
   --card-row-max-height: calc((100cqw - var(--card-pair-gap)) * 15 / 22);
   --header-height: clamp(48px, 13cqw, 64px);
   --info-height: clamp(38px, 10.5cqw, 58px);
-  --message-height: clamp(32px, 8.4cqw, 42px);
+  --message-height: clamp(36px, 9.5cqw, 48px);
   --cheats-height: clamp(84px, 23cqw, 132px);
   --buttons-height: clamp(54px, 16cqw, 86px);
+  --grid-height: clamp(140px, 44.2cqw, 210px);
   display: grid !important;
   grid-template-rows: var(--header-height) minmax(0, 1fr) !important;
 }
@@ -4874,7 +4875,8 @@ body[data-effects="reduced"] *::after {
     var(--cheats-height)
     var(--buttons-height)
     minmax(var(--expanding-section-min), 1fr)
-    auto !important;
+    minmax(0, var(--grid-height))
+    minmax(calc(var(--expanding-section-min) / 2), 0.5fr) !important;
   gap: 0 !important;
 }
 
@@ -4985,12 +4987,50 @@ body[data-effects="reduced"] *::after {
 
 #run-message-row {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) auto !important;
+  grid-template-columns: minmax(0, 1fr) auto auto !important;
   align-items: center !important;
-  gap: 14px !important;
+  gap: 10px !important;
   min-height: var(--message-height, 36px) !important;
   max-height: var(--message-height, 36px) !important;
   height: var(--message-height, 36px) !important;
+}
+
+.run-energy-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: min(100%, 36px);
+  padding: 0 10px;
+  border: 1px solid rgba(223, 245, 255, 0.24);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.025)),
+    rgba(35, 44, 64, 0.74);
+  color: #dff5ff;
+  white-space: nowrap;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.045),
+    0 0 12px rgba(95, 228, 255, 0.12);
+}
+
+.run-energy-chip[hidden] {
+  display: none !important;
+}
+
+.run-energy-chip-label {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: clamp(0.6rem, 1.8cqw, 0.72rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.run-energy-chip-value {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: clamp(0.82rem, 2.4cqw, 0.98rem);
+  font-weight: 900;
+  line-height: 1;
 }
 
 #message-bar {
@@ -5010,8 +5050,7 @@ body[data-effects="reduced"] *::after {
   visibility: visible !important;
   pointer-events: auto !important;
   overflow: hidden !important;
-  white-space: nowrap !important;
-  text-overflow: ellipsis !important;
+  white-space: normal !important;
   font-size: clamp(1.05rem, 3.55cqw, 1.34rem) !important;
   letter-spacing: 0 !important;
 }
@@ -5181,12 +5220,10 @@ body[data-effects="reduced"] *::after {
 
 #cheat-choice-container .choice-modal {
   width: min(85vw, 560px);
-  height: min(70dvh, 600px);
-  min-height: min(70dvh, 600px);
   max-height: calc(100dvh - 32px);
   padding: 16px;
   display: grid;
-  grid-template-rows: auto auto auto minmax(108px, 1fr);
+  grid-template-rows: auto auto auto auto;
   gap: 10px;
   overflow: hidden;
 }
@@ -5466,11 +5503,19 @@ body[data-effects="reduced"] *::after {
 }
 
 .cheat-choice-info {
-  min-height: 0;
+  /* Fixed to fit the longest cheat description in the game (measured at
+     ~164px) so the popup is a consistent size regardless of which cheat
+     is shown, rather than resizing per description. */
+  height: 172px;
+  min-height: 172px;
+  max-height: 172px;
   padding: 10px 14px;
   border-radius: 14px;
   background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   text-align: center;
   overflow-x: hidden;
   overflow-y: auto;
@@ -6414,22 +6459,26 @@ body[data-visuals="new"] .card-center-suit {
 }
 
 body[data-visuals="new"] .card-suit[data-suit="♠"],
-body[data-visuals="new"] .card-center-suit[data-suit="♠"] {
+body[data-visuals="new"] .card-center-suit[data-suit="♠"],
+body[data-visuals="new"] .card-pip[data-suit="♠"] {
   background-image: url('images/Suits/SpaceIcon.png');
 }
 
 body[data-visuals="new"] .card-suit[data-suit="♥"],
-body[data-visuals="new"] .card-center-suit[data-suit="♥"] {
+body[data-visuals="new"] .card-center-suit[data-suit="♥"],
+body[data-visuals="new"] .card-pip[data-suit="♥"] {
   background-image: url('images/Suits/HeartIcon.png');
 }
 
 body[data-visuals="new"] .card-suit[data-suit="♦"],
-body[data-visuals="new"] .card-center-suit[data-suit="♦"] {
+body[data-visuals="new"] .card-center-suit[data-suit="♦"],
+body[data-visuals="new"] .card-pip[data-suit="♦"] {
   background-image: url('images/Suits/DiamondIcon.png');
 }
 
 body[data-visuals="new"] .card-suit[data-suit="♣"],
-body[data-visuals="new"] .card-center-suit[data-suit="♣"] {
+body[data-visuals="new"] .card-center-suit[data-suit="♣"],
+body[data-visuals="new"] .card-pip[data-suit="♣"] {
   background-image: url('images/Suits/ClubIcon.png');
 }
 
@@ -6441,31 +6490,20 @@ body[data-visuals="new"] .card-pip-grid {
 }
 
 body[data-visuals="new"] .card-pip {
+  /* 25% bigger than the corner suit icon (0.8em == 10.24cqw at the
+     card's 12.8cqw font-size), so 10.24cqw * 1.25 = 12.8cqw. */
   position: absolute;
-  width: 21cqw;
-  height: 21cqw;
+  width: 12.8cqw;
+  height: 12.8cqw;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
   transform: translate(-50%, -50%);
 }
 
-body[data-visuals="new"] .card-pip::before {
-  content: attr(data-suit);
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-family: "Times New Roman", Georgia, serif;
-  font-size: 1.18em;
-  font-weight: 900;
-  line-height: 1;
-}
-
 body[data-visuals="new"] .card-pip-large {
-  width: 39cqw;
-  height: 39cqw;
-}
-
-body[data-visuals="new"] .card-pip-large::before {
-  font-size: 1.28em;
+  width: 12.8cqw;
+  height: 12.8cqw;
 }
 
 body[data-visuals="new"] .card-pip-invert {
@@ -6487,16 +6525,6 @@ body[data-visuals="new"] .card-pip-lc { left: 50%; top: 69%; }
 body[data-visuals="new"] .card-pip-bl { left: 25%; top: 84%; }
 body[data-visuals="new"] .card-pip-bc { left: 50%; top: 84%; }
 body[data-visuals="new"] .card-pip-br { left: 75%; top: 84%; }
-
-body[data-visuals="new"] .card-pip[data-suit="♠"],
-body[data-visuals="new"] .card-pip[data-suit="♣"] {
-  color: #1a1a1a;
-}
-
-body[data-visuals="new"] .card-pip[data-suit="♥"],
-body[data-visuals="new"] .card-pip[data-suit="♦"] {
-  color: #dc2626;
-}
 
 body[data-visuals="new"] .card-court-art {
   position: absolute;

@@ -875,7 +875,10 @@ function resolvePendingRewardQueues() {
 }
 
 function getRewardChoiceDelay() {
-  return 250;
+  const timing = typeof getRevealTiming === "function" ? getRevealTiming() : null;
+  if (!timing) return 250;
+  const revealSettleMs = timing.flip + timing.hold + timing.slide + 30;
+  return revealSettleMs + 220;
 }
 
 function previewPendingRunBehindPowerChoice(deck, runMode = "standard", deckKey = "blue", levelNumber = DEFAULT_LEVEL_NUMBER) {

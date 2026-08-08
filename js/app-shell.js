@@ -1,5 +1,5 @@
 (function () {
-  const ASSET_VERSION = "20260713f";
+  const ASSET_VERSION = "20260713q";
   const VIEW_TITLES = {
     home: APP_STRINGS.nav.home,
     setup: APP_STRINGS.nav.play,
@@ -72,6 +72,24 @@
   const modalBody = document.getElementById("shell-modal-body");
   const views = new Map(Array.from(document.querySelectorAll(".app-view")).map((el) => [el.dataset.view, el]));
   let overlayReturnFocus = null;
+  let lastSetupCardTapKey = null;
+  let lastSetupCardTapTime = 0;
+  const SETUP_CARD_DOUBLE_TAP_MS = 350;
+
+  function handleSetupCardTap(key, applySelection) {
+    const now = Date.now();
+    const isDoubleTap = key === lastSetupCardTapKey && (now - lastSetupCardTapTime) < SETUP_CARD_DOUBLE_TAP_MS;
+    lastSetupCardTapKey = isDoubleTap ? null : key;
+    lastSetupCardTapTime = now;
+    applySelection();
+    if (isDoubleTap) startSelectedRun();
+  }
+
+  function startSelectedRun() {
+    saveSelectedDeck(app.selectedDeck);
+    saveSelectedLevel(app.selectedDeck === "black" ? 1 : app.selectedLevel);
+    navigate("play", { deck: app.selectedDeck, level: app.selectedDeck === "black" ? 1 : app.selectedLevel });
+  }
 
   function getTodayKey() {
     return typeof getCurrentDailyDateKey === "function" ? getCurrentDailyDateKey() : new Date().toISOString().slice(0, 10);
@@ -456,10 +474,12 @@
       button.classList.toggle("locked", !unlocked);
       button.addEventListener("click", () => {
         if (!unlocked) return;
-        app.selectedDeck = deck;
-        app.selectedLevel = deck === "black" ? 1 : Math.min(app.selectedLevel || 1, 4);
-        if (!isDeckLevelUnlocked(app.selectedDeck, app.selectedLevel)) app.selectedLevel = 1;
-        renderSetup();
+        handleSetupCardTap(`deck:${deck}`, () => {
+          app.selectedDeck = deck;
+          app.selectedLevel = deck === "black" ? 1 : Math.min(app.selectedLevel || 1, 4);
+          if (!isDeckLevelUnlocked(app.selectedDeck, app.selectedLevel)) app.selectedLevel = 1;
+          renderSetup();
+        });
       });
       hostEl.appendChild(button);
     }
@@ -487,17 +507,15 @@
         : `Level ${level} locked`);
       button.addEventListener("click", () => {
         if (!unlocked) return;
-        app.selectedLevel = level;
-        renderSetup();
+        handleSetupCardTap(`level:${level}`, () => {
+          app.selectedLevel = level;
+          renderSetup();
+        });
       });
       levelGrid.appendChild(button);
     }
 
-    document.getElementById("setup-start-btn")?.addEventListener("click", () => {
-      saveSelectedDeck(app.selectedDeck);
-      saveSelectedLevel(app.selectedDeck === "black" ? 1 : app.selectedLevel);
-      navigate("play", { deck: app.selectedDeck, level: app.selectedDeck === "black" ? 1 : app.selectedLevel });
-    });
+    document.getElementById("setup-start-btn")?.addEventListener("click", startSelectedRun);
   }
 
   function ensureStylesheet(id, href) {
@@ -776,6 +794,220 @@
     return DAILY_BOARD_PAGE_SIZE;
   }
 
+  function hideDailyPopover() {
+    const popover = document.getElementById("daily-entry-popover");
+    if (!popover) return;
+    popover.classList.add("hidden");
+    popover.setAttribute("aria-hidden", "true");
+    popover.innerHTML = "";
+  }
+
+  function formatDailyStatNumber(value, maxValue) {
+    const num = Math.max(0, Math.floor(Number(value) || 0));
+    return String(Math.min(maxValue, num));
+  }
+
+  function showDailyPopover(entry, anchorEl, point) {
+    const popover = document.getElementById("daily-entry-popover");
+    if (!popover || !entry || !anchorEl) return;
+    const cardsCleared = formatDailyStatNumber(entry.cardsCleared ?? entry.score, 52);
+    const cardScore = formatDailyStatNumber(entry.cardScore ?? ((entry.cardsCleared || 0) * 100), 9999);
+    const totalScore = formatDailyStatNumber(entry.score, 9999);
+    const remainingCheats = formatDailyStatNumber(entry.remainingCheats, 999);
+    const remainingNudges = formatDailyStatNumber(entry.remainingNudges, 999);
+    const powerCount = formatDailyStatNumber(entry.powerCount, 999);
+    const tearCount = formatDailyStatNumber(entry.tearCount, 999);
+    const cheatBonus = formatDailyStatNumber(entry.cheatBonus, 999);
+    const nudgeBonus = formatDailyStatNumber(entry.nudgeBonus, 999);
+    const powerBonus = formatDailyStatNumber(entry.powerBonus, 999);
+    const tearPenalty = formatDailyStatNumber(entry.tearPenalty, 999);
+    const bonusScore = Math.max(0, Math.floor(Number(entry.bonusScore) || 0));
+
+    popover.innerHTML = `
+      <div class="daily-popover-name">${escapeHtml(entry.playerName || "Unknown")}</div>
+      <div class="daily-popover-section">
+        <div class="daily-popover-title">Daily Score</div>
+        <div class="daily-score-breakdown-row"><span>Cards cleared</span><strong>${cardsCleared} = ${cardScore}</strong></div>
+        <div class="daily-score-breakdown-row"><span>Cheats left</span><strong>${remainingCheats} = +${cheatBonus}</strong></div>
+        <div class="daily-score-breakdown-row"><span>Nudges left</span><strong>${remainingNudges} = +${nudgeBonus}</strong></div>
+        <div class="daily-score-breakdown-row"><span>Powers in play</span><strong>${powerCount} = +${powerBonus}</strong></div>
+        <div class="daily-score-breakdown-row"><span>Tears</span><strong>${tearCount} = -${tearPenalty}</strong></div>
+        <div class="daily-score-breakdown-row daily-score-breakdown-total"><span>Bonus</span><strong>${bonusScore}</strong></div>
+        <div class="daily-score-breakdown-row daily-score-breakdown-total"><span>Total</span><strong>${totalScore}</strong></div>
+      </div>
+    `;
+    popover.classList.remove("hidden");
+    popover.setAttribute("aria-hidden", "false");
+
+    const popoverRect = popover.getBoundingClientRect();
+    const margin = 8;
+    const anchorRect = anchorEl.getBoundingClientRect();
+    const anchorX = point && Number.isFinite(point.x) ? point.x : anchorRect.left + (anchorRect.width / 2);
+    const anchorY = point && Number.isFinite(point.y) ? point.y : anchorRect.top;
+    const preferredLeft = anchorX - (popoverRect.width / 2);
+    const left = Math.max(margin, Math.min(window.innerWidth - popoverRect.width - margin, preferredLeft));
+    const preferredTop = anchorY - popoverRect.height - margin;
+    const fallbackTop = anchorY + margin;
+    const top = preferredTop >= margin
+      ? preferredTop
+      : Math.max(margin, Math.min(window.innerHeight - popoverRect.height - margin, fallbackTop));
+    popover.style.left = `${Math.round(left)}px`;
+    popover.style.top = `${Math.round(top)}px`;
+  }
+
+  function attachDailyRowHoldHandlers(button, entry, enabled) {
+    if (!enabled) return;
+    let holdTimer = null;
+    let pointerHoldActive = false;
+    button.setAttribute("draggable", "false");
+    button.dataset.dailyHoldable = "true";
+
+    const clearHold = () => {
+      if (holdTimer) {
+        window.clearTimeout(holdTimer);
+        holdTimer = null;
+      }
+      hideDailyPopover();
+    };
+    const beginHold = (event) => {
+      if (event.button !== undefined && event.button !== 0) return;
+      event.preventDefault();
+      clearHold();
+      if (event.pointerType === "mouse" || event.type === "mousedown") {
+        showDailyPopover(entry, button, { x: event.clientX, y: event.clientY });
+        return;
+      }
+      holdTimer = window.setTimeout(() => {
+        showDailyPopover(entry, button, { x: event.clientX, y: event.clientY });
+      }, 300);
+    };
+    button.addEventListener("pointerdown", (event) => {
+      pointerHoldActive = true;
+      beginHold(event);
+    });
+    button.addEventListener("touchstart", (event) => event.preventDefault(), { passive: false });
+    button.addEventListener("mousedown", (event) => {
+      if (pointerHoldActive) return;
+      beginHold(event);
+    });
+    const clearPointerHold = () => {
+      clearHold();
+      window.setTimeout(() => { pointerHoldActive = false; }, 0);
+    };
+    button.addEventListener("pointerup", clearPointerHold);
+    button.addEventListener("pointercancel", clearPointerHold);
+    button.addEventListener("pointerleave", clearPointerHold);
+    button.addEventListener("mouseup", () => {
+      if (pointerHoldActive) return;
+      clearHold();
+    });
+    button.addEventListener("contextmenu", (event) => event.preventDefault());
+  }
+
+  function renderDailyBoardRows(entries, showScores) {
+    const list = document.getElementById("daily-board-list");
+    const label = document.getElementById("daily-page-label");
+    const pageSize = getDailyBoardPageSize();
+    const pageCount = Math.max(1, Math.ceil(entries.length / pageSize));
+    app.dailyPage = Math.max(0, Math.min(app.dailyPage, pageCount - 1));
+    const rows = entries.slice(app.dailyPage * pageSize, app.dailyPage * pageSize + pageSize);
+    hideDailyPopover();
+    if (list) {
+      list.innerHTML = rows.length ? "" : '<div class="app-loading">Empty</div>';
+      rows.forEach((entry) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "board-row";
+        const scoreText = showScores ? formatDailyStatNumber(entry.cardsCleared ?? entry.score, 52) : "??";
+        const name = entry.playerName || "Unknown";
+        button.innerHTML = `<span>${escapeHtml(String(entry.dailyDisplayRank || "-"))}</span><span>${escapeHtml(name)}</span><span>${scoreText}</span>`;
+        button.setAttribute("aria-label", showScores ? `${name}, hold for score breakdown` : name);
+        attachDailyRowHoldHandlers(button, entry, showScores);
+        list.appendChild(button);
+      });
+    }
+    if (label) label.textContent = `${app.dailyPage + 1}/${pageCount}`;
+    const prev = document.getElementById("daily-page-prev");
+    const next = document.getElementById("daily-page-next");
+    if (prev) {
+      prev.disabled = app.dailyPage <= 0;
+      prev.onclick = () => {
+        app.dailyPage = Math.max(0, app.dailyPage - 1);
+        renderDaily({ date: app.dailyDate, variant: app.dailyVariant });
+      };
+    }
+    if (next) {
+      next.disabled = app.dailyPage >= pageCount - 1;
+      next.onclick = () => {
+        app.dailyPage = Math.min(pageCount - 1, app.dailyPage + 1);
+        renderDaily({ date: app.dailyDate, variant: app.dailyVariant });
+      };
+    }
+  }
+
+  function formatDailyShareDateLabel(dateKey) {
+    if (!dateKey) return "-";
+    const date = new Date(`${dateKey}T00:00:00Z`);
+    if (Number.isNaN(date.getTime())) return dateKey;
+    return date.toLocaleDateString(undefined, {
+      weekday: "short", year: "numeric", month: "short", day: "numeric", timeZone: "UTC",
+    });
+  }
+
+  function buildDailyShareUrl(dateKey, variant) {
+    const url = new URL("https://onelifeleft.com/52/daily.html");
+    url.searchParams.set("date", dateKey);
+    if (variant === "hard") url.searchParams.set("variant", "hard");
+    return url.toString();
+  }
+
+  function getDailyShareSuitRows(entry) {
+    const counts = entry?.suitCounts && typeof entry.suitCounts === "object" ? entry.suitCounts : null;
+    if (!counts) return "";
+    return ["♠", "♥", "♦", "♣"].map((suit) => {
+      const count = Math.max(0, Math.min(13, Math.floor(Number(counts[suit]) || 0)));
+      return `${suit} ${String(count).padStart(2, " ")}  ${"■".repeat(count)}`;
+    }).join("\n");
+  }
+
+  function buildDailyShareText(entry, dateKey, variant) {
+    const cards = Math.max(0, Number(entry?.cardsCleared ?? entry?.score ?? 0));
+    const isToday = dateKey === getTodayKey();
+    const dateText = isToday ? "today's 52! Daily" : `the 52! Daily for ${formatDailyShareDateLabel(dateKey)}`;
+    const suitRows = getDailyShareSuitRows(entry);
+    const shareUrl = buildDailyShareUrl(dateKey, variant);
+    if (!suitRows) return `I scored ${cards}/52 on ${dateText}.\n\nYou've one chance to tackle the same deck:\n${shareUrl}`;
+    return `I scored ${cards}/52 on ${dateText}.\n\n${suitRows}\n\nYou've one chance to tackle the same deck:\n${shareUrl}`;
+  }
+
+  async function shareDailyEntry(entry, dateKey, variant, statusEl) {
+    if (!entry) return;
+    const text = buildDailyShareText(entry, dateKey, variant);
+    try {
+      if (typeof navigator.share === "function") {
+        await navigator.share({ title: "52! Daily", text });
+        if (statusEl) statusEl.textContent = "Daily score shared.";
+        return;
+      }
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        if (statusEl) statusEl.textContent = "Share cancelled.";
+        return;
+      }
+    }
+    const payload = text.trim();
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(payload);
+        if (statusEl) statusEl.textContent = "Daily score copied to clipboard.";
+        return;
+      }
+    } catch {
+      // Fall through to an inline status message.
+    }
+    if (statusEl) statusEl.textContent = payload;
+  }
+
   async function renderDaily(options = {}) {
     app.dailyDate = String(options.date || app.dailyDate || getTodayKey()).trim();
     app.dailyVariant = typeof normalizeDailyVariant === "function" ? normalizeDailyVariant(options.variant || app.dailyVariant) : "normal";
@@ -788,11 +1020,16 @@
     if (app.dailyVariant === "hard" && !hardUnlocked) app.dailyVariant = "normal";
     const attempt = getCompletedDailyAttempt(app.dailyDate, app.dailyVariant);
     const complete = !!attempt;
+    const showScores = app.dailyDate !== today || complete;
     const unlocked = isTutorialComplete();
     const canPlay = unlocked && !complete && app.dailyDate === today && (app.dailyVariant === "normal" || hardUnlocked);
     const streak = countDailyStreak(app.dailyVariant, app.dailyDate);
     const previousMonth = shiftDailyMonth(app.dailyDate, -1);
     const nextMonth = shiftDailyMonth(app.dailyDate, 1);
+    const variantLabel = typeof getDailyVariantConfig === "function"
+      ? (getDailyVariantConfig(app.dailyVariant).label || (app.dailyVariant === "hard" ? "Hard" : "Normal"))
+      : (app.dailyVariant === "hard" ? "Hard" : "Normal");
+    const justCompletedToday = complete && app.dailyDate === today;
     host.classList.add("daily-layout");
     renderDailyVariantTabs(hardUnlocked);
 
@@ -812,10 +1049,18 @@
         </div>
       </div>
       <button class="primary-btn daily-play-btn" id="daily-play-btn" type="button" ${canPlay ? "" : "disabled"}>PLAY</button>
+      ${justCompletedToday ? `
+        <div class="daily-complete-note">
+          <p>You've already played ${escapeHtml(variantLabel)} today's Daily. Come back tomorrow for a new deck.</p>
+          <button class="secondary-btn daily-share-btn" id="daily-share-btn" type="button">Share Result</button>
+          <p id="daily-share-status" class="daily-share-status" aria-live="polite"></p>
+        </div>
+      ` : ""}
       <div class="fixed-card daily-board-card">
         <div class="board-list" id="daily-board-list"><div class="app-loading">Loading...</div></div>
         <div class="pager-row"><button class="pager-btn" id="daily-page-prev" type="button">‹</button><span id="daily-page-label"></span><button class="pager-btn" id="daily-page-next" type="button">›</button></div>
       </div>
+      <div id="daily-entry-popover" class="daily-entry-popover hidden" aria-hidden="true"></div>
     `;
 
     host.querySelectorAll("[data-date]").forEach((button) => {
@@ -844,20 +1089,16 @@
       if (!loadPreferredPlayerName()) savePreferredPlayerName("Player");
       navigate("play", { date: app.dailyDate, variant: app.dailyVariant });
     });
+    document.getElementById("daily-share-btn")?.addEventListener("click", () => {
+      shareDailyEntry(attempt, app.dailyDate, app.dailyVariant, document.getElementById("daily-share-status"));
+    });
 
     const requestedDate = app.dailyDate;
     const requestedVariant = app.dailyVariant;
     const response = await fetchDailyLeaderboard(app.dailyDate, 5000, app.dailyVariant);
     if (app.dailyDate !== requestedDate || app.dailyVariant !== requestedVariant) return;
     const entries = rankEntries(Array.isArray(response) ? response : response?.entries || []);
-    renderBoardPage(entries, "daily-board-list", "daily-page-label", "daily-page-prev", "daily-page-next", app.dailyPage, (nextPage) => {
-      app.dailyPage = nextPage;
-      renderDaily({ date: app.dailyDate, variant: app.dailyVariant });
-    }, (entry) => [
-      entry.dailyDisplayRank || "-",
-      entry.playerName || "Unknown",
-      complete ? String(Math.max(0, Number(entry.cardsCleared ?? entry.score) || 0)) : "??",
-    ], getDailyBoardPageSize());
+    renderDailyBoardRows(entries, showScores);
   }
 
   function getEntryDescription(entry, type) {
@@ -1930,6 +2171,13 @@
     }
     closeOverlay(false, { useHistory: false });
     const route = routeFromLocation();
+    if (route.view === app.view) {
+      // Just unwinding an overlay (e.g. Collection/Deck) back onto the
+      // view we never actually left - re-running renderRoute here would
+      // re-init the view (e.g. restart an in-progress run).
+      activateView(route.view);
+      return;
+    }
     renderRoute(route.view, route.options);
   });
 

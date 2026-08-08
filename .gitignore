@@ -1,0 +1,7 @@
+node_modules/
+www/
+
+# Xcode user-specific state (regenerated locally, not part of the project)
+ios/**/xcuserdata/
+ios/**/*.xcuserstate
+ios/App/DerivedData/

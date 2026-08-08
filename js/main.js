@@ -180,6 +180,7 @@ if (!restoredFromSnapshot) {
 window.appPrepareStandardRun = (deckKey = loadSelectedDeck(), levelNumber = loadSelectedLevel()) => {
   const selectedDeckKey = normalizeDeckKey(deckKey);
   const selectedLevelNumber = normalizeLevelNumber(levelNumber);
+  if (typeof clearVictoryEffects === "function") clearVictoryEffects();
   clearGameStateSnapshot();
   state = createEmptyState();
   state.selectedDeckKey = selectedDeckKey;
@@ -196,6 +197,7 @@ window.appPrepareStandardRun = (deckKey = loadSelectedDeck(), levelNumber = load
 };
 
 window.appStartDailyRun = (dateKey = getCurrentDailyDateKey(), variant = "normal") => {
+  if (typeof clearVictoryEffects === "function") clearVictoryEffects();
   clearGameStateSnapshot();
   state = createEmptyState();
   render();
