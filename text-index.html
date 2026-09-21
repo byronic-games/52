@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>52! Text Index</title>
+  <link rel="stylesheet" href="text-index.css?v=20260921g">
+</head>
+<body>
+  <main class="text-index-shell">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">52! Tools</p>
+        <h1>Text Index</h1>
+        <p>Edit shared interface and run-log language, then download and replace <code>js/text-catalog-overrides.js</code>.</p>
+      </div>
+      <nav class="header-actions" aria-label="Page links">
+        <a href="index.html">Home</a>
+        <a href="cheat-index.html">Cheat Index</a>
+        <a href="shop-index.html">Shop Index</a>
+      </nav>
+    </header>
+
+    <section class="toolbar" aria-label="Text catalog controls">
+      <label class="search-field">Filter<input id="text-search" type="search" placeholder="Search key, category, or wording"></label>
+      <label class="locale-field">Locale<input id="locale-code" type="text" value="en-GB" spellcheck="false"></label>
+      <div class="toolbar-actions">
+        <button id="download-text-btn" class="primary-action" type="button">Download Text Catalog</button>
+        <button id="reset-text-btn" type="button">Reset Edits</button>
+      </div>
+    </section>
+
+    <div id="text-summary" class="summary" aria-live="polite"></div>
+    <div id="text-errors" class="validation-message" aria-live="polite"></div>
+
+    <section class="table-wrap" aria-label="Editable text catalog">
+      <table>
+        <thead><tr><th>Key</th><th>Category</th><th>Default English</th><th>Translation / Override</th><th>Placeholders</th></tr></thead>
+        <tbody id="text-table-body"></tbody>
+      </table>
+    </section>
+  </main>
+  <script src="js/text-catalog-overrides.js?v=20260921g"></script>
+  <script src="js/text-catalog.js?v=20260921g"></script>
+  <script src="js/text-index.js?v=20260921g"></script>
+</body>
+</html>

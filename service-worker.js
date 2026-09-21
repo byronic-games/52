@@ -1,6 +1,6 @@
-const CACHE_VERSION = "20260921e";
+const CACHE_VERSION = "20260921i";
 const CACHE_NAME = `byronic-52-${CACHE_VERSION}`;
-const GAME_ASSET_VERSION = "20260921e";
+const GAME_ASSET_VERSION = "20260921i";
 
 const CARD_SUITS = ["clubs", "diamonds", "hearts", "spades"];
 const CARD_RANKS = ["ace", "02", "03", "04", "05", "06", "07", "08", "09", "10", "jack", "queen", "king"];
@@ -21,6 +21,7 @@ const APP_SHELL = [
   "./game.html",
   "./shop.html",
   "./shop-index.html",
+  "./text-index.html",
   "./daily.html",
   "./settings.html",
   "./profile.html",
@@ -43,10 +44,13 @@ const APP_SHELL = [
   "./heroes.css",
   `./shop.css?v=${GAME_ASSET_VERSION}`,
   `./shop-index.css?v=${GAME_ASSET_VERSION}`,
+  `./text-index.css?v=${GAME_ASSET_VERSION}`,
   `./cheat-index.css?v=${GAME_ASSET_VERSION}`,
   "./cheat-catalog.csv",
   `./js/constants.js?v=${GAME_ASSET_VERSION}`,
   `./js/app-strings.js?v=${GAME_ASSET_VERSION}`,
+  `./js/text-catalog-overrides.js?v=${GAME_ASSET_VERSION}`,
+  `./js/text-catalog.js?v=${GAME_ASSET_VERSION}`,
   `./js/app-shell.js?v=${GAME_ASSET_VERSION}`,
   `./js/storage.js?v=${GAME_ASSET_VERSION}`,
   `./js/item-stats.js?v=${GAME_ASSET_VERSION}`,
@@ -68,6 +72,7 @@ const APP_SHELL = [
   `./js/profile-page.js?v=${GAME_ASSET_VERSION}`,
   `./js/shop.js?v=${GAME_ASSET_VERSION}`,
   `./js/shop-index.js?v=${GAME_ASSET_VERSION}`,
+  `./js/text-index.js?v=${GAME_ASSET_VERSION}`,
   `./js/collection.js?v=${GAME_ASSET_VERSION}`,
   "./js/heroes.js",
   `./js/leaderboard.js?v=${GAME_ASSET_VERSION}`,

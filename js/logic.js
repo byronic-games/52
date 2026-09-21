@@ -820,7 +820,7 @@ function grantPowerToCurrentRun(powerId, source = "bonus") {
     powerId: power.id,
     powerName: power.name,
     powersAfterPick: [...state.powers],
-    message: `Power gained: ${power.name}.`,
+    message: getText("game.powerGained", { power: power.name }),
   });
   return true;
 }
@@ -1607,7 +1607,7 @@ function startRun(forceRandom = false) {
 function pickPowerFromChoice(index) {
   if (Date.now() < (state.powerChoiceLockedUntil || 0)) return;
   if (typeof window.isTutorialBlockingPowerPick === "function" && window.isTutorialBlockingPowerPick()) {
-    state.message = "Pick a Power.";
+    state.message = getText("game.pickPower");
     render();
     return;
   }
@@ -1917,7 +1917,7 @@ function completeRunAfterDeckExhausted(reason = "deck_exhausted") {
     reason,
     cardsCleared: getDisplayedRunScore(),
     deckSize: getCurrentDeckTargetCount(),
-    message: "Reduced deck cleared.",
+    message: getText("game.reducedDeckCleared"),
   });
   if (!isDevModeRun()) {
     if (state.runMode !== "daily") {
@@ -1928,7 +1928,7 @@ function completeRunAfterDeckExhausted(reason = "deck_exhausted") {
       recordDailyClearProgress();
     }
   }
-  state.message = "YOU CLEARED THE DECK!";
+  state.message = getText("game.deckCleared");
   state.gameOver = true;
   triggerVictoryEffect();
   handleRunFinished(state.correctAnswers);
@@ -2467,13 +2467,13 @@ function useNudgeCharge(direction) {
   }
 
   if (!blankSpaceActive && isGreenDeckRun() && (state.energy || 0) <= 0) {
-    state.message = "No energy left - nudges are disabled.";
+    state.message = getText("game.noEnergy");
     render();
     return;
   }
 
   if (!blankSpaceActive && state.fiveAliveNudgeLocked) {
-    state.message = "Five Alive has locked this 5 - it cannot be nudged.";
+    state.message = getText("game.fiveLocked");
     render();
     return;
   }

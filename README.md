@@ -21,6 +21,7 @@ Mobile-first browser card game (higher/lower) with deck progression, powers, che
 - `settings.html` - settings/reset
 - `shop.html` - Collection: card backs, deck repairs, and discovered Cheats/Powers/Jokers
 - `shop-index.html` - card-back shop catalog editor and artwork exporter
+- `text-index.html` - shared interface and run-log language editor
 
 ## Handover Docs
 - `HANDOVER.md` (entry summary)

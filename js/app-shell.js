@@ -1,5 +1,5 @@
 (function () {
-  const ASSET_VERSION = "20260921e";
+  const ASSET_VERSION = "20260921i";
   const VIEW_TITLES = {
     home: APP_STRINGS.nav.home,
     setup: APP_STRINGS.nav.play,

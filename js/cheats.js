@@ -298,6 +298,16 @@ function getNudgeNudgeDelta(baseDelta) {
   return baseDelta * (2 ** legacyCheatStacks);
 }
 
+function applyAnimatedCurrentCardNudge(targetValue) {
+  const currentValue = getCurrentEffectiveValue();
+  if (!Number.isFinite(currentValue) || !Number.isFinite(targetValue)) return false;
+  state.currentValueModifier += targetValue - currentValue;
+  if (targetValue !== currentValue && typeof setCurrentCardNudgeAnimation === "function") {
+    setCurrentCardNudgeAnimation(targetValue < currentValue ? "down" : "up", currentValue, targetValue);
+  }
+  return true;
+}
+
 function getWeightedRandomIndex(items, getWeight, rng = Math.random) {
   const totalWeight = items.reduce((sum, item) => sum + Math.max(0, getWeight(item)), 0);
   if (totalWeight <= 0) return -1;
@@ -992,7 +1002,7 @@ const CHEATS = [
       }
       const targetValue = getAdjustedCurrentNudgeTarget(getNudgeNudgeDelta(1));
       if (!Number.isFinite(targetValue)) return "No current card.";
-      state.currentValueModifier += targetValue - current;
+      applyAnimatedCurrentCardNudge(targetValue);
       return `Current card is now treated as ${valueToRank(getCurrentEffectiveValue())} for the next guess.`;
     },
   },
@@ -1016,7 +1026,7 @@ const CHEATS = [
       }
       const targetValue = getAdjustedCurrentNudgeTarget(getNudgeNudgeDelta(-1));
       if (!Number.isFinite(targetValue)) return "No current card.";
-      state.currentValueModifier += targetValue - current;
+      applyAnimatedCurrentCardNudge(targetValue);
       return `Current card is now treated as ${valueToRank(getCurrentEffectiveValue())} for the next guess.`;
     },
   },
@@ -1040,7 +1050,7 @@ const CHEATS = [
       }
       const nextValue = getAdjustedCurrentNudgeTarget(getNudgeNudgeDelta(2));
       if (!Number.isFinite(nextValue)) return "No current card.";
-      state.currentValueModifier += nextValue - current;
+      applyAnimatedCurrentCardNudge(nextValue);
       return `Current card is now treated as ${valueToRank(getCurrentEffectiveValue())} for the next guess.`;
     },
   },
@@ -1064,7 +1074,7 @@ const CHEATS = [
       }
       const nextValue = getAdjustedCurrentNudgeTarget(getNudgeNudgeDelta(-2));
       if (!Number.isFinite(nextValue)) return "No current card.";
-      state.currentValueModifier += nextValue - current;
+      applyAnimatedCurrentCardNudge(nextValue);
       return `Current card is now treated as ${valueToRank(getCurrentEffectiveValue())} for the next guess.`;
     },
   },

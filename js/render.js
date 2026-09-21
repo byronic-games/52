@@ -1198,7 +1198,7 @@ function renderScores() {
     state.bestScore = loadBestScore(bestDeckKey, bestLevelNumber);
   }
   if (scoreEl) setAnimatedText(scoreEl, getDisplayedRunScore());
-  if (bestScoreEl) setAnimatedText(bestScoreEl, `BEST: ${state.bestScore}`);
+  if (bestScoreEl) setAnimatedText(bestScoreEl, getText("game.best", { score: state.bestScore }));
   renderExperienceCounter(false);
   if (jokerCountEl) {
     const showJokerCount = isJokerDeckKey(hudDeckKey);
@@ -1445,6 +1445,11 @@ function shortenEffectPayload(effectName, payload) {
   }
   if (/hit/i.test(text) && /power/i.test(text)) return `${getShortEffectLabel(name)}: Power`;
   if (/hit/i.test(text) && /2 .*cheats?/i.test(text)) return `${getShortEffectLabel(name)}: 2 Cheats`;
+  if (/saved (?:the run|this guess)/i.test(text)) return `${getShortEffectLabel(name)} saved`;
+  if (/no (?:other )?cheats? or nudges?/i.test(text)) {
+    const remainingMatch = text.match(/(\d+) more (?:turn|card)/i);
+    return remainingMatch ? `${getShortEffectLabel(name)}: ${remainingMatch[1]} left` : `${getShortEffectLabel(name)} locked`;
+  }
   if (/^yes\b/i.test(text)) return `${getShortEffectLabel(name)}: Yes`;
   if (/^no\b/i.test(text)) return `${getShortEffectLabel(name)}: No`;
   if (/complete/i.test(text) && /power/i.test(text)) return `${getShortEffectLabel(name)}: Power`;
@@ -1535,12 +1540,19 @@ function getShortPlayerMessage(message = "") {
   if (/^WL/i.test(cleaned)) return "WL";
   if (/^Higher, Higher, Higher/i.test(cleaned)) return "HHH";
   if (/^Catch-22/i.test(cleaned)) return "Catch-22";
-  if (/^Psycho/i.test(cleaned)) return "Psycho";
+  if (/^Psycho/i.test(cleaned)) {
+    const remainingMatch = cleaned.match(/(\d+) more turn/i);
+    return remainingMatch ? `Psycho: ${remainingMatch[1]} left` : "Psycho";
+  }
   if (/^Brucie Bonus/i.test(cleaned)) return "Brucie Bonus";
   if (/^You Can Cheat A Cheater/i.test(cleaned)) return "Cheater paid";
   if (/^Emergency Services/i.test(cleaned) && /9/i.test(cleaned)) return "9s pulled";
   if (/^Power gained:/i.test(cleaned)) return "Power gained";
   if (/^Unlocked:/i.test(cleaned)) return "Unlocked";
+  {
+    const dartMatch = cleaned.match(/^9 Dart Finish.*?(\d+) more card/i);
+    if (dartMatch) return `9 Dart: ${dartMatch[1]} left`;
+  }
   if (/^Choose/i.test(cleaned) && /cheat/i.test(cleaned)) return "Choose Cheat";
   if (/^Choose/i.test(cleaned) && /power/i.test(cleaned)) return "Choose Power";
   if (/tutorial/i.test(cleaned) && /lock/i.test(cleaned)) return "Tutorial locked";
@@ -1563,25 +1575,33 @@ function getShortPlayerMessage(message = "") {
   if (/Correct!/i.test(cleaned)) return "Correct";
   if (/Yellow Joker:/i.test(cleaned)) {
     const jokerPart = cleaned.replace(/^Yellow Joker:\s*/i, "");
-    return jokerPart.split(/[.!-]/)[0].slice(0, 28) || "Joker";
+    if (/removed.*nudges?/i.test(jokerPart)) return "Joker: Nudges removed";
+    if (/discarded.*cheats?/i.test(jokerPart)) return "Joker: Cheats removed";
+    if (/stripped.*power|cleared active effects/i.test(jokerPart)) return "Joker: Powers removed";
+    if (/torn|tear/i.test(jokerPart)) return "Joker: Tear hidden";
+    if (/shuffl|rewind/i.test(jokerPart)) return "Joker: Cards returned";
+    if (/grid/i.test(jokerPart)) return "Joker: Grid cleared";
+    return truncateMessage(`Joker: ${jokerPart.split(/[.!]/)[0]}`, 32) || "Joker";
   }
-  if (/saved the run/i.test(cleaned)) return "Saved";
-  if (/choose/i.test(cleaned) && /cheat/i.test(cleaned)) return "Choose a Cheat";
+  if (/saved the run/i.test(cleaned)) {
+    const saver = cleaned.match(/^(.+?) saved the run/i)?.[1];
+    return saver ? truncateMessage(`${saver} saved`, 28) : "Saved";
+  }
   if (/choose/i.test(cleaned) && /power/i.test(cleaned)) return "Choose a Power";
+  if (/choose/i.test(cleaned) && /cheat/i.test(cleaned)) return "Choose a Cheat";
   if (/nudge/i.test(cleaned)) return cleaned.length > 38 ? "Nudge used" : cleaned;
   if (/Run started/i.test(cleaned)) return "Run started";
-  return truncateMessage(cleaned, 34);
+  return truncateMessage(cleaned, 32);
 }
 
 function getMessageBarText(message = "") {
-  return cleanPlayerLogMessage(message);
+  return truncateMessage(getShortPlayerMessage(message), 32);
 }
 
 function addPlayerLogEntry(message = "", options = {}) {
   const detail = cleanPlayerLogMessage(message);
   if (!detail) return;
   if (detail === "Press Start Run.") return;
-  if (/^(Nudge [+-]\d+ used\. Current card treated|Blank Space adjusted\.)/i.test(detail)) return;
   if (state.lastPlayerLogMessage === detail) return;
 
   const summaryOverride = cleanPlayerLogMessage(options.summary || "");
@@ -1604,7 +1624,7 @@ function renderRunLogList() {
 
   const entries = Array.isArray(state.playerLog) ? state.playerLog : [];
   if (!entries.length) {
-    listEl.innerHTML = `<p class="run-log-empty">No run events yet.</p>`;
+    listEl.innerHTML = `<p class="run-log-empty">${escapeHtml(getText("game.noRunEvents"))}</p>`;
     return;
   }
 
@@ -1728,7 +1748,7 @@ function renderHeaderStatus() {
 }
 
 function getCheatDescription(cheat) {
-  return CHEAT_DESCRIPTIONS?.[cheat.name] || "No description yet.";
+  return CHEAT_DESCRIPTIONS?.[cheat.name] || getText("game.noDescription");
 }
 
 function showTooltip(titleText, bodyText, el) {
@@ -2130,7 +2150,7 @@ function renderRestartButton() {
     typeof getRunScoreFromCorrectAnswers === "function" &&
     getRunScoreFromCorrectAnswers(state.correctAnswers) >= 52;
   if (state.saveScumPendingContinue && state.saveScumSnapshot) {
-    btn.innerText = "RELOAD SAVE";
+    btn.innerText = getText("action.reloadSave");
     btn.disabled = false;
     return;
   }
@@ -2138,20 +2158,22 @@ function renderRestartButton() {
     const variantLabel = typeof getDailyVariantConfig === "function"
       ? getDailyVariantConfig(state.dailyVariant).label || "Daily"
       : "Daily";
-    btn.innerText = `${variantLabel} Complete`;
+    btn.innerText = getText("game.dailyComplete", { variant: variantLabel });
     btn.disabled = true;
     return;
   }
 
   btn.disabled = false;
   if (runIsActive) {
-    btn.innerText = state.restartConfirmArmed ? "Confirm Restart" : "Restart Run";
+    btn.innerText = state.restartConfirmArmed
+      ? getText("action.confirmRestart")
+      : getText("action.restartRun");
     return;
   }
 
   btn.innerText = hasStartedRun
-    ? (runWasCompletelyCleared ? "Main Menu" : "Restart Run")
-    : "Start Run";
+    ? (runWasCompletelyCleared ? getText("action.mainMenu") : getText("action.restartRun"))
+    : getText("action.startRun");
 }
 
 function renderStartPowerSelector() {
@@ -2231,7 +2253,7 @@ function renderCheatGuide() {
 
     const desc = document.createElement("div");
     desc.className = "cheat-guide-desc";
-    desc.innerText = CHEAT_DESCRIPTIONS[cheat.name] || "No description yet.";
+    desc.innerText = CHEAT_DESCRIPTIONS[cheat.name] || getText("game.noDescription");
 
     item.appendChild(name);
     item.appendChild(desc);
@@ -2261,11 +2283,8 @@ function renderActivePowers() {
 function renderCardFaceMarkup(card, displayValue, isTemporarilyModified, includeTornCorner, options = {}) {
   if (isJokerCard(card)) {
     return `
-      <img class="card-art card-art-large" src="images/LargeCards/Joker1.png" alt="" aria-hidden="true" draggable="false">
-      <div class="joker-card-corner">JOKER</div>
-      <div class="joker-card-icon">${card.icon || "!"}</div>
-      <div class="joker-card-name">${getJokerName(card)}</div>
-      <div class="joker-card-copy">${card.description || "Yellow hazard"}</div>
+      <div class="joker-card-name">${escapeHtml(getJokerName(card))}</div>
+      <div class="joker-card-copy">${escapeHtml(card.description || "Yellow hazard")}</div>
     `;
   }
   const showShieldBadge = !!options.showShieldBadge;
@@ -2586,8 +2605,8 @@ function renderNudgeControls() {
 
   upCountEl.innerText = String(upCount);
   downCountEl.innerText = String(downCount);
-  upBtn.setAttribute("aria-label", `Nudge Up, ${upCount} charge${upCount === 1 ? "" : "s"} available`);
-  downBtn.setAttribute("aria-label", `Nudge Down, ${downCount} charge${downCount === 1 ? "" : "s"} available`);
+  upBtn.setAttribute("aria-label", `${getText("game.nudgeUp")}, ${upCount} ${getText("game.charges")}`);
+  downBtn.setAttribute("aria-label", `${getText("game.nudgeDown")}, ${downCount} ${getText("game.charges")}`);
 
   const isBlocked =
     state.gameOver ||
@@ -2795,6 +2814,9 @@ function renderButtons() {
   const lowerBtn = document.getElementById("lower-btn");
   if (!controls || !restartBtn || !higherBtn || !lowerBtn) return;
 
+  higherBtn.innerText = getText("action.higher");
+  lowerBtn.innerText = getText("action.lower");
+
   const showingChoiceModal = state.pendingPowerOptions.length > 0 || state.pendingCheatOptions.length > 0;
   const revealInFlight = !!state.pendingRevealAnimation;
   const runIsActive = !!state.current && (!state.gameOver || revealInFlight);
@@ -2858,6 +2880,14 @@ function renderButtons() {
 
   higherBtn.disabled = disableGuessing;
   lowerBtn.disabled = disableGuessing;
+}
+
+function renderLocalizedStaticText() {
+  const runLogBtn = document.getElementById("run-log-btn");
+  if (runLogBtn) {
+    runLogBtn.innerText = getText("action.log");
+    runLogBtn.setAttribute("aria-label", getText("action.log"));
+  }
 }
 
 function renderHandCard() {
@@ -3487,7 +3517,7 @@ function renderCheats() {
       if (held) return;
       hideCheatTooltip(true);
       if (typeof window.isTutorialBlockingCheatUse === "function" && window.isTutorialBlockingCheatUse()) {
-        state.message = "Tutorial locked";
+        state.message = getText("game.tutorialLocked");
         renderMessage();
         return;
       }
@@ -4043,7 +4073,7 @@ function renderSeenGrid() {
 
   if (labelEl) {
     const deckSize = typeof getCurrentDeckTargetCount === "function" ? getCurrentDeckTargetCount() : 52;
-    setAnimatedText(labelEl, `FOUND: ${foundCount}/${deckSize}`);
+    setAnimatedText(labelEl, getText("game.found", { count: foundCount, total: deckSize }));
   }
 
   for (const suit of SUITS) {
@@ -4194,7 +4224,7 @@ function renderMessage() {
       return;
     }
   }
-  el.dataset.messageDensity = "scroll";
+  el.dataset.messageDensity = "tight";
 }
 
 function renderNextInfo() {
@@ -4204,6 +4234,7 @@ function renderNextInfo() {
 }
 
 function render() {
+  renderLocalizedStaticText();
   if (!state.gameOver && state.gameOverDisplayCards) {
     state.gameOverDisplayCards = null;
   }
