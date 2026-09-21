@@ -1,12 +1,26 @@
-const CACHE_VERSION = "20260713q";
+const CACHE_VERSION = "20260921e";
 const CACHE_NAME = `byronic-52-${CACHE_VERSION}`;
-const GAME_ASSET_VERSION = "20260713q";
+const GAME_ASSET_VERSION = "20260921e";
+
+const CARD_SUITS = ["clubs", "diamonds", "hearts", "spades"];
+const CARD_RANKS = ["ace", "02", "03", "04", "05", "06", "07", "08", "09", "10", "jack", "queen", "king"];
+const CARD_FACE_ASSETS = ["LargeCards", "SmallCards"].flatMap((folder) => [
+  ...CARD_SUITS.flatMap((suit) => CARD_RANKS.map((rank) => `./images/${folder}/${suit}_${rank}.png`)),
+  `./images/${folder}/Joker1.png`,
+  `./images/${folder}/Joker2.png`,
+]);
+const CARD_BACK_ASSETS = [
+  ...Array.from({ length: 8 }, (_, index) => `./images/LargeCards/back${String(index + 1).padStart(2, "0")}.png`),
+  "./images/SmallCards/back01.png",
+  "./images/SmallCards/back02.png",
+];
 
 const APP_SHELL = [
   "./",
   "./index.html",
   "./game.html",
   "./shop.html",
+  "./shop-index.html",
   "./daily.html",
   "./settings.html",
   "./profile.html",
@@ -15,6 +29,7 @@ const APP_SHELL = [
   "./manifest.webmanifest",
   "./icon.svg",
   "./images/52logo.png",
+  "./images/card_backs/rocco_birthday.png",
   "./images/icons/apple-touch-icon.png",
   "./images/icons/icon-192.png",
   "./images/icons/icon-512.png",
@@ -27,6 +42,7 @@ const APP_SHELL = [
   `./profile.css?v=${GAME_ASSET_VERSION}`,
   "./heroes.css",
   `./shop.css?v=${GAME_ASSET_VERSION}`,
+  `./shop-index.css?v=${GAME_ASSET_VERSION}`,
   `./cheat-index.css?v=${GAME_ASSET_VERSION}`,
   "./cheat-catalog.csv",
   `./js/constants.js?v=${GAME_ASSET_VERSION}`,
@@ -35,6 +51,7 @@ const APP_SHELL = [
   `./js/storage.js?v=${GAME_ASSET_VERSION}`,
   `./js/item-stats.js?v=${GAME_ASSET_VERSION}`,
   `./js/cosmetics.js?v=${GAME_ASSET_VERSION}`,
+  `./js/card-back-catalog-overrides.js?v=${GAME_ASSET_VERSION}`,
   `./js/state.js?v=${GAME_ASSET_VERSION}`,
   `./js/powers.js?v=${GAME_ASSET_VERSION}`,
   `./js/cheats.js?v=${GAME_ASSET_VERSION}`,
@@ -50,11 +67,14 @@ const APP_SHELL = [
   "./js/settings.js",
   `./js/profile-page.js?v=${GAME_ASSET_VERSION}`,
   `./js/shop.js?v=${GAME_ASSET_VERSION}`,
+  `./js/shop-index.js?v=${GAME_ASSET_VERSION}`,
   `./js/collection.js?v=${GAME_ASSET_VERSION}`,
   "./js/heroes.js",
   `./js/leaderboard.js?v=${GAME_ASSET_VERSION}`,
   `./js/cheat-index.js?v=${GAME_ASSET_VERSION}`,
   `./js/pwa-update.js?v=${GAME_ASSET_VERSION}`,
+  ...CARD_FACE_ASSETS,
+  ...CARD_BACK_ASSETS,
 ];
 
 self.addEventListener("install", (event) => {

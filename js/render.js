@@ -8,6 +8,21 @@ function getDeckBackColor(deckKey) {
   return "blue";
 }
 
+function getCardBackImagePath(deckKey, folder = "LargeCards") {
+  const backNumber = {
+    blue: "01",
+    red: "02",
+    green: "03",
+    orange: "04",
+    yellow: "05",
+    black: "06",
+  }[normalizeDeckKey(deckKey || "blue")] || "01";
+  const availableBackNumber = folder === "SmallCards" && !["01", "02"].includes(backNumber)
+    ? "01"
+    : backNumber;
+  return `images/${folder}/back${availableBackNumber}.png`;
+}
+
 let revealAnimationResetTimer = null;
 let revealGameOverTimer = null;
 let messageExpiryTimer = null;
@@ -1194,7 +1209,11 @@ function renderScores() {
     jokerCountEl.setAttribute("aria-hidden", showJokerCount ? "false" : "true");
   }
   {
-    const showEnergy = !state.gameOver && !!state.current && isEnergyDeckKey(hudDeckKey);
+    const normalizedHudDeckKey = normalizeDeckKey(hudDeckKey);
+    const showEnergyDeck =
+      (typeof isEnergyDeckKey === "function" && isEnergyDeckKey(normalizedHudDeckKey)) ||
+      normalizedHudDeckKey === "orange";
+    const showEnergy = !state.gameOver && !!state.current && showEnergyDeck;
     if (energyCardEl) {
       energyCardEl.hidden = !showEnergy;
     }
@@ -2242,6 +2261,7 @@ function renderActivePowers() {
 function renderCardFaceMarkup(card, displayValue, isTemporarilyModified, includeTornCorner, options = {}) {
   if (isJokerCard(card)) {
     return `
+      <img class="card-art card-art-large" src="images/LargeCards/Joker1.png" alt="" aria-hidden="true" draggable="false">
       <div class="joker-card-corner">JOKER</div>
       <div class="joker-card-icon">${card.icon || "!"}</div>
       <div class="joker-card-name">${getJokerName(card)}</div>
@@ -2260,8 +2280,11 @@ function renderCardFaceMarkup(card, displayValue, isTemporarilyModified, include
   const minimalFacePreview = isNewTheme && !!options.minimalFacePreview && isFaceRank(shownRank);
   const pipLayout = isNewTheme && !options.suppressPips ? getCardPipLayout(shownRank) : null;
   const faceCardArt = isNewTheme ? getFaceCardImagePath(card, shownRank) : "";
+  const fullCardArt = isNewTheme ? getPlayingCardImagePath(card, shownRank, "LargeCards") : "";
   const labelHtml = isNewTheme
-    ? `<div class="card-corner card-corner-tl"><span class="card-rank ${nudgeValueActive ? "card-nudge-new-rank" : ""}">${shownRank}</span>${minimalFacePreview ? "" : `<span class="card-suit" data-suit="${card.suit}" aria-hidden="true"></span>`}</div>${faceCardArt ? renderFaceCardArtMarkup(faceCardArt, shownRank, card.suit) : (minimalFacePreview ? "" : (pipLayout ? renderPipGridMarkup(card.suit, shownRank, pipLayout) : `<div class="card-center-suit" data-suit="${card.suit}" aria-hidden="true"></div>`))}<div class="card-corner card-corner-br" aria-hidden="true"><span class="card-rank ${nudgeValueActive ? "card-nudge-new-rank" : ""}">${shownRank}</span>${minimalFacePreview ? "" : `<span class="card-suit" data-suit="${card.suit}"></span>`}</div>`
+    ? fullCardArt
+      ? `<img class="card-art card-art-large" src="${fullCardArt}" alt="" aria-hidden="true" draggable="false">`
+      : `<div class="card-corner card-corner-tl"><span class="card-rank ${nudgeValueActive ? "card-nudge-new-rank" : ""}">${shownRank}</span>${minimalFacePreview ? "" : `<span class="card-suit" data-suit="${card.suit}" aria-hidden="true"></span>`}</div>${faceCardArt ? renderFaceCardArtMarkup(faceCardArt, shownRank, card.suit) : (minimalFacePreview ? "" : (pipLayout ? renderPipGridMarkup(card.suit, shownRank, pipLayout) : `<div class="card-center-suit" data-suit="${card.suit}" aria-hidden="true"></div>`))}<div class="card-corner card-corner-br" aria-hidden="true"><span class="card-rank ${nudgeValueActive ? "card-nudge-new-rank" : ""}">${shownRank}</span>${minimalFacePreview ? "" : `<span class="card-suit" data-suit="${card.suit}"></span>`}</div>`
     : `<span class="card-face-label ${nudgeValueActive ? "card-nudge-new-label" : ""}">${shownRank}${card.suit}</span>`;
   const nudgeOldRankHtml = nudgeValueActive
     ? isNewTheme
@@ -2294,12 +2317,19 @@ function applyCardBackCosmeticToElement(cardBackEl) {
     "card-back-cosmetic-royal-felt",
     "card-back-cosmetic-oll-logo",
     "card-back-cosmetic-muse-logo",
+    "card-back-cosmetic-rocco-birthday",
   );
   if (!cosmetic || cosmetic.id === "classic") {
     cardBackEl.style.removeProperty("--card-back-cosmetic-image");
+    cardBackEl.style.setProperty(
+      "--card-back-image",
+      `url("${getCardBackImagePath(state.currentDeckKey || state.selectedDeckKey)}")`,
+    );
     return;
   }
-  cardBackEl.classList.add("has-card-back-cosmetic", cosmetic.previewClass || "");
+  cardBackEl.style.removeProperty("--card-back-image");
+  cardBackEl.classList.add("has-card-back-cosmetic");
+  if (cosmetic.previewClass) cardBackEl.classList.add(cosmetic.previewClass);
   if (cosmetic.image) {
     cardBackEl.style.setProperty("--card-back-cosmetic-image", `url("${cosmetic.image}")`);
   } else {
@@ -2309,6 +2339,23 @@ function applyCardBackCosmeticToElement(cardBackEl) {
 
 function isFaceRank(rank) {
   return rank === "J" || rank === "Q" || rank === "K";
+}
+
+function getPlayingCardImagePath(card, shownRank = card?.rank, folder = "LargeCards") {
+  const suitName = {
+    "♣": "clubs",
+    "♦": "diamonds",
+    "♥": "hearts",
+    "♠": "spades",
+  }[card?.suit || ""];
+  const normalizedRank = String(shownRank || "").toLowerCase();
+  const rankName = {
+    a: "ace",
+    j: "jack",
+    q: "queen",
+    k: "king",
+  }[normalizedRank] || normalizedRank.padStart(2, "0");
+  return suitName && rankName ? `images/${folder}/${suitName}_${rankName}.png` : "";
 }
 
 function getFaceCardImagePath(card, shownRank) {
@@ -2394,22 +2441,27 @@ function renderCurrentCard() {
 
   const backStatus = getCardBackStatus(cardToRender.id);
   const isEnchantedCard = !!backStatus.enchanted || state.recentEnchantedRevealCardId === cardToRender.id;
+  const nudgeAnimation = state.currentNudgeAnimation?.cardId === cardToRender.id
+    ? state.currentNudgeAnimation
+    : null;
   const effectiveValue = showPinnedCurrentCard
     ? pendingReveal.fromEffectiveValue
     : gameOverCards?.leftCard && cardToRender.id === gameOverCards.leftCard.id
       ? gameOverCards.leftEffectiveValue
       : getCurrentEffectiveValue();
+  const displayedEffectiveValue = nudgeAnimation?.showFromValue
+    ? nudgeAnimation.fromValue
+    : effectiveValue;
   const isTemporarilyModified = showPinnedCurrentCard
     ? !!pendingReveal.fromIsTemp
     : gameOverCards?.leftCard && cardToRender.id === gameOverCards.leftCard.id
       ? !!gameOverCards.leftIsTemp
-      : effectiveValue !== cardToRender.value || Number.isFinite(typeof getTemporaryCardValue === "function" ? getTemporaryCardValue(cardToRender) : null);
+      : nudgeAnimation?.showFromValue
+        ? displayedEffectiveValue !== cardToRender.value
+        : effectiveValue !== cardToRender.value || Number.isFinite(typeof getTemporaryCardValue === "function" ? getTemporaryCardValue(cardToRender) : null);
   const feedbackClass = state.currentCardFeedback
     ? `feedback-${state.currentCardFeedback}`
     : "";
-  const nudgeAnimation = state.currentNudgeAnimation?.cardId === cardToRender.id
-    ? state.currentNudgeAnimation
-    : null;
   const nudgeClass = nudgeAnimation
     ? `nudge-animate nudge-${nudgeAnimation.direction === "down" ? "down" : "up"}`
     : "";
@@ -2417,7 +2469,7 @@ function renderCurrentCard() {
   currentCardEl.className = `card-face ${isJokerCard(cardToRender) ? "joker-card-face" : (isRed(cardToRender) ? "red" : "black")} ${backStatus.tornCorner ? "torn-corner-face" : ""} ${isEnchantedCard ? "enchanted-card-face" : ""} ${isTemporarilyModified ? "temporary-value" : ""} ${feedbackClass} ${nudgeClass}${getPreservedTutorialFocusClass(currentCardEl)}`.trim();
   currentCardEl.innerHTML = renderCardFaceMarkup(
     cardToRender,
-    effectiveValue,
+    displayedEffectiveValue,
     isTemporarilyModified,
     backStatus.tornCorner,
     {
@@ -4009,20 +4061,28 @@ function renderSeenGrid() {
       cell.setAttribute("aria-label", `${describeCard(card)} ${seen ? "found" : "not found"}`);
 
       if (!seen) {
-        if (cell.childElementCount) cell.replaceChildren();
+        const backPath = getCardBackImagePath(state.currentDeckKey || state.selectedDeckKey, "SmallCards");
+        if (cell.children.length === 1 && cell.firstElementChild?.getAttribute("src") === backPath) continue;
+        const backEl = document.createElement("img");
+        backEl.className = "memory-card-art memory-card-back-art";
+        backEl.src = backPath;
+        backEl.alt = "";
+        backEl.setAttribute("aria-hidden", "true");
+        backEl.draggable = false;
+        cell.replaceChildren(backEl);
         continue;
       }
 
       if (visuals === "new") {
-        if (cell.children.length === 2 && cell.children[0].textContent === rank.r && cell.children[1].dataset.suit === suit) continue;
-        const rankEl = document.createElement("span");
-        rankEl.className = "memory-card-rank";
-        rankEl.innerText = rank.r;
-        const suitEl = document.createElement("span");
-        suitEl.className = "memory-card-suit";
-        suitEl.dataset.suit = suit;
-        suitEl.setAttribute("aria-hidden", "true");
-        cell.replaceChildren(rankEl, suitEl);
+        const imagePath = getPlayingCardImagePath(card, rank.r, "SmallCards");
+        if (cell.children.length === 1 && cell.firstElementChild?.getAttribute("src") === imagePath) continue;
+        const imageEl = document.createElement("img");
+        imageEl.className = "memory-card-art";
+        imageEl.src = imagePath;
+        imageEl.alt = "";
+        imageEl.setAttribute("aria-hidden", "true");
+        imageEl.draggable = false;
+        cell.replaceChildren(imageEl);
       } else if (cell.children.length !== 1 || cell.textContent !== `${rank.r}${suit}`) {
         const label = document.createElement("span");
         label.className = "memory-card-label";

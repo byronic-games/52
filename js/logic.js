@@ -132,6 +132,7 @@ function buildDailyRun(dateKey, variant = "normal") {
 
 let currentCardFeedbackTimer = null;
 let currentCardNudgeAnimationTimer = null;
+let currentCardNudgeMidpointTimer = null;
 let gameShellFlashTimer = null;
 let recentlySeenCardTimer = null;
 let victoryEffectTimer = null;
@@ -555,6 +556,7 @@ function setCurrentCardNudgeAnimation(direction, fromValue, toValue) {
     direction: direction === "down" ? "down" : "up",
     fromValue,
     toValue,
+    showFromValue: true,
   };
 
   state.currentNudgeAnimation = animation;
@@ -563,11 +565,27 @@ function setCurrentCardNudgeAnimation(direction, fromValue, toValue) {
     clearTimeout(currentCardNudgeAnimationTimer);
     currentCardNudgeAnimationTimer = null;
   }
+  if (currentCardNudgeMidpointTimer) {
+    clearTimeout(currentCardNudgeMidpointTimer);
+    currentCardNudgeMidpointTimer = null;
+  }
+
+  currentCardNudgeMidpointTimer = setTimeout(() => {
+    if (state.currentNudgeAnimation?.id === animation.id) {
+      state.currentNudgeAnimation.showFromValue = false;
+      if (typeof renderCurrentCard === "function") renderCurrentCard();
+    }
+    currentCardNudgeMidpointTimer = null;
+  }, 162);
 
   currentCardNudgeAnimationTimer = setTimeout(() => {
     if (state.currentNudgeAnimation?.id === animation.id) {
       state.currentNudgeAnimation = null;
       render();
+    }
+    if (currentCardNudgeMidpointTimer) {
+      clearTimeout(currentCardNudgeMidpointTimer);
+      currentCardNudgeMidpointTimer = null;
     }
     currentCardNudgeAnimationTimer = null;
   }, 324);

@@ -20,6 +20,7 @@ Mobile-first browser card game (higher/lower) with deck progression, powers, che
 - `profile.html` - profile/crowns
 - `settings.html` - settings/reset
 - `shop.html` - Collection: card backs, deck repairs, and discovered Cheats/Powers/Jokers
+- `shop-index.html` - card-back shop catalog editor and artwork exporter
 
 ## Handover Docs
 - `HANDOVER.md` (entry summary)
@@ -29,6 +30,7 @@ Mobile-first browser card game (higher/lower) with deck progression, powers, che
 - `DATA_CONTRACTS.md` (Supabase expectations)
 - `STATE_MAP.md` (storage keys)
 - `AI_STARTER_PROMPT.md` (copy/paste takeover prompt)
+- `archive/` (dated, reversible storage for unused imports and prototypes)
 
 ## Developer Rules
 - Keep unlock order: Blue -> Green -> Yellow -> Orange -> Black. Green unlocks from Blue L1, Yellow from Green L1, Orange from Yellow L1, and Black from clearing every level of Blue/Green/Yellow/Orange.

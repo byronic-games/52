@@ -49,7 +49,39 @@ const CARD_BACK_COSMETICS = [
     previewClass: "card-back-cosmetic-muse-logo",
     image: "images/card_backs/muse_logo.png",
   },
+  {
+    id: "rocco_birthday",
+    name: "Rocco Birthday",
+    description: "Happy birthday, Rocco!",
+    cost: 0,
+    included: true,
+    hiddenWhenUnowned: true,
+    previewClass: "card-back-cosmetic-rocco-birthday",
+    image: "images/card_backs/rocco_birthday.png",
+  },
 ];
+
+if (typeof CARD_BACK_CATALOG_OVERRIDES !== "undefined" && CARD_BACK_CATALOG_OVERRIDES) {
+  CARD_BACK_COSMETICS.forEach((cosmetic) => {
+    const override = CARD_BACK_CATALOG_OVERRIDES[cosmetic.id];
+    if (!override) return;
+    ["name", "description", "cost", "included", "hiddenWhenUnowned", "image"].forEach((key) => {
+      if (Object.prototype.hasOwnProperty.call(override, key)) cosmetic[key] = override[key];
+    });
+  });
+  Object.entries(CARD_BACK_CATALOG_OVERRIDES).forEach(([id, override]) => {
+    if (!id || CARD_BACK_COSMETICS.some((cosmetic) => cosmetic.id === id)) return;
+    CARD_BACK_COSMETICS.push({
+      id,
+      name: override.name || id,
+      description: override.description || "",
+      cost: Math.max(0, Number(override.cost) || 0),
+      included: override.included !== false,
+      hiddenWhenUnowned: !!override.hiddenWhenUnowned,
+      image: override.image || "",
+    });
+  });
+}
 
 function getCardBackCosmeticById(id) {
   return CARD_BACK_COSMETICS.find((cosmetic) => cosmetic.id === id) || CARD_BACK_COSMETICS[0];
@@ -62,5 +94,12 @@ function getSelectedCardBackCosmetic() {
 }
 
 function getIncludedCardBackCosmetics() {
-  return CARD_BACK_COSMETICS.filter((cosmetic) => cosmetic.included !== false);
+  const selectedId = typeof loadSelectedCardBackCosmetic === "function" ? loadSelectedCardBackCosmetic() : "classic";
+  return CARD_BACK_COSMETICS.filter((cosmetic) => {
+    if (cosmetic.included === false) return false;
+    if (!cosmetic.hiddenWhenUnowned) return true;
+    return cosmetic.id === selectedId || (
+      typeof isCardBackCosmeticOwned === "function" && isCardBackCosmeticOwned(cosmetic.id)
+    );
+  });
 }

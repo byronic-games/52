@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>52! Shop Index</title>
+  <link rel="stylesheet" href="shop-index.css?v=20260921a">
+</head>
+<body>
+  <main class="shop-index-shell">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">52! Tools</p>
+        <h1>Shop Index</h1>
+        <p>Edit card-back availability and prices, then download the catalog and replace <code>js/card-back-catalog-overrides.js</code>.</p>
+      </div>
+      <nav class="header-actions" aria-label="Page links">
+        <a href="index.html">Home</a>
+        <a href="index.html?view=shop">Open Shop</a>
+      </nav>
+    </header>
+
+    <section class="tool-section" aria-labelledby="catalog-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="catalog-title">Card Back Catalog</h2>
+          <p id="catalog-summary" aria-live="polite"></p>
+        </div>
+        <div class="section-actions">
+          <button id="add-card-back-btn" type="button">Add Card Back</button>
+          <button id="download-catalog-btn" class="primary-action" type="button">Download Catalog</button>
+          <button id="reset-catalog-btn" type="button">Reset Edits</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Preview</th>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Available</th>
+              <th>Cost (XP)</th>
+              <th>Hidden Until Owned</th>
+              <th>Image Path</th>
+            </tr>
+          </thead>
+          <tbody id="card-back-table-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="tool-section artwork-section" aria-labelledby="artwork-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="artwork-title">Artwork Template</h2>
+          <p>Create one design and export game-ready large and grid versions.</p>
+        </div>
+        <div class="section-actions">
+          <button id="export-large-btn" class="primary-action" type="button">Export 352 x 512</button>
+          <button id="export-small-btn" type="button">Export 66 x 96</button>
+        </div>
+      </div>
+      <div class="artwork-workspace">
+        <div class="canvas-column">
+          <canvas id="artwork-canvas" width="352" height="512" aria-label="Card back artwork preview"></canvas>
+          <p id="artwork-status" aria-live="polite">Ready for artwork.</p>
+        </div>
+        <form class="artwork-controls" onsubmit="return false">
+          <label>Artwork image<input id="artwork-file" type="file" accept="image/png,image/jpeg,image/webp"></label>
+          <label>File name<input id="artwork-name" type="text" value="new_card_back" spellcheck="false"></label>
+          <label>Image fit<select id="artwork-fit"><option value="cover">Cover</option><option value="contain">Contain</option><option value="stretch">Stretch</option></select></label>
+          <label>Frame color<input id="frame-color" type="color" value="#f4f7fa"></label>
+          <label>Artwork background<input id="artwork-color" type="color" value="#245bbd"></label>
+          <label class="toggle-row"><input id="show-guides" type="checkbox" checked><span>Show safe-area guides</span></label>
+          <button id="download-template-btn" type="button">Download Blank Template</button>
+          <p class="control-note">Guides are preview-only and are never included in exported card artwork.</p>
+        </form>
+      </div>
+    </section>
+  </main>
+  <script src="js/card-back-catalog-overrides.js?v=20260921a"></script>
+  <script src="js/cosmetics.js?v=20260921a"></script>
+  <script src="js/shop-index.js?v=20260921a"></script>
+</body>
+</html>
