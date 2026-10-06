@@ -2640,6 +2640,26 @@ body[data-effects="reduced"] *::after {
   transform-origin: center;
 }
 
+.grid-cell.current::after {
+  content: "";
+  position: absolute;
+  z-index: 4;
+  inset: -3px;
+  border: 2px solid #5fe4ff;
+  border-radius: 5px;
+  background: rgba(95, 228, 255, 0.08);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.8),
+    0 0 7px 2px rgba(95, 228, 255, 0.7);
+  pointer-events: none;
+  animation: current-grid-card-pulse 1.65s ease-in-out infinite;
+}
+
+.grid-cell.current {
+  z-index: 2;
+  isolation: isolate;
+}
+
 .grid-cell.xp-banked-source {
   opacity: 0;
   transition: opacity 120ms ease-in;
@@ -3471,6 +3491,30 @@ body[data-effects="reduced"] *::after {
 .choice-current-card-visual .joker-card-name {
   padding: 4px;
   font-size: 0.52rem;
+}
+
+@keyframes current-grid-card-pulse {
+  0%, 100% {
+    opacity: 0.52;
+    background: rgba(95, 228, 255, 0.04);
+    box-shadow:
+      inset 0 0 0 2px rgba(255, 255, 255, 0.62),
+      0 0 4px 1px rgba(95, 228, 255, 0.48);
+  }
+  50% {
+    opacity: 1;
+    background: rgba(95, 228, 255, 0.18);
+    box-shadow:
+      inset 0 0 0 2px rgba(255, 255, 255, 0.96),
+      0 0 10px 3px rgba(95, 228, 255, 0.95);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grid-cell.current::after {
+    animation: none;
+    opacity: 0.9;
+  }
 }
 
 .choice-current-card-visual .joker-card-copy {
@@ -6347,6 +6391,7 @@ body[data-visuals="new"] .card-art {
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
+  image-rendering: pixelated;
 }
 
 body[data-visuals="new"] .card-art-large {
@@ -6635,6 +6680,10 @@ body[data-visuals="new"] .memory-card-art {
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
+}
+
+body[data-visuals="new"] .grid-cell.seen .memory-card-art {
+  image-rendering: pixelated;
 }
 
 body[data-visuals="new"] .grid-cell:not(.seen) .memory-card-back-art {

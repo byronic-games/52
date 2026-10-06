@@ -1,6 +1,6 @@
-const CACHE_VERSION = "20260921i";
+const CACHE_VERSION = "20260925c";
 const CACHE_NAME = `byronic-52-${CACHE_VERSION}`;
-const GAME_ASSET_VERSION = "20260921i";
+const GAME_ASSET_VERSION = "20260925c";
 
 const CARD_SUITS = ["clubs", "diamonds", "hearts", "spades"];
 const CARD_RANKS = ["ace", "02", "03", "04", "05", "06", "07", "08", "09", "10", "jack", "queen", "king"];
@@ -9,6 +9,11 @@ const CARD_FACE_ASSETS = ["LargeCards", "SmallCards"].flatMap((folder) => [
   `./images/${folder}/Joker1.png`,
   `./images/${folder}/Joker2.png`,
 ]);
+const PIXEL_CARD_FACE_ASSETS = [0, 14, 28, 42].flatMap((suitOffset) =>
+  Array.from({ length: 13 }, (_, rankIndex) =>
+    `./images/PixelCards/${String(suitOffset + rankIndex + 1).padStart(2, "0")}_kerenel_Cards.png`,
+  ),
+);
 const CARD_BACK_ASSETS = [
   ...Array.from({ length: 8 }, (_, index) => `./images/LargeCards/back${String(index + 1).padStart(2, "0")}.png`),
   "./images/SmallCards/back01.png",
@@ -79,6 +84,7 @@ const APP_SHELL = [
   `./js/cheat-index.js?v=${GAME_ASSET_VERSION}`,
   `./js/pwa-update.js?v=${GAME_ASSET_VERSION}`,
   ...CARD_FACE_ASSETS,
+  ...PIXEL_CARD_FACE_ASSETS,
   ...CARD_BACK_ASSETS,
 ];
 

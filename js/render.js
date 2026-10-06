@@ -2299,7 +2299,7 @@ function renderCardFaceMarkup(card, displayValue, isTemporarilyModified, include
   const minimalFacePreview = isNewTheme && !!options.minimalFacePreview && isFaceRank(shownRank);
   const pipLayout = isNewTheme && !options.suppressPips ? getCardPipLayout(shownRank) : null;
   const faceCardArt = isNewTheme ? getFaceCardImagePath(card, shownRank) : "";
-  const fullCardArt = isNewTheme ? getPlayingCardImagePath(card, shownRank, "LargeCards") : "";
+  const fullCardArt = isNewTheme ? getPlayingCardImagePath(card, shownRank, "PixelCards") : "";
   const labelHtml = isNewTheme
     ? fullCardArt
       ? `<img class="card-art card-art-large" src="${fullCardArt}" alt="" aria-hidden="true" draggable="false">`
@@ -2374,6 +2374,22 @@ function getPlayingCardImagePath(card, shownRank = card?.rank, folder = "LargeCa
     q: "queen",
     k: "king",
   }[normalizedRank] || normalizedRank.padStart(2, "0");
+  if (folder === "PixelCards") {
+    const rankIndex = {
+      a: 1,
+      j: 11,
+      q: 12,
+      k: 13,
+    }[normalizedRank] || Number.parseInt(normalizedRank, 10);
+    const suitOffset = {
+      hearts: 0,
+      spades: 14,
+      diamonds: 28,
+      clubs: 42,
+    }[suitName];
+    if (!Number.isInteger(rankIndex) || rankIndex < 1 || rankIndex > 13 || suitOffset === undefined) return "";
+    return `images/PixelCards/${String(suitOffset + rankIndex).padStart(2, "0")}_kerenel_Cards.png`;
+  }
   return suitName && rankName ? `images/${folder}/${suitName}_${rankName}.png` : "";
 }
 
@@ -4042,6 +4058,10 @@ function renderSeenGrid() {
   const foundCount = state.seenCardIds instanceof Set ? state.seenCardIds.size : 0;
   const gridCardIds = state.gridCardIds instanceof Set ? state.gridCardIds : state.seenCardIds;
   const visuals = document.body.dataset.visuals || "new";
+  const pendingReveal = state.pendingRevealAnimation;
+  const displayedCurrentCard = pendingReveal?.initialDeal
+    ? null
+    : pendingReveal?.fromCard || state.gameOverDisplayCards?.leftCard || state.current;
 
   if (seenGridRenderedElement !== grid || seenGridRenderedVisuals !== visuals || seenGridCells.size !== 52) {
     seenGridRenderedElement = grid;
@@ -4084,8 +4104,9 @@ function renderSeenGrid() {
       const card = { id: cardId, suit, rank: rank.r, value: rank.v };
       const seen = gridCardIds.has(cardId);
       const isFresh = state.recentlySeenCardId === cardId;
+      const isCurrent = !isJokerCard(displayedCurrentCard) && displayedCurrentCard?.id === cardId;
       const isBanked = state.experienceBankedCardIds instanceof Set && state.experienceBankedCardIds.has(cardId);
-      const className = `grid-cell ${seen ? "seen" : ""} ${isFresh ? "fresh" : ""} ${isBanked ? "xp-banked-source" : ""} ${isRed(card) ? "red" : "black"}`.trim();
+      const className = `grid-cell ${seen ? "seen" : ""} ${isFresh ? "fresh" : ""} ${isCurrent ? "current" : ""} ${isBanked ? "xp-banked-source" : ""} ${isRed(card) ? "red" : "black"}`.trim();
       if (cell.className !== className) cell.className = className;
       cell.dataset.seen = seen ? "true" : "false";
       cell.setAttribute("aria-label", `${describeCard(card)} ${seen ? "found" : "not found"}`);
@@ -4104,7 +4125,7 @@ function renderSeenGrid() {
       }
 
       if (visuals === "new") {
-        const imagePath = getPlayingCardImagePath(card, rank.r, "SmallCards");
+        const imagePath = getPlayingCardImagePath(card, rank.r, "PixelCards");
         if (cell.children.length === 1 && cell.firstElementChild?.getAttribute("src") === imagePath) continue;
         const imageEl = document.createElement("img");
         imageEl.className = "memory-card-art";
