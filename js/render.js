@@ -162,6 +162,120 @@ function triggerInteractionFeedback(kind) {
   if (pattern) navigator.vibrate(pattern);
 }
 
+// Effects live outside the card DOM, which is rebuilt during a flip.
+function animateGameplayAccent(el, frames, duration, onFinish = () => el.remove()) {
+  if (typeof el.animate !== "function") {
+    window.setTimeout(onFinish, duration);
+    return;
+  }
+  const animation = el.animate(frames, { duration, easing: "cubic-bezier(.2,.7,.3,1)", fill: "both" });
+  animation.finished.then(() => { animation.cancel(); onFinish(); }, onFinish);
+}
+
+function createGameplayAccent(className, rect, text = "") {
+  const el = document.createElement("div");
+  el.className = `gameplay-accent ${className}`;
+  el.setAttribute("aria-hidden", "true");
+  el.textContent = text;
+  Object.assign(el.style, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px` });
+  document.body.appendChild(el);
+  return el;
+}
+
+function playRescueAccent(pending) {
+  if (!pending.rescue || pending.rescueAccentPlayed) return;
+  const target = document.getElementById("reveal-overlay");
+  if (!target) return;
+  pending.rescueAccentPlayed = true;
+  const reduced = shouldUseReducedEffects();
+  const duration = loadFastRevealEnabled() ? 230 : 430;
+  const rect = (target.closest(".card-slot") || target).getBoundingClientRect();
+  const rescue = pending.rescue;
+  const label = createGameplayAccent(`rescue-accent rescue-${rescue.kind}`, rect);
+  const glyph = document.createElement("span");
+  glyph.className = "rescue-glyph";
+  glyph.textContent = rescue.kind === "queen" ? "♛" : rescue.kind === "shield" ? "⬟" : "✦";
+  const caption = document.createElement("span");
+  caption.className = "rescue-caption";
+  caption.textContent = `${rescue.label} saved you`;
+  label.append(glyph, caption);
+  animateGameplayAccent(label, reduced ? [{ opacity: 1 }, { opacity: 1 }, { opacity: 0 }] : [
+    { opacity: 1, borderColor: "#fb7185", boxShadow: "0 0 22px #fb718580", offset: 0 },
+    { opacity: 1, borderColor: "#fb7185", transform: "scale(1.025)", offset: .22 },
+    { opacity: 1, borderColor: "#fde68a", boxShadow: "0 0 28px #fbbf2480", transform: "scale(1)", offset: .48 },
+    { opacity: 0, borderColor: "#fde68a", transform: "scale(1.04)" },
+  ], reduced ? 380 : duration);
+  if (reduced) return;
+  const source = document.getElementById(rescue.power ? "header-power-chip" : "current-card");
+  if (!source) return;
+  const sourceRect = source.getBoundingClientRect();
+  const token = createGameplayAccent(`rescue-token rescue-${rescue.kind}`, {
+    left: sourceRect.left + sourceRect.width / 2 - 14,
+    top: sourceRect.top + sourceRect.height / 2 - 14, width: 28, height: 28,
+  }, glyph.textContent);
+  const dx = rect.left + rect.width / 2 - (sourceRect.left + sourceRect.width / 2);
+  const dy = rect.top + rect.height / 2 - (sourceRect.top + sourceRect.height / 2);
+  animateGameplayAccent(token, [
+    { transform: "translate(0,0) scale(.7)", opacity: 0 },
+    { opacity: 1, offset: .15 },
+    { transform: `translate(${dx}px,${dy}px) scale(1.8)`, opacity: 0 },
+  ], duration);
+}
+
+function playRevealGridAccent(pending) {
+  if (pending.outcome !== "correct" || !pending.revealCard || isJokerCard(pending.revealCard)) return;
+  const cell = seenGridCells.get(pending.revealCard.id);
+  const source = document.getElementById("current-card");
+  if (!cell || !source || cell.dataset.seen !== "true") return;
+  const stamp = () => {
+    if (!cell.isConnected || cell.dataset.seen !== "true") return;
+    animateGameplayAccent(cell, shouldUseReducedEffects() ? [
+      { outline: "2px solid #fde68a" }, { outline: "0px solid transparent" },
+    ] : [
+      { transform: "scale(1.22)", filter: "brightness(1.7)" },
+      { transform: "scale(.94)", offset: .65 },
+      { transform: "scale(1)", filter: "brightness(1)" },
+    ], 220, () => {});
+  };
+  if (shouldUseReducedEffects()) { stamp(); return; }
+  const from = source.getBoundingClientRect();
+  const to = cell.getBoundingClientRect();
+  const size = 24;
+  const left = from.left + from.width / 2 - size / 2;
+  const top = from.top + from.height / 2 - size / 2;
+  const token = createGameplayAccent(`grid-suit-trail ${isRed(pending.revealCard) ? "red" : "black"}`, { left, top, width: size, height: size }, pending.revealCard.suit);
+  const dx = to.left + to.width / 2 - size / 2 - left;
+  const dy = to.top + to.height / 2 - size / 2 - top;
+  animateGameplayAccent(token, [
+    { transform: "translate(0,0) scale(1)", opacity: 1 },
+    { transform: `translate(${dx * .5}px,${dy * .4}px) scale(1.2)`, opacity: 1, offset: .5 },
+    { transform: `translate(${dx}px,${dy}px) scale(.5)`, opacity: 0 },
+  ], loadFastRevealEnabled() ? 160 : 300, () => { token.remove(); stamp(); });
+}
+
+function renderCheatProgress() {
+  const meter = document.getElementById("cheat-progress");
+  if (!meter) return;
+  const threshold = getCheatRewardThreshold();
+  meter.hidden = normalizeDeckKey(state.currentDeckKey) === "black" || !state.current || threshold >= 999;
+  if (meter.hidden) return;
+  const pending = state.pendingRevealAnimation;
+  const rewardReady = !!pending?.cheatRewardEarned && !!pending.messageReleased;
+  const value = Math.min(threshold, Math.max(0, pending && !pending.messageReleased
+    ? pending.cheatProgressBefore : rewardReady ? threshold : state.streak || 0));
+  meter.setAttribute("aria-valuemax", String(threshold));
+  meter.setAttribute("aria-valuenow", String(value));
+  meter.setAttribute("aria-valuetext", rewardReady ? "Cheat earned" : `${threshold - value} correct reveals until next Cheat`);
+  meter.title = rewardReady ? "Cheat earned!" : `Next Cheat: ${value}/${threshold} correct reveals`;
+  if (meter.childElementCount !== threshold) {
+    meter.replaceChildren(...Array.from({ length: threshold }, () => document.createElement("span")));
+  }
+  Array.from(meter.children).forEach((segment, index) => {
+    segment.classList.toggle("is-filled", index < value);
+  });
+  meter.classList.toggle("is-ready", rewardReady);
+}
+
 function clearPendingRevealTimers() {
   if (revealAnimationResetTimer) {
     clearTimeout(revealAnimationResetTimer);
@@ -354,6 +468,7 @@ function finalizePendingReveal(pending) {
   }
 
   render();
+  playRevealGridAccent(pending);
 }
 
 function setRevealSlideOffset(revealingDeckEl, currentCardEl) {
@@ -410,6 +525,7 @@ function playPendingCardRevealAnimation() {
         flipInOverlayEl.style.animation = "";
         flipInOverlayEl.classList.add("reveal-flip-in");
         if (effectClass) flipInOverlayEl.classList.add(effectClass);
+        playRescueAccent(pending);
       }
 
       revealAnimationResetTimer = setTimeout(() => {
@@ -2299,7 +2415,7 @@ function renderCardFaceMarkup(card, displayValue, isTemporarilyModified, include
   const minimalFacePreview = isNewTheme && !!options.minimalFacePreview && isFaceRank(shownRank);
   const pipLayout = isNewTheme && !options.suppressPips ? getCardPipLayout(shownRank) : null;
   const faceCardArt = isNewTheme ? getFaceCardImagePath(card, shownRank) : "";
-  const fullCardArt = isNewTheme ? getPlayingCardImagePath(card, shownRank, "PixelCards") : "";
+  const fullCardArt = isNewTheme ? getPlayingCardImagePath(card, shownRank, "LargeCards") : "";
   const labelHtml = isNewTheme
     ? fullCardArt
       ? `<img class="card-art card-art-large" src="${fullCardArt}" alt="" aria-hidden="true" draggable="false">`
@@ -4102,7 +4218,7 @@ function renderSeenGrid() {
       const cell = seenGridCells.get(cardId);
       if (!cell) continue;
       const card = { id: cardId, suit, rank: rank.r, value: rank.v };
-      const seen = gridCardIds.has(cardId);
+      const seen = gridCardIds.has(cardId) && !(pendingReveal?.revealCard?.id === cardId && !pendingReveal.revealWasInGrid && !pendingReveal.messageReleased);
       const isFresh = state.recentlySeenCardId === cardId;
       const isCurrent = !isJokerCard(displayedCurrentCard) && displayedCurrentCard?.id === cardId;
       const isBanked = state.experienceBankedCardIds instanceof Set && state.experienceBankedCardIds.has(cardId);
@@ -4125,7 +4241,7 @@ function renderSeenGrid() {
       }
 
       if (visuals === "new") {
-        const imagePath = getPlayingCardImagePath(card, rank.r, "PixelCards");
+        const imagePath = getPlayingCardImagePath(card, rank.r, "SmallCards");
         if (cell.children.length === 1 && cell.firstElementChild?.getAttribute("src") === imagePath) continue;
         const imageEl = document.createElement("img");
         imageEl.className = "memory-card-art";
@@ -4271,6 +4387,7 @@ function render() {
   renderButtons();
   renderHandCard();
   renderCheats();
+  renderCheatProgress();
   renderCheatChoice();
   renderPowerChoice();
   renderSeenGrid();

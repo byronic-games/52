@@ -9,13 +9,20 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="52!">
   <title>52!</title>
-  <link rel="manifest" href="manifest.webmanifest">
+  <script>
+    if (location.protocol !== "file:") {
+      const manifest = document.createElement("link");
+      manifest.rel = "manifest";
+      manifest.href = "manifest.webmanifest";
+      document.head.appendChild(manifest);
+    }
+  </script>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="images/icons/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800;900&family=Space+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="app-shell.css?v=20260921g">
+  <link rel="stylesheet" href="app-shell.css?v=20261019d">
 </head>
 <body>
   <div id="app-root" class="app-shell">
@@ -168,12 +175,12 @@
   <script src="js/cheat-balance-overrides.js?v=20260713c"></script>
   <script src="js/apply-cheat-balance-overrides.js?v=20260713c"></script>
   <script src="js/leaderboard.js?v=20260709bk"></script>
-  <script src="js/daily.js?v=20260709bk"></script>
+  <script src="js/daily.js?v=20261019d"></script>
   <script src="js/item-stats.js?v=20260709bk"></script>
   <script src="js/text-catalog-overrides.js?v=20260921g"></script>
   <script src="js/text-catalog.js?v=20260921g"></script>
   <script src="js/app-strings.js?v=20260921g"></script>
-  <script src="js/app-shell.js?v=20260921i"></script>
+  <script src="js/app-shell.js?v=20261019d"></script>
   <script src="js/pwa-update.js?v=20260921i"></script>
 </body>
 </html>

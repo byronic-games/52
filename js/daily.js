@@ -73,6 +73,29 @@ function dailyRemoteEnabled() {
   return !!config.supabaseUrl && !!config.supabaseAnonKey;
 }
 
+function getDailyUnlockRunsStarted() {
+  try {
+    if (typeof loadProfileStats === "function") {
+      return Number(loadProfileStats()?.runsStarted || 0);
+    }
+    const key = typeof PROFILE_STATS_KEY === "string" ? PROFILE_STATS_KEY : "hl_prototype_profile_stats";
+    return Number(JSON.parse(localStorage.getItem(key) || "{}")?.runsStarted || 0);
+  } catch {
+    return 0;
+  }
+}
+
+function isDailyUnlocked() {
+  return getDailyUnlockRunsStarted() >= 1;
+}
+
+function getDailyLeaderboardStatusMessage(response) {
+  const remoteAvailable = Array.isArray(response)
+    ? response._remoteAvailable !== false : !!response?.remoteAvailable;
+  if (remoteAvailable) return "Online leaderboard connected.";
+  return "Online leaderboard unavailable. Showing results saved on this device.";
+}
+
 function getCurrentDailyDateKey(now = new Date()) {
   const year = now.getUTCFullYear();
   const month = String(now.getUTCMonth() + 1).padStart(2, "0");

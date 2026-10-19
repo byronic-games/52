@@ -6391,7 +6391,7 @@ body[data-visuals="new"] .card-art {
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 
 body[data-visuals="new"] .card-art-large {
@@ -6683,7 +6683,7 @@ body[data-visuals="new"] .memory-card-art {
 }
 
 body[data-visuals="new"] .grid-cell.seen .memory-card-art {
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 
 body[data-visuals="new"] .grid-cell:not(.seen) .memory-card-back-art {
@@ -6732,4 +6732,113 @@ body[data-visuals="new"] .memory-card-suit[data-suit="♦"] {
 
 body[data-visuals="new"] .memory-card-suit[data-suit="♣"] {
   background-image: url('images/Suits/ClubIcon.png');
+}
+/* Gameplay accents sit above the table without changing its fixed mobile rows. */
+.gameplay-accent {
+  position: fixed;
+  z-index: 45;
+  pointer-events: none;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rescue-accent {
+  border: 2px solid #fde68a;
+  border-radius: 12px;
+  color: #fde68a;
+  flex-direction: column;
+  gap: 5px;
+  background: linear-gradient(transparent 35%, rgba(15, 10, 24, .85));
+  justify-content: flex-end;
+  padding: 8px 4px;
+}
+
+.rescue-glyph {
+  position: relative;
+  font-size: clamp(22px, 6vw, 38px);
+  line-height: 1;
+  text-shadow: 0 0 12px #fbbf24;
+}
+
+.rescue-shield .rescue-glyph::after {
+  content: "";
+  position: absolute;
+  inset: 15% 35%;
+  background: #291c34;
+  clip-path: polygon(50% 0, 100% 38%, 45% 46%, 80% 100%, 0 55%, 45% 38%);
+}
+
+.rescue-queen .rescue-glyph::after {
+  content: "";
+  position: absolute;
+  width: 160%;
+  height: 3px;
+  left: -30%;
+  top: 45%;
+  transform: rotate(-35deg);
+  background: #fff7d6;
+  box-shadow: 0 0 8px #fbbf24;
+}
+
+.rescue-caption {
+  max-width: 100%;
+  padding: 3px 5px;
+  border-radius: 5px;
+  background: #21152e;
+  text-align: center;
+  font: 700 clamp(9px, 2.6vw, 12px)/1.2 Inter, sans-serif;
+}
+
+.rescue-token {
+  color: #fde68a;
+  font-size: 28px;
+  text-shadow: 0 0 12px #fbbf24;
+}
+
+.grid-suit-trail {
+  border-radius: 50%;
+  background: #fff7e6;
+  font: 700 22px/1 Georgia, serif;
+  box-shadow: 0 0 12px #fde68a99;
+}
+.grid-suit-trail.red { color: #dc264c; }
+.grid-suit-trail.black { color: #251d36; }
+
+#cheat-progress {
+  position: absolute;
+  left: clamp(14px, 4cqw, 20px);
+  right: 5px;
+  bottom: 3px;
+  height: 4px;
+  display: flex;
+  gap: 4px;
+  pointer-events: none;
+}
+#cheat-progress[hidden] { display: none; }
+#cheat-progress::before {
+  content: "CHEAT";
+  align-self: center;
+  color: #fde68a;
+  font: 700 7px/1 Inter, sans-serif;
+  letter-spacing: .4px;
+}
+#cheat-progress > span {
+  flex: 1;
+  border-radius: 3px;
+  background: #ffffff24;
+  transition: background-color 150ms, box-shadow 150ms;
+}
+#cheat-progress > .is-filled {
+  background: #fde68a;
+  box-shadow: 0 0 5px #fbbf2466;
+}
+#cheat-progress.is-ready > span {
+  background: #fff7d6;
+  box-shadow: 0 0 9px #fbbf24;
+}
+body[data-effects="reduced"] #cheat-progress > span { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  #cheat-progress > span { transition: none; }
 }

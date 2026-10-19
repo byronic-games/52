@@ -1,5 +1,23 @@
 (function () {
-  const ASSET_VERSION = "20260921i";
+  if (window.location.protocol === "file:") {
+    const root = document.getElementById("app-root");
+    if (root) {
+      const message = document.createElement("main");
+      message.style.cssText = "max-width:440px;margin:15vh auto;padding:24px;font:16px/1.6 Inter,sans-serif;color:#fff";
+      const title = document.createElement("h1");
+      title.textContent = "Open 52! with its launcher";
+      const instructions = document.createElement("p");
+      instructions.textContent = "Double-click Play 52.cmd in the game folder. It starts the local server and opens the game. Keep its window open while playing.";
+      const link = document.createElement("a");
+      link.href = `http://127.0.0.1:5252/index.html${window.location.search}${window.location.hash}`;
+      link.style.color = "#fde68a";
+      link.textContent = "Server already running? Open the game";
+      message.append(title, instructions, link);
+      root.replaceChildren(message);
+    }
+    return;
+  }
+  const ASSET_VERSION = "20261019d";
   const VIEW_TITLES = {
     home: APP_STRINGS.nav.home,
     setup: APP_STRINGS.nav.play,
@@ -303,17 +321,19 @@
     }
   }
 
-  function isTutorialComplete() {
-    return localStorage.getItem(getTutorialCompletedKey()) === "1";
-  }
-
   function renderHome() {
     const dailyBtn = document.getElementById("home-daily-btn");
-    const dailyLocked = !isTutorialComplete();
+    const dailyLocked = !isDailyUnlocked();
     if (dailyBtn) {
       dailyBtn.disabled = dailyLocked;
       dailyBtn.setAttribute("aria-disabled", dailyLocked ? "true" : "false");
       dailyBtn.querySelector(".tile-title").textContent = APP_STRINGS.home.daily;
+      if (dailyLocked) {
+        const hint = document.createElement("small");
+        hint.className = "daily-unlock-hint";
+        hint.textContent = "Start a run to unlock";
+        dailyBtn.querySelector(".tile-title").appendChild(hint);
+      }
     }
   }
 
@@ -1021,8 +1041,12 @@
     const attempt = getCompletedDailyAttempt(app.dailyDate, app.dailyVariant);
     const complete = !!attempt;
     const showScores = app.dailyDate !== today || complete;
-    const unlocked = isTutorialComplete();
+    const unlocked = isDailyUnlocked();
     const canPlay = unlocked && !complete && app.dailyDate === today && (app.dailyVariant === "normal" || hardUnlocked);
+    const playDisabledReason = !unlocked ? "Start a standard run to unlock Daily."
+      : app.dailyDate !== today ? "Archived Daily. Select today to play."
+        : complete ? "You've already played this Daily. Come back tomorrow for a new deck."
+          : app.dailyVariant === "hard" && !hardUnlocked ? "Finish Normal first to unlock Hard." : "";
     const streak = countDailyStreak(app.dailyVariant, app.dailyDate);
     const previousMonth = shiftDailyMonth(app.dailyDate, -1);
     const nextMonth = shiftDailyMonth(app.dailyDate, 1);
@@ -1048,7 +1072,9 @@
           <div class="daily-calendar-grid">${buildDailyCalendar(app.dailyDate, app.dailyVariant)}</div>
         </div>
       </div>
-      <button class="primary-btn daily-play-btn" id="daily-play-btn" type="button" ${canPlay ? "" : "disabled"}>PLAY</button>
+      <div class="daily-play-controls">
+      <button class="primary-btn daily-play-btn" id="daily-play-btn" type="button" aria-describedby="daily-play-status" ${canPlay ? "" : "disabled"} ${justCompletedToday ? "hidden" : ""}>PLAY</button>
+      <p id="daily-play-status" class="daily-play-status" ${playDisabledReason && !justCompletedToday ? "" : "hidden"}>${escapeHtml(playDisabledReason)}</p>
       ${justCompletedToday ? `
         <div class="daily-complete-note">
           <p>You've already played ${escapeHtml(variantLabel)} today's Daily. Come back tomorrow for a new deck.</p>
@@ -1056,7 +1082,12 @@
           <p id="daily-share-status" class="daily-share-status" aria-live="polite"></p>
         </div>
       ` : ""}
+      </div>
       <div class="fixed-card daily-board-card">
+        <div class="daily-board-connection">
+          <p id="daily-board-status" role="status">Connecting to online leaderboard...</p>
+          <button id="daily-board-retry" type="button" hidden>Retry</button>
+        </div>
         <div class="board-list" id="daily-board-list"><div class="app-loading">Loading...</div></div>
         <div class="pager-row"><button class="pager-btn" id="daily-page-prev" type="button">‹</button><span id="daily-page-label"></span><button class="pager-btn" id="daily-page-next" type="button">›</button></div>
       </div>
@@ -1095,8 +1126,19 @@
 
     const requestedDate = app.dailyDate;
     const requestedVariant = app.dailyVariant;
-    const response = await fetchDailyLeaderboard(app.dailyDate, 5000, app.dailyVariant);
-    if (app.dailyDate !== requestedDate || app.dailyVariant !== requestedVariant) return;
+    const statusEl = document.getElementById("daily-board-status");
+    const retryBtn = document.getElementById("daily-board-retry");
+    retryBtn?.addEventListener("click", () => renderDaily({ date: requestedDate, variant: requestedVariant }));
+    let response;
+    try {
+      response = await fetchDailyLeaderboard(requestedDate, 5000, requestedVariant);
+    } catch {
+      response = buildDailyLeaderboardResult(attempt ? [attempt] : [], false, "offline_network");
+    }
+    if (!statusEl?.isConnected || app.dailyDate !== requestedDate || app.dailyVariant !== requestedVariant) return;
+    statusEl.textContent = getDailyLeaderboardStatusMessage(response);
+    const online = Array.isArray(response) ? response._remoteAvailable !== false : !!response?.remoteAvailable;
+    if (retryBtn) retryBtn.hidden = online;
     const entries = rankEntries(Array.isArray(response) ? response : response?.entries || []);
     renderDailyBoardRows(entries, showScores);
   }

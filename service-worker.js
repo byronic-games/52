@@ -1,6 +1,6 @@
-const CACHE_VERSION = "20260925c";
+const CACHE_VERSION = "20261019d";
 const CACHE_NAME = `byronic-52-${CACHE_VERSION}`;
-const GAME_ASSET_VERSION = "20260925c";
+const GAME_ASSET_VERSION = "20261019d";
 
 const CARD_SUITS = ["clubs", "diamonds", "hearts", "spades"];
 const CARD_RANKS = ["ace", "02", "03", "04", "05", "06", "07", "08", "09", "10", "jack", "queen", "king"];

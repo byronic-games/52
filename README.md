@@ -3,8 +3,10 @@
 Mobile-first browser card game (higher/lower) with deck progression, powers, cheats, Normal/Hard Daily modes, Collection/discovery, Profile stats, and a final pure-score Black Deck.
 
 ## Start
-- Serve repo root with a static server.
-- Open `index.html`.
+- On Windows, double-click `Play 52.cmd`. It starts the local server and opens the game.
+- Alternatively run `npm start` (requires Node.js).
+- Keep the server window open while playing. The address is always `http://127.0.0.1:5252/index.html`; you can bookmark it. Opening the launcher again reuses the existing server.
+- Open the game through that address instead of double-clicking `index.html`: browsers block the game's page fetches under `file://`.
 
 ## Live / Deploy
 - Current public version: `https://byronicman.com/52/`.

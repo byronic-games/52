@@ -265,6 +265,10 @@ function queueCardRevealAnimation(options = {}) {
     messageJustReleased: false,
     effectId: String(options.effectId || ""),
     feedbackEffect: String(options.feedbackEffect || normalizedOutcome),
+    rescue: options.rescue || null,
+    revealWasInGrid: !!options.revealWasInGrid,
+    cheatProgressBefore: Number.isFinite(options.cheatProgressBefore) ? options.cheatProgressBefore : (state.streak || 0),
+    cheatRewardEarned: !!options.cheatRewardEarned,
     triggerGameOver: !!options.triggerGameOver,
     gameOverDetail: String(options.gameOverDetail || ""),
     initialDeal: !!options.initialDeal,
@@ -3243,6 +3247,8 @@ function makeGuess(type) {
       revealCard: next,
       revealEffectiveValue: null,
       effectId: "joker",
+      cheatProgressBefore: jokerTriggeredCheatAward ? getCheatRewardThreshold() - 1 : Math.max(0, state.streak - 1),
+      cheatRewardEarned: jokerTriggeredCheatAward,
       feedbackEffect: "correct",
       clearSuitedAndBootedOnFinalize: suitedAndBootedShouldResolveOnReveal,
     });
@@ -3727,9 +3733,32 @@ function makeGuess(type) {
   const prevCard = state.current;
   recordCurrentCardGuess(state.current, type, true);
   recordFaceDownOutcome(next, false, currentWasBase);
+  const revealWasInGrid = state.gridCardIds instanceof Set && state.gridCardIds.has(next.id);
   const bingoAwards = advanceToCard(next, { awardBingo: true });
+  // Keep presentation tied to the resolved save, before consumed effects disappear.
+  const rescue = rescuedByKillerQueen ? { kind: "queen", label: "Killer Queen" }
+    : rescuedByInsurance ? { kind: "shield", label: "Insurance", power: true }
+    : rescuedByCursedShield ? { kind: "shield", label: "Cursed Shield" }
+    : rescuedByOneLifeLeft ? { kind: "shield", label: "One Life Left" }
+    : rescuedByEnchant ? { kind: "magic", label: "Enchant" }
+    : rescuedByAlwaysBetBlack ? { kind: "magic", label: "Always Bet on the Black" }
+    : rescuedByRedDeadRedemption ? { kind: "magic", label: "Red? Dead? Redemption" }
+    : rescuedBySuitedAndBooted ? { kind: "shield", label: "Suited and Booted" }
+    : rescuedByMarginForError ? { kind: "shield", label: "Margin For Error" }
+    : rescuedByHotOrCold ? { kind: "shield", label: "Margin Of Error" }
+    : rescuedByStitchInTime ? { kind: "magic", label: "A Stitch In Time" }
+    : rescuedBySuitSave ? { kind: "shield", label: passiveSuitSavePower?.name || "Suit save", power: true }
+    : rescuedBySellYourSoul ? { kind: "magic", label: "Sell Your Soul" }
+    : !naturallyCorrectGuess && !isTutorialGuessProtectionActive() && !cheatSpecial && !match
+      ? lucky7WasArmed ? { kind: "magic", label: "Lucky 7" }
+        : fiveAliveWasArmed ? { kind: "magic", label: "Five Alive" }
+        : godSaveKingWasArmed ? { kind: "shield", label: "God Save the King" } : null
+      : null;
   queueCardRevealAnimation({
     outcome: "correct",
+    rescue,
+    revealWasInGrid,
+    cheatRewardEarned: (state.streak || 0) + 1 >= getCheatRewardThreshold(),
     fromCard: prevCard,
     fromEffectiveValue: currentComparisonValue,
     revealCard: next,

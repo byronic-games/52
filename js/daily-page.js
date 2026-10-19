@@ -15,24 +15,6 @@ function formatDailyDateLabel(dateKey) {
   });
 }
 
-function getDailyUnlockRunsStarted() {
-  if (typeof loadProfileStats === "function") {
-    const stats = loadProfileStats();
-    return Number(stats?.runsStarted || 0);
-  }
-
-  const profileStatsKey = typeof PROFILE_STATS_KEY === "string"
-    ? PROFILE_STATS_KEY
-    : "hl_prototype_profile_stats";
-
-  try {
-    const parsed = JSON.parse(localStorage.getItem(profileStatsKey) || "{}");
-    return Number(parsed?.runsStarted || 0);
-  } catch {
-    return 0;
-  }
-}
-
 function buildDailyShareUrl(dateKey, variant = "normal") {
   const url = new URL(DAILY_SHARE_BASE_URL);
   url.searchParams.set("date", dateKey);
@@ -410,7 +392,7 @@ async function refreshDailyPageForDate(activeDateKey, activeVariant = "normal") 
   activeVariant = getDailyPageVariant(activeVariant);
   const todayKey = getCurrentDailyDateKey();
   const currentPlayerId = getOrCreateDailyPlayerId();
-  const dailyUnlocked = getDailyUnlockRunsStarted() >= 1;
+  const dailyUnlocked = isDailyUnlocked();
   const normalAttempt = getLocalDailyAttempt(activeDateKey, "normal");
   const hardUnlocked =
     !!normalAttempt &&
@@ -589,21 +571,8 @@ async function refreshDailyPageForDate(activeDateKey, activeVariant = "normal") 
     ? leaderboardResponse
     : (leaderboardResponse?.entries || []);
   const rankedLeaderboard = getDailyRankedEntries(leaderboard);
-  const remoteAvailable = Array.isArray(leaderboardResponse)
-    ? (leaderboardResponse._remoteAvailable !== undefined ? !!leaderboardResponse._remoteAvailable : true)
-    : !!leaderboardResponse?.remoteAvailable;
-  const boardStatus = Array.isArray(leaderboardResponse)
-    ? String(leaderboardResponse._status || "online")
-    : (leaderboardResponse?.status || "online");
-
   if (boardStatusEl) {
-    if (remoteAvailable) {
-      boardStatusEl.innerText = "Online leaderboard connected.";
-    } else if (boardStatus === "offline_config") {
-      boardStatusEl.innerText = "Online leaderboard unavailable. Showing local results only.";
-    } else {
-      boardStatusEl.innerText = "Could not reach online leaderboard. Showing local fallback results.";
-    }
+    boardStatusEl.innerText = getDailyLeaderboardStatusMessage(leaderboardResponse);
   }
 
   if (rankEl && hasCompletedAttempt) {

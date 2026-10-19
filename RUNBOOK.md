@@ -1,8 +1,9 @@
 # Runbook (Fast Checks)
 
 ## Start Local
-- Serve repo root with any static server.
-- Open `index.html`.
+- Double-click `Play 52.cmd` on Windows, or run `npm start`.
+- Use `http://127.0.0.1:5252/index.html` and keep the server window open. Repeated launches reuse the existing server.
+- Avoid opening `index.html` as `file://`; Chrome blocks the shell's page fetches in that mode.
 
 ## 5-Minute Smoke
 1. Start Blue run.
@@ -57,6 +58,10 @@
 4. Re-test with next-card value modifier case (nudged/temporary value scenario).
 
 ## Daily Board Check
+Before the cross-device checks, test both `index.html?view=daily` and `daily.html` in an isolated browser profile. A profile with at least one run started must unlock Daily even without the tutorial-completed flag. A new profile must show why Daily is locked.
+
+Block the leaderboard connection: both routes must show local-fallback status; the main-menu Daily must offer Retry and recover when the connection returns. Check the completed-result layout at 320 x 568 so the status and board remain visible.
+
 1. Open same date on two devices.
 2. Normal leaderboard should show only Normal entries.
 3. Hard unlocks after Normal is attempted for that date.
