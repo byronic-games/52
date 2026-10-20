@@ -17,7 +17,7 @@
     }
     return;
   }
-  const ASSET_VERSION = "20261019d";
+  const ASSET_VERSION = "20261020b";
   const VIEW_TITLES = {
     home: APP_STRINGS.nav.home,
     setup: APP_STRINGS.nav.play,

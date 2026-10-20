@@ -24,7 +24,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Space+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261019c">
+  <link rel="stylesheet" href="styles.css?v=20261020a">
 </head>
 <body class="game-page">
   <div id="orientation-overlay" aria-hidden="true">
@@ -87,7 +87,9 @@
             <div id="game-over-detail" aria-live="polite"></div>
           </div>
         </section>
-        <div class="layout-spacer layout-spacer-cards-bottom" aria-hidden="true"></div>
+        <div class="layout-spacer layout-spacer-cards-bottom">
+          <div id="cheat-progress" role="progressbar" aria-label="Progress to next Cheat" aria-valuemin="0" aria-valuemax="3" aria-valuenow="0" hidden></div>
+        </div>
 
         <div class="layout-gap layout-gap-info-cheats" aria-hidden="true"></div>
 
@@ -104,7 +106,6 @@
           </button>
           <div class="cheat-scroll-window">
             <div id="cheat-list"></div>
-            <div id="cheat-progress" role="progressbar" aria-label="Progress to next Cheat" aria-valuemin="0" aria-valuemax="3" aria-valuenow="0" hidden></div>
           </div>
         </section>
 
@@ -364,7 +365,7 @@
   <script src="js/state.js?v=20260709q"></script>
   <script src="js/powers.js?v=20260709q"></script>
   <script src="js/cheats.js?v=20260921f"></script>
-  <script src="js/cheat-balance-overrides.js?v=20260713c"></script>
+  <script src="js/cheat-balance-overrides.js?v=20261020b"></script>
   <script src="js/apply-cheat-balance-overrides.js?v=20260713c"></script>
   <script src="js/leaderboard.js?v=20260709q"></script>
   <script src="js/daily.js?v=20261019d"></script>

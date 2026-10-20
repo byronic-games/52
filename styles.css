@@ -6806,11 +6806,15 @@ body[data-visuals="new"] .memory-card-suit[data-suit="♣"] {
 .grid-suit-trail.red { color: #dc264c; }
 .grid-suit-trail.black { color: #251d36; }
 
+.layout-spacer-cards-bottom {
+  position: relative;
+}
+
 #cheat-progress {
   position: absolute;
-  left: clamp(14px, 4cqw, 20px);
-  right: 5px;
-  bottom: 3px;
+  left: 0;
+  right: 0;
+  bottom: 4px;
   height: 4px;
   display: flex;
   gap: 4px;
